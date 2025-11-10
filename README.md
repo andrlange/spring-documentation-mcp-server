@@ -12,6 +12,51 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - **Web Management UI**: Thymeleaf-based interface for managing projects, versions, and documentation
 - **Code Examples**: Searchable repository of Spring code snippets
 
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="assets/screen-01.png" alt="Dashboard" />
+      <p align="center"><b>Dashboard</b> - Overview statistics and quick actions</p>
+    </td>
+    <td width="50%">
+      <img src="assets/screen-02.png" alt="Spring Boot" />
+      <p align="center"><b>Spring Boot</b> - Spring Boot project management</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/screen-03.png" alt="Projects" />
+      <p align="center"><b>Projects</b> - All Spring projects overview</p>
+    </td>
+    <td width="50%">
+      <img src="assets/screen-04.png" alt="Project Details" />
+      <p align="center"><b>Project Details</b> - Spring Batch project details</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/screen-05.png" alt="Versions" />
+      <p align="center"><b>Versions</b> - Version management and tracking</p>
+    </td>
+    <td width="50%">
+      <img src="assets/screen-06.png" alt="Documentation" />
+      <p align="center"><b>Documentation</b> - Full-text search and browse</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/screen-07.png" alt="Settings" />
+      <p align="center"><b>Settings</b> - Application configuration and sync controls</p>
+    </td>
+    <td width="50%">
+      <img src="assets/screen-08.png" alt="Documentation Markdown Expansion" />
+      <p align="center"><b>Documentation Markdown</b> - Expanded Spring Batch documentation content</p>
+    </td>
+  </tr>
+</table>
+
 ## Current Status
 
 ### ✅ Fully Implemented Features
