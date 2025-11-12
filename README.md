@@ -61,7 +61,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
       <p align="center"><b>Settings</b> - Application configuration, scheduler, and sync controls</p>
     </td>
     <td width="50%">
-      <img src="assets/screen-08.png" alt="Documentation Markdown Expansion" />
+      <img src="assets/screen-11.png" alt="Documentation Markdown Expansion" />
       <p align="center"><b>Documentation Markdown</b> - Expanded Spring Batch documentation content</p>
     </td>
   </tr>
