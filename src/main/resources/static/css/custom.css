@@ -798,3 +798,64 @@ code.bg-light {
     background-color: var(--spring-nav-bg) !important;
     color: var(--spring-green) !important;
 }
+
+/* ============================================
+   Modal Overrides for Dark Mode
+   ============================================ */
+.modal-content {
+    background-color: var(--spring-card-bg) !important;
+    border: 1px solid var(--spring-border-dark);
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    background-color: var(--spring-nav-bg) !important;
+    border-bottom: 1px solid var(--spring-border-dark);
+    color: var(--text-primary) !important;
+}
+
+.modal-header .modal-title {
+    color: var(--text-primary) !important;
+}
+
+.modal-body {
+    background-color: var(--spring-card-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+.modal-footer {
+    background-color: var(--spring-card-bg) !important;
+    border-top: 1px solid var(--spring-border-dark);
+}
+
+.modal-backdrop {
+    background-color: #000;
+}
+
+.modal-backdrop.show {
+    opacity: 0.7;
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Danger Modal (for delete actions) */
+.modal-header.bg-danger {
+    background-color: var(--danger-red) !important;
+    border-bottom-color: rgba(220, 53, 69, 0.5);
+}
+
+/* Warning Modal (for deactivate actions) */
+.modal-header.bg-warning {
+    background-color: var(--warning-orange) !important;
+    color: #1b1f23 !important;
+}
+
+.modal-header.bg-warning .modal-title {
+    color: #1b1f23 !important;
+}
+
+.modal-header.bg-warning .btn-close {
+    filter: none;
+}

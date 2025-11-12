@@ -118,6 +118,122 @@
         </div>
     </div>
 
+    <!-- API Key Management -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0">
+                <i class="bi bi-key-fill text-warning"></i> API Key Management
+            </h5>
+            <small class="text-muted">Manage API keys for MCP endpoint authentication</small>
+        </div>
+        <div class="card-body">
+            <!-- Stats -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="stat-box bg-primary bg-opacity-10 p-3 rounded">
+                        <div class="text-primary fw-bold">Total Keys</div>
+                        <div class="h4 mb-0" th:text="${apiKeyStats.total}">0</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-box bg-success bg-opacity-10 p-3 rounded">
+                        <div class="text-success fw-bold">Active Keys</div>
+                        <div class="h4 mb-0" th:text="${apiKeyStats.active}">0</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-box bg-secondary bg-opacity-10 p-3 rounded">
+                        <div class="text-secondary fw-bold">Inactive Keys</div>
+                        <div class="h4 mb-0" th:text="${apiKeyStats.inactive}">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create New Key Button -->
+            <div class="mb-3">
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createApiKeyModal">
+                    <i class="bi bi-plus-circle"></i> Create New API Key
+                </button>
+            </div>
+
+            <!-- API Keys Table -->
+            <div th:if="${#lists.isEmpty(apiKeys)}" class="alert alert-info">
+                <i class="bi bi-info-circle"></i> No API keys created yet. Create your first API key to access MCP endpoints.
+            </div>
+
+            <div th:unless="${#lists.isEmpty(apiKeys)}" class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Created</th>
+                        <th>Created By</th>
+                        <th>Last Used</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="key : ${apiKeys}">
+                        <td>
+                            <strong th:text="${key.name}">API Key Name</strong>
+                            <br/>
+                            <small class="text-muted" th:if="${key.description}" th:text="${key.description}"></small>
+                        </td>
+                        <td>
+                            <small th:text="${#temporals.format(key.createdAt, 'MMM dd, yyyy HH:mm')}">Jan 01, 2025 12:00</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-info" th:text="${key.createdBy}">admin</span>
+                        </td>
+                        <td>
+                            <small th:if="${key.lastUsedAt}" th:text="${#temporals.format(key.lastUsedAt, 'MMM dd, yyyy HH:mm')}">Jan 01, 2025 12:00</small>
+                            <small th:unless="${key.lastUsedAt}" class="text-muted fst-italic">Never</small>
+                        </td>
+                        <td>
+                            <span th:if="${key.isActive}" class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> Active
+                            </span>
+                            <span th:unless="${key.isActive}" class="badge bg-secondary">
+                                <i class="bi bi-x-circle"></i> Inactive
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button th:if="${key.isActive}" type="button" class="btn btn-outline-warning"
+                                        th:data-key-id="${key.id}"
+                                        onclick="deactivateApiKey(this.getAttribute('data-key-id'))"
+                                        title="Deactivate">
+                                    <i class="bi bi-pause-circle"></i>
+                                </button>
+                                <button th:unless="${key.isActive}" type="button" class="btn btn-outline-success"
+                                        th:data-key-id="${key.id}"
+                                        onclick="activateApiKey(this.getAttribute('data-key-id'))"
+                                        title="Activate">
+                                    <i class="bi bi-play-circle"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger"
+                                        th:data-key-id="${key.id}"
+                                        th:data-key-name="${key.name}"
+                                        onclick="deleteApiKey(this.getAttribute('data-key-id'), this.getAttribute('data-key-name'))"
+                                        title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="alert alert-warning mt-3 mb-0">
+                <i class="bi bi-shield-exclamation"></i>
+                <strong>Security Note:</strong> API keys are stored securely using BCrypt hashing.
+                The plain text key is shown only once during creation. Keep your API keys secure and rotate them regularly.
+            </div>
+        </div>
+    </div>
+
     <!-- System Information -->
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom">
@@ -154,6 +270,349 @@
             </div>
         </div>
     </div>
+
+    <!-- Create API Key Modal -->
+    <div class="modal fade" id="createApiKeyModal" tabindex="-1" aria-labelledby="createApiKeyModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createApiKeyModalLabel">
+                        <i class="bi bi-key-fill text-warning"></i> Create New API Key
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createApiKeyForm">
+                        <div class="mb-3">
+                            <label for="apiKeyName" class="form-label">
+                                Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="apiKeyName" name="name"
+                                   placeholder="e.g., Production MCP Client" required minlength="3" maxlength="255">
+                            <small class="form-text text-muted">Minimum 3 characters. Unique identifier for this key.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="apiKeyDescription" class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" id="apiKeyDescription" name="description"
+                                      rows="2" placeholder="Purpose of this API key..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Generated Key (Preview)</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control font-monospace" id="generatedKeyPreview"
+                                       readonly placeholder="Click 'Generate Key' button">
+                                <button class="btn btn-outline-secondary" type="button" id="generateKeyBtn">
+                                    <i class="bi bi-arrow-clockwise"></i> Generate Key
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">
+                                <i class="bi bi-info-circle"></i>
+                                A secure random key will be generated. You can preview it here before creating.
+                            </small>
+                        </div>
+
+                        <div class="alert alert-warning mb-0">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Important:</strong> The API key will be shown only once after creation. Make sure to copy and store it securely.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="createApiKeyBtn">
+                        <i class="bi bi-plus-circle"></i> Create API Key
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Created Modal (Show Key One Time) -->
+    <div class="modal fade" id="apiKeyCreatedModal" tabindex="-1" aria-labelledby="apiKeyCreatedModalLabel" aria-hidden="true"
+         data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="apiKeyCreatedModalLabel">
+                        <i class="bi bi-check-circle"></i> API Key Created Successfully
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>IMPORTANT:</strong> This is the only time you will see this key. Copy it now and store it securely!
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">API Key Name:</label>
+                        <div id="createdKeyName" class="text-primary"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Your API Key:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control font-monospace" id="createdKeyValue"
+                                   readonly style="font-size: 0.9rem;">
+                            <button class="btn btn-primary" type="button" id="copyKeyBtn">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mb-0">
+                        <strong>How to use:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Add to <code>X-API-Key</code> header: <code>X-API-Key: your_key_here</code></li>
+                            <li>Or use <code>Authorization</code> header: <code>Authorization: Bearer your_key_here</code></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal" onclick="location.reload()">
+                        <i class="bi bi-check-circle"></i> I've Copied the Key
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deactivate API Key Confirmation Modal -->
+    <div class="modal fade" id="deactivateApiKeyModal" tabindex="-1" aria-labelledby="deactivateApiKeyModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title" id="deactivateApiKeyModalLabel">
+                        <i class="bi bi-pause-circle-fill"></i> Deactivate API Key
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning mb-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Warning:</strong> This action will prevent the API key from being used for authentication.
+                    </div>
+                    <p class="mb-2">Are you sure you want to deactivate this API key?</p>
+                    <p class="text-muted mb-0">
+                        <small>You can reactivate it later if needed.</small>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-warning" id="confirmDeactivateBtn">
+                        <i class="bi bi-pause-circle"></i> Deactivate Key
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete API Key Confirmation Modal -->
+    <div class="modal fade" id="deleteApiKeyModal" tabindex="-1" aria-labelledby="deleteApiKeyModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteApiKeyModalLabel">
+                        <i class="bi bi-trash-fill"></i> Delete API Key
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger mb-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Danger!</strong> This action cannot be undone.
+                    </div>
+                    <p class="mb-2">Are you sure you want to <strong>permanently delete</strong> the API key:</p>
+                    <div class="bg-dark p-3 rounded mb-3">
+                        <code class="text-warning" id="deleteKeyNameDisplay"></code>
+                    </div>
+                    <p class="text-danger mb-0">
+                        <i class="bi bi-shield-exclamation"></i>
+                        <strong>All applications using this key will immediately lose access!</strong>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="bi bi-trash"></i> Delete Permanently
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page-specific JavaScript -->
+    <script>
+        // Generate API key preview
+        document.getElementById('generateKeyBtn').addEventListener('click', async function() {
+            try {
+                const response = await fetch('/settings/api-keys/generate');
+                const data = await response.json();
+                document.getElementById('generatedKeyPreview').value = data.key;
+            } catch (error) {
+                console.error('Error generating key:', error);
+                alert('Failed to generate key preview');
+            }
+        });
+
+        // Create API key
+        document.getElementById('createApiKeyBtn').addEventListener('click', async function() {
+            const name = document.getElementById('apiKeyName').value.trim();
+            const description = document.getElementById('apiKeyDescription').value.trim();
+
+            if (!name || name.length < 3) {
+                alert('Please enter a name (minimum 3 characters)');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('name', name);
+                if (description) {
+                    formData.append('description', description);
+                }
+
+                const response = await fetch('/settings/api-keys/create', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Hide create modal
+                    const createModal = bootstrap.Modal.getInstance(document.getElementById('createApiKeyModal'));
+                    createModal.hide();
+
+                    // Show created key modal with the plain text key
+                    document.getElementById('createdKeyName').textContent = data.apiKey.name;
+                    document.getElementById('createdKeyValue').value = data.plainTextKey;
+
+                    const createdModal = new bootstrap.Modal(document.getElementById('apiKeyCreatedModal'));
+                    createdModal.show();
+
+                    // Reset form
+                    document.getElementById('createApiKeyForm').reset();
+                    document.getElementById('generatedKeyPreview').value = '';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error creating API key:', error);
+                alert('Failed to create API key');
+            }
+        });
+
+        // Copy API key to clipboard
+        document.getElementById('copyKeyBtn').addEventListener('click', function() {
+            const keyInput = document.getElementById('createdKeyValue');
+            keyInput.select();
+            document.execCommand('copy');
+
+            // Change button text temporarily
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-success');
+
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-primary');
+            }, 2000);
+        });
+
+        // Deactivate API key - Show modal for confirmation
+        let currentDeactivateId = null;
+
+        function deactivateApiKey(id) {
+            currentDeactivateId = id;
+            const modal = new bootstrap.Modal(document.getElementById('deactivateApiKeyModal'));
+            modal.show();
+        }
+
+        // Confirm deactivate button handler
+        document.getElementById('confirmDeactivateBtn').addEventListener('click', async function() {
+            if (!currentDeactivateId) return;
+
+            try {
+                const response = await fetch(`/settings/api-keys/${currentDeactivateId}/deactivate`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('deactivateApiKeyModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error deactivating API key:', error);
+                alert('Failed to deactivate API key');
+            }
+        });
+
+        // Activate API key
+        async function activateApiKey(id) {
+            try {
+                const response = await fetch(`/settings/api-keys/${id}/activate`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error activating API key:', error);
+                alert('Failed to activate API key');
+            }
+        }
+
+        // Delete API key - Show modal for confirmation
+        let currentDeleteId = null;
+
+        function deleteApiKey(id, name) {
+            currentDeleteId = id;
+            document.getElementById('deleteKeyNameDisplay').textContent = name;
+            const modal = new bootstrap.Modal(document.getElementById('deleteApiKeyModal'));
+            modal.show();
+        }
+
+        // Confirm delete button handler
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+            if (!currentDeleteId) return;
+
+            try {
+                const response = await fetch(`/settings/api-keys/${currentDeleteId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('deleteApiKeyModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error deleting API key:', error);
+                alert('Failed to delete API key');
+            }
+        });
+    </script>
 </div>
 </body>
 </html>

@@ -1,5 +1,6 @@
 package com.spring.mcp.config;
 
+import com.spring.mcp.security.ApiKeyAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +11,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.sql.DataSource;
 
@@ -26,17 +28,22 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class SecurityConfig {
 
     private final DataSource dataSource;
+    private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            // Add API Key authentication filter before UsernamePasswordAuthenticationFilter
+            // This filter only processes /mcp/** endpoints
+            .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+
             .authorizeHttpRequests(auth -> auth
                 // Public resources
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
 
-                // MCP endpoints - require authentication
-                .requestMatchers("/mcp/**", "/api/mcp/**").authenticated()
+                // MCP endpoints - require API key authentication (handled by ApiKeyAuthenticationFilter)
+                .requestMatchers("/mcp/**").authenticated()
 
                 // API endpoints - require authentication
                 .requestMatchers("/api/**").authenticated()
@@ -61,9 +68,10 @@ public class SecurityConfig {
                 .deleteCookies("JSESSIONID")
                 .permitAll()
             )
-            .httpBasic(withDefaults())
+            .httpBasic(withDefaults()) // Keep Basic Auth for backward compatibility
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/mcp/**", "/api/mcp/**", "/sync/**") // MCP endpoints use Basic Auth, temporarily allow sync for testing
+                // Disable CSRF for MCP endpoints as they use API key authentication
+                .ignoringRequestMatchers("/mcp/**", "/api/mcp/**", "/sync/**", "/settings/api-keys/**")
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)

@@ -75,8 +75,9 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - **Documentation** - Browse and search documentation links with full-text search
 - **Code Examples** - Code snippet library with tagging
 - **Users** - User management with role-based access
-- **Settings** - Application configuration and feature toggles
+- **Settings** - Application configuration, feature toggles, and API Key Management
 - **Authentication** - Spring Security with session management
+- **API Key Management** - Secure token-based authentication for MCP endpoints
 
 #### Documentation Sync Services
 - Automated sync from spring.io/projects
@@ -160,6 +161,51 @@ Or using Gradle:
 - **Login**: Username: `admin`, Password: `admin`
 - **MCP Endpoint**: http://localhost:8080/mcp (SSE endpoint auto-configured by Spring AI)
 
+## API Key Authentication
+
+### Creating an API Key
+
+![API Key Management](assets/screen-09.png)
+*API Key Management interface with secure key generation, activation/deactivation controls, and confirmation modals*
+
+The MCP endpoints are protected by secure API key authentication. To create an API key:
+
+1. **Log in to the Web UI** at http://localhost:8080 (Username: `admin`, Password: `admin`)
+2. **Navigate to Settings** (`/settings`)
+3. **Scroll to "API Key Management"** section
+4. **Click "Create New API Key"** button
+5. **Enter details**:
+   - **Name**: Unique identifier for this key (minimum 3 characters)
+   - **Description**: Optional purpose description
+6. **Click "Create API Key"**
+7. **⚠️ IMPORTANT**: Copy the API key immediately - it will only be shown once!
+
+**API Key Format**: `smcp_<secure-random-string>` (256-bit cryptographically secure)
+
+**Security Features**:
+- Keys are hashed using BCrypt (cost factor 12) - never stored in plain text
+- Support for activate/deactivate (soft delete)
+- Last used timestamp tracking for auditing
+
+### Using API Keys
+
+API keys can be provided in three ways (in order of preference):
+
+1. **X-API-Key Header** (Recommended):
+   ```bash
+   curl -H "X-API-Key: smcp_your_key_here" http://localhost:8080/mcp/sse
+   ```
+
+2. **Authorization Bearer Header**:
+   ```bash
+   curl -H "Authorization: Bearer smcp_your_key_here" http://localhost:8080/mcp/sse
+   ```
+
+3. **Query Parameter** (Testing only - less secure):
+   ```bash
+   curl "http://localhost:8080/mcp/sse?api_key=smcp_your_key_here"
+   ```
+
 ## Using the MCP Server with Claude Code
 
 ### Configuration
@@ -173,14 +219,14 @@ Add to your Claude Desktop or Claude Code MCP configuration:
       "command": "bash",
       "args": [
         "-c",
-        "curl -N -u admin:admin http://localhost:8080/mcp"
+        "curl -N -H 'X-API-Key: smcp_your_api_key_here' http://localhost:8080/mcp/sse"
       ]
     }
   }
 }
 ```
 
-**Note**: The Spring AI MCP server auto-configures the SSE endpoint at `/mcp`. Authentication is required via Basic Auth.
+**Note**: Replace `smcp_your_api_key_here` with your actual API key from the Settings page.
 
 ### Available MCP Tools
 
