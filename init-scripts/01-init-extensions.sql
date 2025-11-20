@@ -1,4 +1,4 @@
--- Initialize PostgreSQL extensions for full-text search
+-- Initialize PostgresSQL extensions for full-text search
 CREATE EXTENSION IF NOT EXISTS pg_trgm;  -- Trigram matching for fuzzy search
 
 -- Set timezone

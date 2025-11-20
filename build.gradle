@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.7'
+    id 'org.springframework.boot' version '4.0.0-RC2'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -8,9 +8,9 @@ group = 'com.spring.mcp'
 version = '1.0.0'
 
 java {
-    // Allow running on Java 25+
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
 }
 
 configurations {
@@ -26,14 +26,19 @@ repositories {
 }
 
 ext {
-    springAiVersion = '1.0.3'
+    springAiVersion = '1.1.0'
+    thymeleafVersion = '3.4.0'
+    jsoupVersion = '1.21.2'
+    htmlunitVersion = '4.18.0'
+    flexmarkVersion = '0.64.8'
+    guavaVersion = '33.5.0-jre'
 }
 
 dependencies {
     // Spring Boot Starters
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-    implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect:3.4.0'
+    implementation "nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect:${thymeleafVersion}"
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -44,20 +49,20 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
-    // Note: Using Hibernate 6.6 native PostgreSQL JSON and Array support instead of hypersistence-utils
+    // Note: Using Hibernate 6.6 native PostgresSQL JSON and Array support instead of hypersistence-utils
 
     // Spring AI MCP Server with SSE
     implementation "org.springframework.ai:spring-ai-starter-mcp-server-webmvc:${springAiVersion}"
 
     // HTML Parsing for documentation fetching
-    implementation 'org.jsoup:jsoup:1.21.2'
+    implementation "org.jsoup:jsoup:${jsoupVersion}"
 
     // HtmlUnit for JavaScript-enabled web scraping
-    implementation 'org.htmlunit:htmlunit:4.18.0'
+    implementation "org.htmlunit:htmlunit:${htmlunitVersion}"
 
     // HTML to Markdown conversion
-    implementation 'com.vladsch.flexmark:flexmark-html2md-converter:0.64.8'
-    implementation 'com.vladsch.flexmark:flexmark:0.64.8'
+    implementation "com.vladsch.flexmark:flexmark-html2md-converter:${flexmarkVersion}"
+    implementation "com.vladsch.flexmark:flexmark:${flexmarkVersion}"
 
     // JSON Processing
     implementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -68,7 +73,7 @@ dependencies {
 
     // Utilities
     implementation 'org.apache.commons:commons-lang3'
-    implementation 'com.google.guava:guava:33.5.0-jre'
+    implementation "com.google.guava:guava:${guavaVersion}"
 
     // Lombok for reducing boilerplate
     compileOnly 'org.projectlombok:lombok'
@@ -91,12 +96,12 @@ dependencyManagement {
     }
 }
 
-tasks.named('test') {
+tasks.named('test', Test) {
     useJUnitPlatform()
 }
 
 // Ensure proper character encoding
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
@@ -107,7 +112,7 @@ tasks.named('bootRun') {
 }
 
 // Temporary task to print runtime classpath for HtmlUnit test
-task printRuntimeClasspath {
+tasks.register('printRuntimeClasspath') {
     doLast {
         println sourceSets.main.runtimeClasspath.asPath
     }
