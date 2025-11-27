@@ -544,12 +544,12 @@ mcp:
 ## Technology Stack
 
 ### Core Framework
-- **Spring Boot**: 3.5.7
-- **Java**: 25 (LTS)
+- **Spring Boot**: 3.5.8
+- **Java**: 21+ (25 recommended)
 - **Build Tool**: Gradle 9.2.0
 
 ### MCP Protocol
-- **Spring AI MCP Server**: 1.0.3
+- **Spring AI MCP Server**: 1.1.0
 - **Protocol**: Server-Sent Events (SSE)
 - **Auto-discovery**: `@Tool` annotations
 
@@ -997,6 +997,26 @@ Areas for contribution:
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Changelog
+
+### v1.0.2 (2025-11-27)
+- **Spring Boot**: Bumped from 3.5.7 to 3.5.8
+- **Spring AI**: Upgraded from 1.0.3 to 1.1.0
+- **Example App**: Added first 100% AI-generated example application (`examples/todo-app-example/`)
+  - Multi-user Todo app with Spring Boot 4.0.0
+  - Spring Security authentication
+  - PostgreSQL database with Flyway migrations
+  - Custom Actuator endpoints
+  - Dark-themed Thymeleaf UI
+  - Built entirely using this MCP server for Spring documentation lookup
+
+### v1.0.1
+- Initial public release
+- 10 MCP tools for Spring documentation access
+- Full-text search with PostgreSQL
+- Web management UI
+- API Key authentication
 
 ## Resources
 
