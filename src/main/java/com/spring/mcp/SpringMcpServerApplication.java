@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Spring MCP Server Application - Main Entry Point
- *
+ * <p>
  * A Spring Boot application that serves as an MCP (Model Context Protocol) Server
  * providing comprehensive access to Spring ecosystem documentation through
  * Server-Sent Events (SSE).

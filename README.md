@@ -944,7 +944,7 @@ lsof -ti :8080 | xargs kill -9
 ## Roadmap
 
 ### Completed ✅
-- [x] Spring Boot 3.5.7 project setup
+- [x] Spring Boot 3.5.8 project setup
 - [x] PostgreSQL database with Docker Compose
 - [x] Flyway migrations
 - [x] Entity models and repositories
