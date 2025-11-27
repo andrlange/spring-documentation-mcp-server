@@ -6,7 +6,7 @@
 set -e  # Exit on error
 
 IMAGE_NAME="spring-mcp-server"
-IMAGE_TAG="1.0.0"
+IMAGE_TAG="1.0.2"
 FULL_IMAGE_NAME="${IMAGE_NAME}:${IMAGE_TAG}"
 
 echo "=========================================="

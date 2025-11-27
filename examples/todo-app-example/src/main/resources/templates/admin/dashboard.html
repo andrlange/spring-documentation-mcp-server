@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Admin Dashboard')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-4">
+    <!-- Page Header -->
+    <div class="page-header mb-4">
+        <h1 class="page-title">
+            <i class="bi bi-speedometer2 me-2" style="color: var(--spring-green);"></i>Admin Dashboard
+        </h1>
+        <p class="page-subtitle">System overview and statistics</p>
+    </div>
+
+    <!-- System Stats -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value" th:text="${stats.totalUsers}">0</div>
+                <div class="stat-label">
+                    <i class="bi bi-people me-1"></i>Total Users
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value" th:text="${stats.activeUsers}">0</div>
+                <div class="stat-label">
+                    <i class="bi bi-person-check me-1"></i>Active Users
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value" th:text="${stats.totalTodos}">0</div>
+                <div class="stat-label">
+                    <i class="bi bi-list-task me-1"></i>Total Todos
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value" style="color: var(--spring-green);" th:text="${stats.completedTodos}">0</div>
+                <div class="stat-label">
+                    <i class="bi bi-check-circle me-1"></i>Completed
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Stats Row -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="bi bi-bar-chart me-2" style="color: var(--spring-green);"></i>Todo Status Breakdown
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge status-pending px-2 py-1">Pending</span>
+                                <span class="ms-auto text-light fw-semibold" th:text="${stats.pendingTodos}">0</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge status-in_progress px-2 py-1">In Progress</span>
+                                <span class="ms-auto text-light fw-semibold" th:text="${stats.inProgressTodos}">0</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge status-completed px-2 py-1">Completed</span>
+                                <span class="ms-auto text-light fw-semibold" th:text="${stats.completedTodos}">0</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge status-cancelled px-2 py-1">Cancelled</span>
+                                <span class="ms-auto text-light fw-semibold" th:text="${stats.cancelledTodos}">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" style="border-color: var(--border-color);">
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-exclamation-triangle text-danger"></i>
+                                <span class="text-light">Overdue</span>
+                                <span class="ms-auto text-danger fw-semibold" th:text="${stats.overdueTodos}">0</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-calendar-event text-warning"></i>
+                                <span class="text-light">Due Today</span>
+                                <span class="ms-auto text-warning fw-semibold" th:text="${stats.dueTodayTodos}">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="bi bi-activity me-2" style="color: var(--spring-green);"></i>Quick Links
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush" style="background: transparent;">
+                        <a href="/actuator" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center"
+                           style="background: var(--bg-input); border-color: var(--border-color); color: var(--text-primary);">
+                            <i class="bi bi-speedometer2 me-3" style="color: var(--spring-green);"></i>
+                            <div>
+                                <div class="fw-semibold">Actuator Index</div>
+                                <small class="text-muted">View all actuator endpoints</small>
+                            </div>
+                            <i class="bi bi-chevron-right ms-auto"></i>
+                        </a>
+                        <a href="/actuator/health" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center"
+                           style="background: var(--bg-input); border-color: var(--border-color); color: var(--text-primary);">
+                            <i class="bi bi-heart-pulse me-3" style="color: var(--spring-green);"></i>
+                            <div>
+                                <div class="fw-semibold">Health Check</div>
+                                <small class="text-muted">Application health status</small>
+                            </div>
+                            <i class="bi bi-chevron-right ms-auto"></i>
+                        </a>
+                        <a href="/actuator/info" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center"
+                           style="background: var(--bg-input); border-color: var(--border-color); color: var(--text-primary);">
+                            <i class="bi bi-info-circle me-3" style="color: var(--spring-green);"></i>
+                            <div>
+                                <div class="fw-semibold">Application Info</div>
+                                <small class="text-muted">Build and application details</small>
+                            </div>
+                            <i class="bi bi-chevron-right ms-auto"></i>
+                        </a>
+                        <a href="/actuator/todostats" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center"
+                           style="background: var(--bg-input); border-color: var(--border-color); color: var(--text-primary);">
+                            <i class="bi bi-graph-up me-3" style="color: var(--spring-green);"></i>
+                            <div>
+                                <div class="fw-semibold">Todo Statistics (Custom)</div>
+                                <small class="text-muted">Custom actuator endpoint with todo stats</small>
+                            </div>
+                            <i class="bi bi-chevron-right ms-auto"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">
+                <i class="bi bi-people me-2" style="color: var(--spring-green);"></i>Registered Users
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Display Name</th>
+                            <th>Email</th>
+                            <th>Roles</th>
+                            <th>Todos</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="user : ${users}">
+                            <td>
+                                <i class="bi bi-person-circle me-2" style="color: var(--spring-green);"></i>
+                                <span th:text="${user.username}">username</span>
+                            </td>
+                            <td th:text="${user.displayName}">Display Name</td>
+                            <td th:text="${user.email}">email@example.com</td>
+                            <td>
+                                <span th:each="role : ${user.roles}" class="badge bg-secondary me-1"
+                                      th:text="${#strings.replace(role, 'ROLE_', '')}">USER</span>
+                            </td>
+                            <td th:text="${user.todoCount}">0</td>
+                            <td>
+                                <span th:if="${user.enabled}" class="badge bg-success">Active</span>
+                                <span th:unless="${user.enabled}" class="badge bg-danger">Disabled</span>
+                            </td>
+                            <td th:text="${#temporals.format(user.createdAt, 'MMM d, yyyy')}">Jan 1, 2025</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

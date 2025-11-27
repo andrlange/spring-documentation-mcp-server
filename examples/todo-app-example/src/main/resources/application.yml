@@ -1,0 +1,87 @@
+spring:
+  application:
+    name: todo-app-example
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:todo_app}
+    username: ${DB_USER:todouser}
+    password: ${DB_PASSWORD:todopass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+
+server:
+  port: ${SERVER_PORT:7777}
+  servlet:
+    session:
+      timeout: 30m
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,todostats
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    info:
+      enabled: true
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+
+# Application Info for Actuator
+info:
+  app:
+    name: Todo App Example
+    description: Spring Boot 4 Todo Application with Multi-user support
+    version: 1.0.0
+    java:
+      version: ${java.version}
+  spring:
+    boot:
+      version: 4.0.0
+  features:
+    - Multi-user authentication
+    - JPA with PostgreSQL
+    - Custom Actuator endpoints
+    - Dark theme UI
+
+logging:
+  level:
+    com.example.todo: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

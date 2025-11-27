@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('View Todo')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb" style="background: transparent;">
+                    <li class="breadcrumb-item"><a th:href="@{/todos}">My Todos</a></li>
+                    <li class="breadcrumb-item active">View Todo</li>
+                </ol>
+            </nav>
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-eye me-2" style="color: var(--spring-green);"></i>Todo Details
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <span class="badge" th:classappend="'priority-' + ${todo.priority.name().toLowerCase()}"
+                              th:text="${todo.priority}">MEDIUM</span>
+                        <span class="badge" th:classappend="'status-' + ${todo.status.name().toLowerCase()}"
+                              th:text="${#strings.replace(todo.status.name(), '_', ' ')}">PENDING</span>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <h4 class="mb-3" th:text="${todo.title}">Todo Title</h4>
+
+                    <div th:if="${todo.description}" class="mb-4">
+                        <label class="form-label text-secondary">Description</label>
+                        <p th:text="${todo.description}">Description content</p>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6" th:if="${todo.dueDate}">
+                            <label class="form-label text-secondary">Due Date</label>
+                            <p>
+                                <i class="bi bi-calendar3 me-1"></i>
+                                <span th:text="${#temporals.format(todo.dueDate, 'MMMM d, yyyy')}">January 1, 2025</span>
+                                <span th:if="${todo.overdue}" class="badge bg-danger ms-2">Overdue</span>
+                                <span th:if="${todo.dueToday}" class="badge bg-warning ms-2">Due Today</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" style="border-color: var(--border-color);">
+
+                    <div class="d-flex justify-content-between">
+                        <a th:href="@{/todos}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Back to List
+                        </a>
+                        <div class="d-flex gap-2">
+                            <form th:action="@{/todos/{id}/toggle(id=${todo.id})}" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i th:if="${todo.status.name() == 'COMPLETED'}" class="bi bi-arrow-counterclockwise me-1"></i>
+                                    <i th:unless="${todo.status.name() == 'COMPLETED'}" class="bi bi-check-lg me-1"></i>
+                                    <span th:if="${todo.status.name() == 'COMPLETED'}">Mark Pending</span>
+                                    <span th:unless="${todo.status.name() == 'COMPLETED'}">Mark Complete</span>
+                                </button>
+                            </form>
+                            <a th:href="@{/todos/{id}/edit(id=${todo.id})}" class="btn btn-primary">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: todo-app-db
+    environment:
+      POSTGRES_DB: todo_app
+      POSTGRES_USER: todouser
+      POSTGRES_PASSWORD: todopass
+    ports:
+      - "5433:5432"  # Using port 5433 to avoid conflict with other PostgreSQL instances
+    volumes:
+      - todo_postgres_data:/var/lib/postgresql/data
+    networks:
+      - todo-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U todouser -d todo_app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  todo_postgres_data:
+    driver: local
+
+networks:
+  todo-network:
+    driver: bridge
