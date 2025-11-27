@@ -2,6 +2,10 @@
 
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
+Commiter:
+[@andrlange](https://github.com/andrlange)
+[@bsmahi](https://github.com/bsmahi)
+
 ## What is this?
 
 This MCP server enables AI assistants (like Claude) to search, browse, and retrieve Spring Framework documentation, code examples, and API references. It includes:
@@ -11,6 +15,26 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - **Full-Text Search**: PostgreSQL-powered search across all Spring documentation
 - **Web Management UI**: Thymeleaf-based interface for managing projects, versions, and documentation
 - **Code Examples**: Searchable repository of Spring code snippets
+
+## Changelog
+
+### v1.0.2 (2025-11-27)
+- **Spring Boot**: Bumped from 3.5.7 to 3.5.8
+- **Spring AI**: Upgraded from 1.0.3 to 1.1.0
+- **Example App**: Added first 100% AI-generated example application (`examples/todo-app-example/`)
+    - Multi-user Todo app with Spring Boot 4.0.0
+    - Spring Security authentication
+    - PostgreSQL database with Flyway migrations
+    - Custom Actuator endpoints
+    - Dark-themed Thymeleaf UI
+    - Built entirely using this MCP server for Spring documentation lookup
+
+### v1.0.1
+- Initial public release
+- 10 MCP tools for Spring documentation access
+- Full-text search with PostgreSQL
+- Web management UI
+- API Key authentication
 
 ## Screenshots
 
@@ -944,7 +968,7 @@ lsof -ti :8080 | xargs kill -9
 ## Roadmap
 
 ### Completed ✅
-- [x] Spring Boot 3.5.7 project setup
+- [x] Spring Boot 3.5.8 project setup using Spring AI 1.1.0
 - [x] PostgreSQL database with Docker Compose
 - [x] Flyway migrations
 - [x] Entity models and repositories
@@ -968,6 +992,7 @@ lsof -ti :8080 | xargs kill -9
 - [ ] Enhanced search with highlighting and snippets
 - [ ] More code examples across Spring ecosystem
 - [ ] Performance optimization for large result sets
+- [ ] Migration of Manual Tool registration to @McpTool
 
 ### Planned 📋
 - [ ] Semantic search using embeddings
@@ -997,26 +1022,6 @@ Areas for contribution:
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Changelog
-
-### v1.0.2 (2025-11-27)
-- **Spring Boot**: Bumped from 3.5.7 to 3.5.8
-- **Spring AI**: Upgraded from 1.0.3 to 1.1.0
-- **Example App**: Added first 100% AI-generated example application (`examples/todo-app-example/`)
-  - Multi-user Todo app with Spring Boot 4.0.0
-  - Spring Security authentication
-  - PostgreSQL database with Flyway migrations
-  - Custom Actuator endpoints
-  - Dark-themed Thymeleaf UI
-  - Built entirely using this MCP server for Spring documentation lookup
-
-### v1.0.1
-- Initial public release
-- 10 MCP tools for Spring documentation access
-- Full-text search with PostgreSQL
-- Web management UI
-- API Key authentication
 
 ## Resources
 
