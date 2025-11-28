@@ -6,6 +6,6 @@
   |____/| .__/|_|  |_|_| |_|\__, | |_|  |_|\____|_|     |____/ \___|_|    \_/ \___|_|
         |_|                 |___/
 
-  Spring Documentation MCP Server v${application.version}
+  Spring Documentation MCP Server v${spring.application.version}
   Spring Boot ${spring-boot.version}
 

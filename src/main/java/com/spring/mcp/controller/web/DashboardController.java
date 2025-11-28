@@ -1,5 +1,6 @@
 package com.spring.mcp.controller.web;
 
+import com.spring.mcp.config.OpenRewriteFeatureConfig;
 import com.spring.mcp.repository.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,9 @@ public class DashboardController {
     private final CodeExampleRepository codeExampleRepository;
     private final UserRepository userRepository;
     private final SpringBootVersionRepository springBootVersionRepository;
+    private final OpenRewriteFeatureConfig openRewriteFeatureConfig;
+    private final MigrationRecipeRepository migrationRecipeRepository;
+    private final MigrationTransformationRepository migrationTransformationRepository;
 
     /**
      * Display the dashboard page with statistics.
@@ -113,6 +117,23 @@ public class DashboardController {
             // Recent Activity: Top 5 projects with newest release dates
             var recentActivityProjects = projectVersionRepository.findTopByReleaseDateDesc(PageRequest.of(0, 5));
             model.addAttribute("recentActivityProjects", recentActivityProjects);
+
+            // OpenRewrite Recipe Statistics (conditional on feature flag)
+            model.addAttribute("openRewriteEnabled", openRewriteFeatureConfig.isEnabled());
+            if (openRewriteFeatureConfig.isEnabled()) {
+                long recipeCount = migrationRecipeRepository.countByIsActiveTrue();
+                long transformationCount = migrationTransformationRepository.count();
+                long breakingChangeCount = migrationTransformationRepository.countByBreakingChangeTrue();
+                var recipeProjects = migrationRecipeRepository.findDistinctProjects();
+
+                model.addAttribute("recipeCount", recipeCount);
+                model.addAttribute("transformationCount", transformationCount);
+                model.addAttribute("breakingChangeCount", breakingChangeCount);
+                model.addAttribute("recipeProjects", recipeProjects);
+
+                log.debug("Recipe stats - Recipes: {}, Transformations: {}, Breaking: {}",
+                    recipeCount, transformationCount, breakingChangeCount);
+            }
 
             // Set active page for sidebar navigation
             model.addAttribute("activePage", "dashboard");

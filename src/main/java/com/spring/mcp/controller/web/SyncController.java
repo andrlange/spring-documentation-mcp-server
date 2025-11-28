@@ -1,11 +1,14 @@
 package com.spring.mcp.controller.web;
 
+import com.spring.mcp.config.OpenRewriteFeatureConfig;
 import com.spring.mcp.service.sync.CodeExamplesSyncService;
 import com.spring.mcp.service.sync.ComprehensiveSyncService;
 import com.spring.mcp.service.sync.ProjectSyncService;
+import com.spring.mcp.service.sync.RecipeSyncService;
 import com.spring.mcp.service.sync.SpringGenerationsSyncService;
 import com.spring.mcp.service.sync.SyncProgressTracker;
 import lombok.RequiredArgsConstructor;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -43,6 +46,10 @@ public class SyncController {
     private final com.spring.mcp.service.sync.ProjectRelationshipSyncService relationshipSyncService;
     private final com.spring.mcp.service.sync.DocumentationSyncService documentationSyncService;
     private final com.spring.mcp.repository.SpringProjectRepository springProjectRepository;
+
+    // OpenRewrite recipe sync (optional - depends on feature being enabled)
+    private final OpenRewriteFeatureConfig openRewriteFeatureConfig;
+    private final Optional<RecipeSyncService> recipeSyncService;
 
     /**
      * Show sync page with options.
@@ -319,6 +326,48 @@ public class SyncController {
             }
         } catch (Exception e) {
             String errorMsg = "Error during documentation sync: " + e.getMessage();
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+            log.error(errorMsg, e);
+        }
+
+        return "redirect:/sync";
+    }
+
+    /**
+     * Trigger manual sync of migration recipes (OpenRewrite knowledge).
+     * Only available when OpenRewrite feature is enabled.
+     *
+     * @param redirectAttributes for flash messages
+     * @return redirect to sync page
+     */
+    @PostMapping("/recipes")
+    public String syncRecipes(RedirectAttributes redirectAttributes) {
+        log.info("Manual recipe sync triggered");
+
+        if (!openRewriteFeatureConfig.isEnabled()) {
+            redirectAttributes.addFlashAttribute("error", "OpenRewrite feature is disabled");
+            return "redirect:/sync";
+        }
+
+        if (recipeSyncService.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Recipe sync service is not available");
+            return "redirect:/sync";
+        }
+
+        try {
+            recipeSyncService.get().syncRecipes();
+            RecipeSyncService.RecipeSyncStatus status = recipeSyncService.get().getSyncStatus();
+
+            String message = String.format(
+                "Recipe sync completed successfully! %d recipes, %d transformations available",
+                status.recipeCount(),
+                status.transformationCount()
+            );
+            redirectAttributes.addFlashAttribute("success", message);
+            log.info(message);
+
+        } catch (Exception e) {
+            String errorMsg = "Error during recipe sync: " + e.getMessage();
             redirectAttributes.addFlashAttribute("error", errorMsg);
             log.error(errorMsg, e);
         }

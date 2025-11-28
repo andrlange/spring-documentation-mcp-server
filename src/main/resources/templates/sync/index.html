@@ -82,6 +82,7 @@
                             <li>Phase 4: Sync project relationships</li>
                             <li>Phase 5: Sync documentation content (Markdown conversion)</li>
                             <li>Phase 6: Sync code examples (Samples from spring.io)</li>
+                            <li th:if="${openRewriteEnabled}">Phase 7: Migration Recipes (OpenRewrite knowledge)</li>
                         </ol>
                     </div>
 
@@ -169,6 +170,12 @@
                             <div class="phase-indicator" data-phase="6">
                                 <i class="bi bi-code-square text-secondary"></i>
                                 <small class="d-block text-white-50">Code Examples</small>
+                            </div>
+                        </div>
+                        <div class="col-4" th:if="${openRewriteEnabled}">
+                            <div class="phase-indicator" data-phase="7">
+                                <i class="bi bi-arrow-repeat text-secondary" style="color: #f97316 !important;"></i>
+                                <small class="d-block text-white-50">Migration Recipes</small>
                             </div>
                         </div>
                     </div>
@@ -444,6 +451,42 @@
                     <small class="text-muted">
                         <i class="bi bi-clock"></i>
                         ~20-40 seconds
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase 7: Migration Recipes (OpenRewrite) - Conditional -->
+        <div class="col-md-6 col-lg-4" th:if="${openRewriteEnabled}">
+            <div class="card h-100 shadow-sm" style="border-color: #f97316;">
+                <div class="card-header text-white" style="background-color: #f97316;">
+                    <h6 class="card-title mb-0">
+                        <span class="badge bg-white me-2" style="color: #f97316;">7</span>
+                        <i class="bi bi-arrow-repeat"></i>
+                        Migration Recipes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text small">
+                        Sync OpenRewrite migration knowledge including recipes, transformations, and breaking changes.
+                    </p>
+                    <form method="post" th:action="@{/sync/recipes}" class="mb-0 sync-form">
+                        <button type="submit" class="btn btn-sm w-100 sync-btn" style="background-color: #f97316; border-color: #f97316; color: white;">
+                            <span class="btn-text">
+                                <i class="bi bi-arrow-repeat"></i>
+                                Sync
+                            </span>
+                            <span class="btn-spinner d-none">
+                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                Syncing...
+                            </span>
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer bg-light">
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i>
+                        ~5-10 seconds
                     </small>
                 </div>
             </div>
