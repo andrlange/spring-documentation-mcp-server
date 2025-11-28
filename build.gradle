@@ -5,12 +5,12 @@ plugins {
 }
 
 group = 'com.spring.mcp'
-version = '1.0.2'
+version = '1.1.0'
 
 java {
-    // Using Java 25 (system available JDK)
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
+    // Using Java 21 (LTS version)
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 configurations {
@@ -100,10 +100,10 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
-// Suppress sun.misc.Unsafe deprecation warnings from Netty on Java 24+
-// See: https://netty.io/wiki/java-24-and-sun.misc.unsafe.html
+// JVM args for bootRun
+// Note: --sun-misc-unsafe-memory-access=allow only available in Java 24+
 tasks.named('bootRun') {
-    jvmArgs = ['--sun-misc-unsafe-memory-access=allow']
+    jvmArgs = []
 }
 
 // Temporary task to print runtime classpath for HtmlUnit test

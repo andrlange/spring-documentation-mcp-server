@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title>Migration Recipes - Spring MCP Server</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Page Header with Attribution -->
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <h1 class="h2 mb-1">
+                    <i class="bi bi-arrow-repeat text-orange"></i>
+                    Migration Recipes
+                </h1>
+                <p class="text-muted mb-2">OpenRewrite migration knowledge for Spring ecosystem upgrades</p>
+                <!-- Attribution Notice -->
+                <div class="attribution-badge">
+                    <span class="badge bg-dark">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Powered by <a th:href="${openRewriteAttribution.repository}" target="_blank" rel="noopener" class="text-orange text-decoration-none" th:text="${openRewriteAttribution.name}">OpenRewrite</a>
+                        <span class="mx-1">|</span>
+                        <a th:href="${openRewriteAttribution.licenseUrl}" target="_blank" rel="noopener" class="text-white-50 text-decoration-none" th:text="${openRewriteAttribution.license}">License</a>
+                    </span>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/sync}" class="btn btn-outline-orange" sec:authorize="hasRole('ADMIN')">
+                    <i class="bi bi-arrow-repeat"></i> Sync Recipes
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm bg-orange-light">
+                    <div class="card-body text-center py-3">
+                        <h3 class="mb-0 text-orange" th:text="${totalRecipes}">0</h3>
+                        <small class="text-muted">Total Recipes</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-3">
+                        <h3 class="mb-0 text-primary" th:text="${totalTransformations}">0</h3>
+                        <small class="text-muted">Transformations</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-3">
+                        <h3 class="mb-0 text-danger" th:text="${breakingChanges}">0</h3>
+                        <small class="text-muted">Breaking Changes</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <form th:action="@{/recipes}" method="get" class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="project" class="form-label">Filter by Project</label>
+                        <select class="form-select" id="project" name="project">
+                            <option value="">All Projects</option>
+                            <option th:each="proj : ${projects}" th:value="${proj}" th:text="${proj}"
+                                    th:selected="${proj == selectedProject}">Project</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="search" class="form-label">Search</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="search" name="search"
+                                   placeholder="Search recipes by name, description..."
+                                   th:value="${searchQuery}">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-orange w-100">
+                            <i class="bi bi-filter"></i> Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Recipes Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Recipe Name</th>
+                                <th>Project</th>
+                                <th>From Version</th>
+                                <th>To Version</th>
+                                <th class="text-center">Transformations</th>
+                                <th class="text-center">Breaking</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="recipe : ${recipes}" th:if="${not #lists.isEmpty(recipes)}">
+                                <td>
+                                    <a th:href="@{/recipes/{id}(id=${recipe.id})}" class="text-decoration-none fw-medium">
+                                        <i class="bi bi-arrow-repeat text-orange me-1"></i>
+                                        <span th:text="${recipe.displayName}">Recipe Name</span>
+                                    </a>
+                                    <div class="small text-muted" th:if="${recipe.description != null}"
+                                         th:text="${#strings.abbreviate(recipe.description, 80)}">Description</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary" th:text="${recipe.fromProject}">spring-boot</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark" th:text="${recipe.fromVersionMin}">3.0.0</span>
+                                    <span th:if="${recipe.fromVersionMax != null}" class="small text-muted">
+                                        - <span th:text="${recipe.fromVersionMax}">3.5.x</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-orange" th:text="${recipe.toVersion}">4.0.0</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary" th:text="${recipe.transformationCount}">0</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge" th:classappend="${recipe.breakingCount > 0 ? 'bg-danger' : 'bg-success'}"
+                                          th:text="${recipe.breakingCount}">0</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-dark" th:text="${recipe.sourceType}">OPENREWRITE</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(recipes)}">
+                                <td colspan="7" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="bi bi-inbox display-4 d-block mb-3"></i>
+                                        <h5>No recipes found</h5>
+                                        <p th:if="${searchQuery != null}">
+                                            No results for "<span th:text="${searchQuery}">query</span>"
+                                        </p>
+                                        <p th:if="${searchQuery == null}">
+                                            Run a sync to fetch recipes from OpenRewrite.
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="card-footer bg-white" th:if="${recipes.totalPages > 1}">
+                <nav aria-label="Recipe pagination">
+                    <ul class="pagination pagination-sm mb-0 justify-content-center">
+                        <li class="page-item" th:classappend="${recipes.first ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/recipes(page=${recipes.number - 1}, project=${selectedProject}, search=${searchQuery})}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, recipes.totalPages - 1)}"
+                            th:classappend="${i == recipes.number ? 'active' : ''}">
+                            <a class="page-link" th:href="@{/recipes(page=${i}, project=${selectedProject}, search=${searchQuery})}"
+                               th:text="${i + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${recipes.last ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/recipes(page=${recipes.number + 1}, project=${selectedProject}, search=${searchQuery})}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <style>
+            .text-orange { color: #f97316 !important; }
+            .bg-orange { background-color: #f97316 !important; color: white; }
+            .bg-orange-light { background-color: rgba(249, 115, 22, 0.1) !important; }
+            .btn-orange {
+                background-color: #f97316;
+                border-color: #f97316;
+                color: white;
+            }
+            .btn-orange:hover {
+                background-color: #ea580c;
+                border-color: #ea580c;
+                color: white;
+            }
+            .btn-outline-orange {
+                border-color: #f97316;
+                color: #f97316;
+            }
+            .btn-outline-orange:hover {
+                background-color: #f97316;
+                color: white;
+            }
+            .attribution-badge {
+                margin-top: 0.5rem;
+            }
+            .attribution-badge a:hover {
+                text-decoration: underline !important;
+            }
+        </style>
+    </th:block>
+</body>
+</html>

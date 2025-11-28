@@ -18,6 +18,15 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 ## Changelog
 
+### v1.1.0 (2025-11-28)
+- **OpenRewrite Migration Recipes**: New optional feature providing migration knowledge for Spring ecosystem upgrades
+    - Dynamic recipe generation based on Spring projects in the database
+    - Covers all 55+ Spring projects with version upgrade paths
+    - Includes transformations for dependencies, imports, properties, and annotations
+    - Dedicated UI for browsing recipes with dark mode styling
+    - Configurable via `mcp.features.openrewrite.enabled` (default: true)
+- **UI Enhancements**: Dark mode styling for recipe details page
+
 ### v1.0.2 (2025-11-27)
 - **Spring Boot**: Bumped from 3.5.7 to 3.5.8
 - **Spring AI**: Upgraded from 1.0.3 to 1.1.0
@@ -105,6 +114,8 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
       <p align="center"><b>Spring AI Compatibility</b> - Claude using MCP to find compatible Spring AI version for Spring Boot 3.5.7</p>
     </td>
     <td width="50%">
+      <img src="assets/screen-15.png" alt="OpenRewrite Recipe Details" />
+      <p align="center"><b>OpenRewrite Recipe Details</b> - Migration recipe transformations with code patterns</p>
     </td>
   </tr>
 </table>
@@ -113,7 +124,9 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 ### ✅ Fully Implemented Features
 
-#### MCP Tools (10 tools available)
+#### MCP Tools (17 tools available)
+
+**Documentation Tools (10 tools)**
 1. **searchSpringDocs** - Full-text search across all Spring documentation with filters
 2. **getSpringVersions** - List available versions for any Spring project
 3. **listSpringProjects** - Browse all available Spring projects
@@ -125,12 +138,22 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 9. **listProjectsBySpringBootVersion** - List compatible projects for Spring Boot version
 10. **findProjectsByUseCase** - Search projects by use case keywords
 
+**OpenRewrite Migration Tools (7 tools - optional)**
+11. **getSpringMigrationGuide** - Get comprehensive migration guide for upgrading Spring Boot versions
+12. **getBreakingChanges** - Get list of breaking changes for a specific Spring project version
+13. **searchMigrationKnowledge** - Search migration knowledge base for specific topics
+14. **getAvailableMigrationPaths** - Get list of available target versions for migration
+15. **getTransformationsByType** - Get transformations filtered by type (IMPORT, DEPENDENCY, PROPERTY, etc.)
+16. **getDeprecationReplacement** - Find the replacement for a deprecated class or method
+17. **checkVersionCompatibility** - Check if dependencies are compatible with a target Spring Boot version
+
 #### Web Management UI
 - **Dashboard** - Overview statistics and recent updates
 - **Projects** - Manage Spring projects (Spring Boot, Framework, Data, Security, Cloud, etc.)
 - **Versions** - Version management with latest/default marking
 - **Documentation** - Browse and search documentation links with full-text search
 - **Code Examples** - Code snippet library with tagging
+- **Migration Recipes** - OpenRewrite-inspired migration knowledge browser (optional feature)
 - **Users** - User management with role-based access
 - **Settings** - Application configuration, feature toggles, and API Key Management
 - **Authentication** - Spring Security with session management
@@ -144,6 +167,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - Spring Generations support
 - Scheduled updates (configurable cron)
 - Bootstrap data loading
+- OpenRewrite migration recipe sync (optional)
 
 #### Database Features
 - PostgreSQL 18 with full-text search (tsvector)
@@ -204,7 +228,7 @@ docker-compose ps
 
 ### 4. Run the Application
 ```bash
-java -jar build/libs/spring-mcp-server-1.0.0.jar
+java -jar build/libs/spring-mcp-server-1.1.0.jar
 ```
 
 Or using Gradle:
@@ -347,7 +371,7 @@ Add to your Claude Desktop or Claude Code MCP configuration (`.mcp.json`):
 
 ### Available MCP Tools
 
-Once connected, the following **10 tools** are available to AI assistants:
+Once connected, the following **17 tools** are available to AI assistants (7 OpenRewrite tools are optional):
 
 #### Documentation Tools
 
@@ -494,6 +518,117 @@ Search for Spring projects by use case keywords.
 ```json
 {
   "useCase": "security"
+}
+```
+
+#### OpenRewrite Migration Tools (Optional)
+
+These tools are only available when `mcp.features.openrewrite.enabled=true` (default).
+
+##### 11. getSpringMigrationGuide
+Get comprehensive migration guide for upgrading Spring Boot versions. Returns all breaking changes, import updates, dependency changes, property migrations, and code modifications needed.
+
+**Parameters**:
+- `fromVersion` (required): Source Spring Boot version (e.g., '3.5.8')
+- `toVersion` (required): Target Spring Boot version (e.g., '4.0.0')
+
+**Example**:
+```json
+{
+  "fromVersion": "3.5.8",
+  "toVersion": "4.0.0"
+}
+```
+
+##### 12. getBreakingChanges
+Get list of breaking changes for a specific Spring project version. Returns severity levels: CRITICAL, ERROR, WARNING, INFO.
+
+**Parameters**:
+- `project` (required): Project slug (e.g., 'spring-boot', 'spring-security')
+- `version` (required): Target version to check (e.g., '4.0.0')
+
+**Example**:
+```json
+{
+  "project": "spring-boot",
+  "version": "4.0.0"
+}
+```
+
+##### 13. searchMigrationKnowledge
+Search migration knowledge base for specific topics. Returns relevant transformations with code examples.
+
+**Parameters**:
+- `searchTerm` (required): Search term (e.g., 'flyway', 'actuator health', '@MockBean')
+- `project` (optional): Project to search in (default: 'spring-boot')
+- `limit` (optional): Maximum results to return (default: 10)
+
+**Example**:
+```json
+{
+  "searchTerm": "MockBean replacement",
+  "project": "spring-boot",
+  "limit": 5
+}
+```
+
+##### 14. getAvailableMigrationPaths
+Get list of available target versions for migration. Use this to discover documented upgrade paths.
+
+**Parameters**:
+- `project` (required): Project slug (e.g., 'spring-boot')
+
+**Example**:
+```json
+{
+  "project": "spring-boot"
+}
+```
+
+##### 15. getTransformationsByType
+Get transformations filtered by type for a specific migration.
+
+**Parameters**:
+- `project` (required): Project slug (e.g., 'spring-boot')
+- `version` (required): Target version (e.g., '4.0.0')
+- `type` (required): Transformation type (IMPORT, DEPENDENCY, PROPERTY, CODE, BUILD, TEMPLATE, ANNOTATION, CONFIG)
+
+**Example**:
+```json
+{
+  "project": "spring-boot",
+  "version": "4.0.0",
+  "type": "DEPENDENCY"
+}
+```
+
+##### 16. getDeprecationReplacement
+Find the replacement for a deprecated class or method. Use when you encounter deprecated APIs.
+
+**Parameters**:
+- `className` (required): Fully qualified deprecated class name
+- `methodName` (optional): Deprecated method name (null for entire class deprecation)
+
+**Example**:
+```json
+{
+  "className": "org.springframework.boot.actuate.health.Health",
+  "methodName": "status"
+}
+```
+
+##### 17. checkVersionCompatibility
+Check if specific dependencies are compatible with a target Spring Boot version.
+
+**Parameters**:
+- `springBootVersion` (required): Target Spring Boot version (e.g., '4.0.0')
+- `dependencies` (required): List of dependencies to check (e.g., ['spring-security', 'flyway'])
+
+**Example**:
+```json
+{
+  "springBootVersion": "4.0.0",
+  "dependencies": ["spring-security", "flyway", "thymeleaf"]
 }
 ```
 
@@ -867,6 +1002,50 @@ The Code Examples feature provides a searchable repository of Spring code snippe
 - Building a knowledge base of working examples
 - AI-assisted code generation with real examples
 
+### OpenRewrite Migration Recipes (Optional Feature)
+
+The OpenRewrite Migration Recipes feature provides comprehensive migration knowledge for upgrading between Spring ecosystem versions. This is an **optional feature** that can be enabled or disabled via configuration.
+
+**Configuration**:
+
+```yaml
+# application.yml
+mcp:
+  features:
+    openrewrite:
+      enabled: true  # Set to false to disable (default: true)
+```
+
+Or via environment variable:
+```bash
+export MCP_FEATURES_OPENREWRITE_ENABLED=false
+```
+
+**Features**:
+- **Dynamic Recipe Generation**: Recipes are automatically generated based on Spring projects in your database
+- **Version Upgrade Paths**: Covers migrations between consecutive major.minor versions
+- **Transformation Types**: Includes dependencies, imports, properties, and annotation changes
+- **55+ Spring Projects**: Supports all major Spring ecosystem projects
+- **Dark Mode UI**: Dedicated browsing interface matching the application theme
+
+**How It Works**:
+1. **Sync Projects First**: Ensure Spring projects are synced via the Sync page
+2. **Sync Recipes**: Click "Sync Recipes" on the Sync page to generate migration recipes
+3. **Browse Recipes**: Navigate to the Recipes page to view all available migration paths
+4. **View Details**: Click on any recipe to see transformation patterns
+
+**Recipe Types Generated**:
+- **Incremental Upgrades**: e.g., Spring Boot 3.0 → 3.1, 3.1 → 3.2
+- **Latest Upgrades**: e.g., Spring Boot 2.7 → 3.5 (comprehensive upgrade)
+
+**Transformation Categories**:
+- **Dependencies**: Maven/Gradle dependency version updates
+- **Imports**: Package and class import changes
+- **Properties**: Configuration property migrations
+- **Annotations**: Framework annotation updates
+
+**Attribution**: Migration knowledge is inspired by [OpenRewrite](https://docs.openrewrite.org/) - an open-source automated refactoring ecosystem. Visit their documentation for detailed migration recipes and tooling.
+
 ### Scheduler Configuration
 
 The built-in scheduler allows you to automate documentation synchronization on a configurable schedule.
@@ -986,6 +1165,7 @@ lsof -ti :8080 | xargs kill -9
 - [x] Code examples repository
 - [x] Spring Boot version compatibility tracking
 - [x] Scheduler configuration for automated syncs
+- [x] OpenRewrite migration recipes (optional feature)
 
 ### In Progress 🚧
 - [ ] Comprehensive documentation coverage for all Spring projects

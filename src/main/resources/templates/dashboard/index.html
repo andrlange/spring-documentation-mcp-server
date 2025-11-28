@@ -113,11 +113,35 @@
 
         </div>
 
-        <!-- Docs & Examples Statistics Row -->
+        <!-- Docs, Examples & Recipes Statistics Row -->
         <div class="row g-4 mb-4">
 
+            <!-- OpenRewrite Recipes Card (conditional) -->
+            <div th:if="${openRewriteEnabled}" th:class="${openRewriteEnabled ? 'col-xl-4 col-md-4' : 'col-xl-6 col-md-6'}">
+                <a th:href="@{/recipes}" class="text-decoration-none">
+                    <div class="stat-card card h-100 border-0 shadow-sm recipe-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="stat-icon bg-orange-light">
+                                    <i class="bi bi-arrow-repeat text-orange"></i>
+                                </div>
+                                <span class="badge bg-orange-light text-orange">Migration</span>
+                            </div>
+                            <h3 class="stat-number mb-1" th:text="${recipeCount}">0</h3>
+                            <p class="stat-label text-muted mb-2">OpenRewrite Recipes</p>
+                            <div class="stat-footer">
+                                <span class="text-orange small">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    <span th:text="${breakingChangeCount}">0</span> breaking changes
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
             <!-- Documentation Card -->
-            <div class="col-xl-6 col-md-6">
+            <div th:class="${openRewriteEnabled ? 'col-xl-4 col-md-4' : 'col-xl-6 col-md-6'}">
                 <div class="stat-card card h-100 border-0 shadow-sm">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
@@ -139,7 +163,7 @@
             </div>
 
             <!-- Code Examples Card -->
-            <div class="col-xl-6 col-md-6">
+            <div th:class="${openRewriteEnabled ? 'col-xl-4 col-md-4' : 'col-xl-6 col-md-6'}">
                 <div class="stat-card card h-100 border-0 shadow-sm">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
@@ -471,6 +495,14 @@
             .bg-warning-light { background-color: rgba(255, 193, 7, 0.1) !important; }
             .bg-success-light { background-color: rgba(25, 135, 84, 0.1) !important; }
             .bg-danger-light { background-color: rgba(220, 53, 69, 0.1) !important; }
+
+            /* OpenRewrite Orange Theme */
+            .text-orange { color: #f97316 !important; }
+            .bg-orange-light { background-color: rgba(249, 115, 22, 0.1) !important; }
+            .recipe-card:hover {
+                border-color: #f97316 !important;
+                box-shadow: 0 0.5rem 1.5rem rgba(249, 115, 22, 0.15) !important;
+            }
 
             /* Beautiful Dark Theme MCP Endpoint Card */
             .mcp-endpoint-card {

@@ -1,10 +1,15 @@
 package com.spring.mcp.config;
 
+import com.spring.mcp.service.tools.MigrationTools;
 import com.spring.mcp.service.tools.SpringDocumentationTools;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * MCP Server Configuration
@@ -21,19 +26,33 @@ import org.springframework.context.annotation.Configuration;
 public class McpConfig {
 
     /**
-     * Register the Spring Documentation Tools for MCP server
+     * Register all MCP tools for the server.
      *
      * The MethodToolCallbackProvider scans the provided tool objects for @Tool annotated methods
      * and automatically registers them with the MCP server. All methods annotated with @Tool
-     * in the SpringDocumentationTools class will be exposed as MCP tools.
+     * will be exposed as MCP tools.
+     *
+     * Tools registered:
+     * - SpringDocumentationTools: 10 documentation tools (always available)
+     * - MigrationTools: 7 OpenRewrite migration tools (optional, when enabled)
      *
      * @param springDocumentationTools the Spring Documentation tools service
-     * @return ToolCallbackProvider configured with Spring Documentation tools
+     * @param migrationTools optional Migration tools service (when OpenRewrite feature is enabled)
+     * @return ToolCallbackProvider configured with all available tools
      */
     @Bean
-    public ToolCallbackProvider toolCallbackProvider(SpringDocumentationTools springDocumentationTools) {
+    public ToolCallbackProvider toolCallbackProvider(
+            SpringDocumentationTools springDocumentationTools,
+            Optional<MigrationTools> migrationTools) {
+
+        List<Object> toolObjects = new ArrayList<>();
+        toolObjects.add(springDocumentationTools);
+
+        // Add migration tools if OpenRewrite feature is enabled
+        migrationTools.ifPresent(toolObjects::add);
+
         return MethodToolCallbackProvider.builder()
-            .toolObjects(springDocumentationTools)
+            .toolObjects(toolObjects.toArray())
             .build();
     }
 }

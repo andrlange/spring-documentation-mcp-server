@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: rest-api-spring-boot-40
+
+server:
+  port: 8082
+
+# Actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true
+
+# Application info
+info:
+  app:
+    name: REST API Example
+    description: Simple REST API with Spring Boot 4.0.0
+    version: 1.0.0
+    spring-boot: 4.0.0
+    java: 21
+
+logging:
+  level:
+    com.example.api: DEBUG

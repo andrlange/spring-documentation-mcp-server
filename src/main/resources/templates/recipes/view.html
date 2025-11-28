@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title th:text="${recipe.displayName + ' - Spring MCP Server'}">Recipe - Spring MCP Server</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/recipes}">Recipes</a></li>
+                <li class="breadcrumb-item active" th:text="${recipe.displayName}">Recipe Name</li>
+            </ol>
+        </nav>
+
+        <!-- Recipe Header -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h1 class="h3 mb-2">
+                            <i class="bi bi-arrow-repeat text-orange me-2"></i>
+                            <span th:text="${recipe.displayName}">Recipe Name</span>
+                        </h1>
+                        <p class="text-muted mb-3" th:if="${recipe.description != null}" th:text="${recipe.description}">
+                            Description
+                        </p>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-folder me-1"></i>
+                                <span th:text="${recipe.fromProject}">spring-boot</span>
+                            </span>
+                            <span class="badge bg-light text-dark">
+                                <i class="bi bi-arrow-right me-1"></i>
+                                From <span th:text="${recipe.fromVersionMin}">3.0.0</span>
+                                <span th:if="${recipe.fromVersionMax != null}"> - <span th:text="${recipe.fromVersionMax}">3.5.x</span></span>
+                            </span>
+                            <span class="badge bg-orange">
+                                <i class="bi bi-bullseye me-1"></i>
+                                To <span th:text="${recipe.toVersion}">4.0.0</span>
+                            </span>
+                        </div>
+                        <!-- Attribution -->
+                        <div class="attribution-notice small">
+                            <i class="bi bi-info-circle text-muted me-1"></i>
+                            Source: <a th:href="${recipe.sourceUrl}" target="_blank" rel="noopener" class="text-orange"
+                                       th:if="${recipe.sourceUrl != null}" th:text="${openRewriteAttribution.name}">OpenRewrite</a>
+                            <span th:if="${recipe.license != null}" class="text-muted mx-2">|</span>
+                            <span th:if="${recipe.license != null}" class="text-muted" th:text="${recipe.license}">License</span>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="d-flex flex-column gap-2">
+                            <div>
+                                <span class="h4 text-primary" th:text="${#lists.size(transformations)}">0</span>
+                                <small class="text-muted d-block">Transformations</small>
+                            </div>
+                            <div>
+                                <span class="h4" th:classappend="${breakingCount > 0 ? 'text-danger' : 'text-success'}"
+                                      th:text="${breakingCount}">0</span>
+                                <small class="text-muted d-block">Breaking Changes</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transformations by Type -->
+        <div class="row g-4">
+            <!-- Type Tabs -->
+            <div class="col-12">
+                <ul class="nav nav-tabs" id="transformationTabs" role="tablist">
+                    <li class="nav-item" role="presentation" th:each="entry, stat : ${transformationsByType}">
+                        <button class="nav-link" th:classappend="${stat.first ? 'active' : ''}"
+                                th:id="${'tab-' + entry.key}"
+                                data-bs-toggle="tab"
+                                th:data-bs-target="${'#content-' + entry.key}"
+                                type="button" role="tab">
+                            <span th:text="${entry.key}">TYPE</span>
+                            <span class="badge bg-secondary ms-1" th:text="${#lists.size(entry.value)}">0</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="transformationTabsContent">
+                    <div th:each="entry, stat : ${transformationsByType}"
+                         class="tab-pane fade"
+                         th:classappend="${stat.first ? 'show active' : ''}"
+                         th:id="${'content-' + entry.key}"
+                         role="tabpanel">
+
+                        <div class="list-group list-group-flush">
+                            <div th:each="t : ${entry.value}" class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge" th:classappend="${t.breakingChange ? 'bg-danger' : 'bg-info'}"
+                                              th:text="${t.severity}">INFO</span>
+                                        <span class="badge bg-secondary" th:if="${t.category != null}" th:text="${t.category}">category</span>
+                                        <span class="badge bg-light text-dark" th:if="${t.subcategory != null}" th:text="${t.subcategory}">subcategory</span>
+                                    </div>
+                                    <span th:if="${t.breakingChange}" class="text-danger small">
+                                        <i class="bi bi-exclamation-triangle"></i> Breaking Change
+                                    </span>
+                                </div>
+
+                                <div class="transformation-patterns mb-3">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="pattern-box pattern-old">
+                                                <div class="pattern-label">
+                                                    <i class="bi bi-x-circle text-danger"></i> Old Pattern
+                                                </div>
+                                                <code class="d-block" th:text="${t.oldPattern}">old pattern</code>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="pattern-box pattern-new">
+                                                <div class="pattern-label">
+                                                    <i class="bi bi-check-circle text-success"></i> New Pattern
+                                                </div>
+                                                <code class="d-block" th:text="${t.newPattern}">new pattern</code>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p th:if="${t.explanation != null}" class="text-muted mb-2" th:text="${t.explanation}">
+                                    Explanation
+                                </p>
+
+                                <!-- Code Example (collapsible) -->
+                                <div th:if="${t.codeExample != null}" class="mt-3">
+                                    <button class="btn btn-sm btn-outline-secondary" type="button"
+                                            data-bs-toggle="collapse" th:data-bs-target="${'#code-' + t.id}">
+                                        <i class="bi bi-code-slash"></i> Show Code Example
+                                    </button>
+                                    <div class="collapse mt-2" th:id="${'code-' + t.id}">
+                                        <pre class="bg-dark text-light p-3 rounded"><code th:text="${t.codeExample}">code example</code></pre>
+                                    </div>
+                                </div>
+
+                                <!-- Additional Steps -->
+                                <div th:if="${t.additionalSteps != null}" class="alert alert-warning mt-3 mb-0">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <strong>Additional Steps:</strong>
+                                    <span th:text="${t.additionalSteps}">steps</span>
+                                </div>
+
+                                <!-- Tags -->
+                                <div th:if="${t.tags != null && not #lists.isEmpty(t.tags)}" class="mt-2">
+                                    <span th:each="tag : ${t.tags}" class="badge bg-light text-dark me-1">
+                                        <i class="bi bi-tag"></i> <span th:text="${tag}">tag</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="mt-4">
+            <a th:href="@{/recipes}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Recipes
+            </a>
+            <a th:href="${recipe.sourceUrl}" th:if="${recipe.sourceUrl != null}"
+               target="_blank" rel="noopener" class="btn btn-outline-orange ms-2">
+                <i class="bi bi-box-arrow-up-right"></i> View on OpenRewrite
+            </a>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <style>
+            .text-orange { color: #f97316 !important; }
+            .bg-orange { background-color: #f97316 !important; color: white; }
+            .btn-outline-orange {
+                border-color: #f97316;
+                color: #f97316;
+            }
+            .btn-outline-orange:hover {
+                background-color: #f97316;
+                color: white;
+            }
+
+            /* Dark mode pattern boxes */
+            .pattern-box {
+                background-color: var(--spring-nav-bg, #2a2e31);
+                border-radius: 8px;
+                padding: 1rem;
+                border-left: 4px solid;
+            }
+            .pattern-old {
+                border-left-color: #dc3545;
+                background-color: rgba(220, 53, 69, 0.1);
+            }
+            .pattern-new {
+                border-left-color: #198754;
+                background-color: rgba(25, 135, 84, 0.1);
+            }
+            .pattern-label {
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 0.5rem;
+                color: var(--text-secondary, #a0a0a0);
+            }
+            .pattern-box code {
+                font-size: 0.9rem;
+                word-break: break-word;
+                white-space: pre-wrap;
+                color: var(--text-primary, #ffffff);
+                background-color: transparent;
+            }
+            .pattern-old code {
+                color: #ff6b6b;
+            }
+            .pattern-new code {
+                color: #8cc656;
+            }
+
+            /* Dark mode tabs */
+            .nav-tabs {
+                border-bottom-color: var(--spring-border-dark, #373a3d);
+            }
+            .nav-tabs .nav-link {
+                color: var(--text-secondary, #a0a0a0);
+                background-color: transparent;
+                border-color: transparent;
+                border-bottom: 2px solid transparent;
+                margin-bottom: -1px;
+            }
+            .nav-tabs .nav-link:hover {
+                color: var(--text-primary, #ffffff);
+                border-color: transparent;
+                border-bottom-color: var(--spring-border-dark, #373a3d);
+            }
+            .nav-tabs .nav-link.active {
+                color: #f97316;
+                background-color: var(--spring-card-bg, #1f2326);
+                border-color: var(--spring-border-dark, #373a3d);
+                border-bottom-color: var(--spring-card-bg, #1f2326);
+            }
+            .tab-content {
+                background-color: var(--spring-card-bg, #1f2326);
+                border: 1px solid var(--spring-border-dark, #373a3d);
+                border-top: none;
+                border-radius: 0 0 0.5rem 0.5rem;
+            }
+
+            /* Dark mode list group */
+            .list-group-flush {
+                background-color: var(--spring-card-bg, #1f2326);
+            }
+            .list-group-item {
+                background-color: var(--spring-card-bg, #1f2326) !important;
+                border-color: var(--spring-border-dark, #373a3d) !important;
+                color: var(--text-primary, #ffffff) !important;
+            }
+            .list-group-item:hover {
+                background-color: var(--spring-hover-bg, #2d3135) !important;
+            }
+
+            /* Dark mode badges */
+            .badge.bg-light {
+                background-color: var(--spring-nav-bg, #2a2e31) !important;
+                color: var(--text-primary, #ffffff) !important;
+            }
+            .badge.bg-info {
+                background-color: #17a2b8 !important;
+            }
+            .badge.bg-secondary {
+                background-color: #6c757d !important;
+            }
+
+            /* Dark mode alerts */
+            .alert-warning {
+                background-color: rgba(253, 126, 20, 0.15);
+                border-color: rgba(253, 126, 20, 0.3);
+                color: #ffa94d;
+            }
+
+            /* Code examples */
+            pre {
+                max-height: 400px;
+                overflow: auto;
+                background-color: var(--spring-bg-dark, #1b1f23) !important;
+            }
+            pre code {
+                color: var(--spring-green-light, #8cc656);
+            }
+
+            /* Collapse button */
+            .btn-outline-secondary {
+                border-color: var(--spring-border-dark, #373a3d);
+                color: var(--text-secondary, #a0a0a0);
+            }
+            .btn-outline-secondary:hover {
+                background-color: var(--spring-hover-bg, #2d3135);
+                border-color: var(--spring-border-dark, #373a3d);
+                color: var(--text-primary, #ffffff);
+            }
+
+            /* Tags in transformation items */
+            .list-group-item .badge.bg-light {
+                background-color: var(--spring-nav-bg, #2a2e31) !important;
+                color: var(--text-secondary, #a0a0a0) !important;
+                border: 1px solid var(--spring-border-dark, #373a3d);
+            }
+        </style>
+    </th:block>
+</body>
+</html>

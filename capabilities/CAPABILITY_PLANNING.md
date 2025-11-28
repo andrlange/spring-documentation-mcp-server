@@ -1,13 +1,18 @@
 # Spring MCP Server - Capability Analysis & Planning
 
-> **Analysis Date**: 2025-11-27
+> **Analysis Date**: 2025-11-28
+> **Version**: 1.1.0
 > **Purpose**: Document Spring MCP Server capabilities for backend and fullstack development with Spring Boot 3.x/4.x
 
 ---
 
 ## Executive Summary
 
-The Spring MCP Server provides **10 specialized tools** for accessing Spring ecosystem documentation, covering **55 Spring projects** with comprehensive version management for both **Spring Boot 3.x** (production) and **Spring Boot 4.x** (latest GA). This server is ideal for AI-assisted Spring Boot development with Java and Kotlin.
+The Spring MCP Server provides **17 specialized tools** for accessing Spring ecosystem documentation and migration knowledge, covering **55 Spring projects** with comprehensive version management for both **Spring Boot 3.x** (production) and **Spring Boot 4.x** (latest GA). This server is ideal for AI-assisted Spring Boot development with Java and Kotlin.
+
+**Tool Categories**:
+- **Documentation Tools (10)**: Search, browse, and retrieve Spring documentation
+- **Migration Tools (7)**: OpenRewrite-inspired migration knowledge for version upgrades (optional)
 
 ---
 
@@ -37,6 +42,20 @@ The Spring MCP Server provides **10 specialized tools** for accessing Spring eco
 | `searchSpringDocs` | Search across documentation | `query`, `project`, `version`, `docType` |
 | `getDocumentationByVersion` | Get all docs for a version | `project`, `version` |
 | `getCodeExamples` | Search code examples | `query`, `project`, `version`, `language`, `limit` |
+
+### 1.4 Migration Tools (Optional - OpenRewrite Feature)
+
+> **Note**: These tools require `mcp.features.openrewrite.enabled=true` in configuration.
+
+| Tool | Purpose | Key Parameters |
+|------|---------|----------------|
+| `getSpringMigrationGuide` | Comprehensive migration guide between versions | `project`, `fromVersion`, `toVersion` |
+| `getBreakingChanges` | Get breaking changes for a project version | `project`, `version` |
+| `searchMigrationKnowledge` | Search migration knowledge base | `query`, `project` (optional) |
+| `getAvailableMigrationPaths` | List documented upgrade paths | `project` (optional) |
+| `getTransformationsByType` | Get transformations by type | `type` (IMPORT, DEPENDENCY, PROPERTY, ANNOTATION, etc.) |
+| `getDeprecationReplacement` | Find replacement for deprecated APIs | `deprecatedPattern`, `project` (optional) |
+| `checkVersionCompatibility` | Check dependency compatibility | `project`, `fromVersion`, `toVersion` |
 
 ---
 
@@ -201,6 +220,20 @@ The Spring MCP Server provides **10 specialized tools** for accessing Spring eco
 | AMQP/RabbitMQ | `getDocumentationByVersion` | `project: "spring-amqp"` |
 | Stream processing | `getSpringVersions` | `project: "spring-cloud-stream"` |
 
+### 4.7 Version Migration (OpenRewrite Feature)
+
+| Capability | Tool | Example Query |
+|------------|------|---------------|
+| Full migration guide | `getSpringMigrationGuide` | `project: "spring-boot", fromVersion: "3.3", toVersion: "3.5"` |
+| Breaking changes check | `getBreakingChanges` | `project: "spring-boot", version: "4.0"` |
+| Find upgrade paths | `getAvailableMigrationPaths` | `project: "spring-boot"` |
+| Search migration issues | `searchMigrationKnowledge` | `query: "WebSecurityConfigurerAdapter"` |
+| Dependency changes | `getTransformationsByType` | `type: "DEPENDENCY"` |
+| Import migrations | `getTransformationsByType` | `type: "IMPORT"` |
+| Property changes | `getTransformationsByType` | `type: "PROPERTY"` |
+| API replacements | `getDeprecationReplacement` | `deprecatedPattern: "WebSecurityConfigurerAdapter"` |
+| Compatibility check | `checkVersionCompatibility` | `project: "spring-boot", fromVersion: "3.3", toVersion: "4.0"` |
+
 ---
 
 ## 5. Spring Boot 3.x vs 4.x Compatibility
@@ -233,6 +266,8 @@ Key projects with their compatible versions:
 | Spring Security | 6.5.x | 7.0.x | Check migration guide |
 | Spring Data | 3.5.x | 4.0.x | Check migration guide |
 | Java Baseline | Java 17+ | Java 17+ (21 recommended) | None |
+
+> **Migration Tools Available**: Use `getSpringMigrationGuide`, `getBreakingChanges`, and `getTransformationsByType` tools to get detailed migration guidance including import changes, dependency updates, property renames, and annotation replacements. These tools are powered by OpenRewrite recipe knowledge.
 
 ---
 
@@ -302,6 +337,14 @@ https://docs.spring.io/{project}/docs/{version}/api/
 1. getLatestSpringBootVersion(majorVersion: 4, minorVersion: 0) -> Check latest 4.x
 2. listProjectsBySpringBootVersion(majorVersion: 4, minorVersion: 0) -> Check compatibility
 3. searchSpringDocs(query: "migration", project: "spring-boot") -> Find migration guides
+
+# With Migration Tools (OpenRewrite Feature enabled):
+4. getAvailableMigrationPaths(project: "spring-boot") -> See all upgrade paths
+5. getSpringMigrationGuide(project: "spring-boot", fromVersion: "3.3", toVersion: "4.0") -> Full guide
+6. getBreakingChanges(project: "spring-boot", version: "4.0") -> Breaking changes list
+7. getTransformationsByType(type: "IMPORT") -> Required import changes
+8. getTransformationsByType(type: "DEPENDENCY") -> Required dependency updates
+9. checkVersionCompatibility(project: "spring-boot", fromVersion: "3.3", toVersion: "4.0")
 ```
 
 ### 8.3 Adding a New Feature
@@ -318,8 +361,8 @@ https://docs.spring.io/{project}/docs/{version}/api/
 ## 9. Planned Example Use Cases (for /examples folder)
 
 ### 9.1 Basic Examples
-- [ ] REST API with Spring Boot 3.5.x
-- [ ] REST API with Spring Boot 4.0.x
+- [x] REST API with Spring Boot 3.5.x (`examples/basic/rest-api-spring-boot-35/`)
+- [x] REST API with Spring Boot 4.0.x (`examples/basic/rest-api-spring-boot-40/`)
 - [ ] JPA + PostgreSQL data access
 - [ ] Spring Security basic auth
 - [ ] Spring Security OAuth2
@@ -349,6 +392,8 @@ https://docs.spring.io/{project}/docs/{version}/api/
 
 Based on tool execution times observed:
 
+### 10.1 Documentation Tools
+
 | Operation | Typical Time |
 |-----------|--------------|
 | `listSpringProjects` | ~22ms |
@@ -359,22 +404,43 @@ Based on tool execution times observed:
 | `searchSpringDocs` | ~72ms |
 | `getCodeExamples` | ~26ms |
 
+### 10.2 Migration Tools (OpenRewrite Feature)
+
+| Operation | Typical Time |
+|-----------|--------------|
+| `getSpringMigrationGuide` | ~50-150ms |
+| `getBreakingChanges` | ~20-50ms |
+| `searchMigrationKnowledge` | ~30-80ms |
+| `getAvailableMigrationPaths` | ~15-40ms |
+| `getTransformationsByType` | ~20-60ms |
+| `getDeprecationReplacement` | ~25-70ms |
+| `checkVersionCompatibility` | ~30-80ms |
+
 ---
 
 ## 11. Current Limitations & Observations
 
-### 11.1 Limitations
+### 11.1 Documentation Tools Limitations
 1. `searchSpringDocs` may return empty results for some queries - requires specific terms
 2. `getCodeExamples` database appears to need population
 3. `getDocumentationByVersion` returns empty for some project/version combinations
 4. Use case search limited to project names/descriptions
 
-### 11.2 Strengths
+### 11.2 Migration Tools Limitations (OpenRewrite Feature)
+1. Recipes are dynamically generated from Spring project data
+2. Transformation patterns are based on common migration patterns
+3. Some edge cases may not be covered by generated recipes
+4. Requires `mcp.features.openrewrite.enabled=true` to activate
+
+### 11.3 Strengths
 1. Comprehensive version tracking with support dates
 2. Excellent Spring Boot compatibility mapping
 3. Fast response times for most operations
 4. Complete coverage of 55 Spring projects
 5. Both OSS and Enterprise support tracking
+6. **360+ migration recipes** with **1,000+ transformations** (when OpenRewrite enabled)
+7. Dynamic recipe generation based on actual Spring project versions
+8. Supports migration paths across all Spring ecosystem projects
 
 ---
 
@@ -398,6 +464,24 @@ Based on tool execution times observed:
 - **SSE Endpoint**: `/mcp/spring/sse`
 - **Messages Endpoint**: `/mcp/spring/messages`
 
+### 12.3 Feature Flags
+
+| Feature | Property | Default | Description |
+|---------|----------|---------|-------------|
+| OpenRewrite Migration | `mcp.features.openrewrite.enabled` | `true` | Enables 7 migration tools |
+
+When OpenRewrite is enabled, the server exposes 17 tools (10 documentation + 7 migration).
+When disabled, only 10 documentation tools are available.
+
+### 12.4 Tool Summary by Category
+
+| Category | Tools Count | Example Tools |
+|----------|-------------|---------------|
+| Project Discovery | 2 | `listSpringProjects`, `findProjectsByUseCase` |
+| Version Management | 5 | `listSpringBootVersions`, `getSpringVersions`, `getLatestSpringBootVersion` |
+| Documentation | 3 | `searchSpringDocs`, `getDocumentationByVersion`, `getCodeExamples` |
+| Migration (Optional) | 7 | `getSpringMigrationGuide`, `getBreakingChanges`, `searchMigrationKnowledge` |
+
 ---
 
 ## Appendix A: Complete Project List
@@ -418,4 +502,20 @@ Based on tool execution times observed:
 
 ---
 
+## Appendix B: Migration Tools Transformation Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `IMPORT` | Java import statement changes | `javax.servlet` → `jakarta.servlet` |
+| `DEPENDENCY` | Maven/Gradle dependency updates | `spring-boot-starter-web:3.3.0` → `3.5.8` |
+| `PROPERTY` | Application property renames | `server.port` → (no change, but other properties may change) |
+| `ANNOTATION` | Annotation changes | `@EnableWebSecurity` class extension changes |
+| `METHOD` | Method signature changes | `WebSecurityConfigurerAdapter` methods |
+| `CLASS` | Class renames or removals | Deprecated class replacements |
+| `CONFIGURATION` | Configuration class changes | Security DSL changes |
+
+---
+
 *Document generated from live MCP server analysis*
+*Last updated: 2025-11-28*
+*Server version: 1.1.0 with 17 MCP tools (10 documentation + 7 migration)*

@@ -33,6 +33,7 @@ spring:
     baseline-on-migrate: true
     validate-on-migrate: true
     clean-disabled: true
+    placeholder-replacement: false
 
   thymeleaf:
     cache: false
@@ -58,21 +59,32 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.0.0"
+        version: "1.1.0"
         instructions: |
           Spring Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 
-          Available tools:
-          - searchSpringDocs: Search across all Spring documentation
-          - getSpringVersions: List available versions for a Spring project
-          - listSpringProjects: List all available Spring projects
-          - getDocumentationByVersion: Get all documentation for a specific version
-          - getCodeExamples: Search for code examples with filters
-          - listSpringBootVersions: List Spring Boot versions
-          - getLatestSpringBootVersion: Get latest patch version for major.minor
-          - filterSpringBootVersionsBySupport: Filter by support status
-          - listProjectsBySpringBootVersion: List compatible projects
-          - findProjectsByUseCase: Search projects by use case
+          Total: 17 tools available (10 documentation + 7 migration)
+
+          Documentation Tools (10):
+          1. searchSpringDocs: Search across all Spring documentation
+          2. getSpringVersions: List available versions for a Spring project
+          3. listSpringProjects: List all available Spring projects
+          4. getDocumentationByVersion: Get all documentation for a specific version
+          5. getCodeExamples: Search for code examples with filters
+          6. listSpringBootVersions: List Spring Boot versions
+          7. getLatestSpringBootVersion: Get latest patch version for major.minor
+          8. filterSpringBootVersionsBySupport: Filter by support status
+          9. listProjectsBySpringBootVersion: List compatible projects
+          10. findProjectsByUseCase: Search projects by use case
+
+          Migration Knowledge Tools (7) - OpenRewrite feature:
+          11. getSpringMigrationGuide: Get comprehensive migration guide between versions
+          12. getBreakingChanges: Get breaking changes for a project version
+          13. searchMigrationKnowledge: Search migration knowledge base
+          14. getAvailableMigrationPaths: List documented upgrade paths
+          15. getTransformationsByType: Get transformations by type (IMPORT, DEPENDENCY, etc.)
+          16. getDeprecationReplacement: Find replacement for deprecated APIs
+          17. checkVersionCompatibility: Check dependency compatibility
 
           SSE endpoint: /mcp/spring/sse
           Message endpoint: /mcp/spring/messages
@@ -101,7 +113,7 @@ server:
 mcp:
   server:
     name: "Spring Documentation MCP Server"
-    version: "1.0.0"
+    version: "1.1.0"
     sse:
       timeout: 3600000 # 1 hour in milliseconds
       heartbeat-interval: 30000 # 30 seconds in milliseconds
@@ -155,6 +167,24 @@ mcp:
       auto-detect: true
       include-snapshots: true
       include-release-candidates: true
+
+  # OpenRewrite Feature Configuration
+  features:
+    openrewrite:
+      enabled: ${OPENREWRITE_ENABLED:true}
+      sync:
+        enabled: ${OPENREWRITE_SYNC_ENABLED:true}
+        schedule: "0 0 3 * * SUN"  # Every Sunday at 3 AM
+      github:
+        base-url: "https://raw.githubusercontent.com/openrewrite/rewrite-spring/main"
+        owner: "openrewrite"
+        repo: "rewrite-spring"
+      attribution:
+        name: "OpenRewrite"
+        license: "Moderne Source Available License"
+        license-url: "https://docs.openrewrite.org/licensing/openrewrite-licensing"
+        repository: "https://github.com/openrewrite/rewrite-spring"
+        notice: "Recipe data sourced from OpenRewrite project. Not for commercial redistribution."
 
 # Actuator for health checks and monitoring
 management:
