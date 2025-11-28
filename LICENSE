@@ -88,25 +88,25 @@ with all applicable licenses of the following components:
 IMPORTANT NOTES
 ================================================================================
 
-1. EDUCATIONAL AND COMMERCIAL PURPOSE:
-   This project is designed for both educational and commercial purposes.
+1. EDUCATIONAL PURPOSE:
+   This project is designed for educational and learning purposes.
    It showcases integration patterns and architectural approaches using
    industry-standard open-source components.
 
-2. COMMERCIAL USE:
-   This project code is MIT licensed and uses dependencies primarily licensed
-   under Apache 2.0, MIT, BSD 2-Clause, and PostgreSQL licenses, all of which
-   are permissive and allow commercial use. However, always review the specific
-   license terms of each dependency.
+2. FREE USE WITHOUT GUARANTEE:
+   This software is provided free of charge for any use. However, it comes
+   with absolutely NO WARRANTY or guarantee of any kind. Use at your own risk.
 
 3. SPRING DOCUMENTATION:
    This project fetches and indexes documentation from docs.spring.io and
    spring.io. Users must respect Spring's terms of service and trademark
    guidelines when using this software. The indexed content remains the
-   intellectual property of VMware, Inc. and the Spring community.
+   intellectual property of Broadcom, Inc. and the Spring community.
 
-4. NO WARRANTY:
-   This software is provided as-is without any warranty. Use at your own risk.
+4. OPENREWRITE RECIPE DATA:
+   Migration recipe data is inspired by and attributed to the OpenRewrite
+   project. Recipe data is dynamically generated based on Spring project
+   versions. See: https://docs.openrewrite.org/licensing/openrewrite-licensing
 
 5. SECURITY:
    Users are responsible for securing their deployments, managing credentials,
@@ -122,14 +122,14 @@ HOW TO COMPLY
 
 To respect all component licenses:
 
-1. Review the license of each dependency in package.json
-2. If deploying commercially, review AGPL-3.0 requirements for Wiki.js
-3. Include proper attribution for all components
-4. Do not remove copyright notices from dependencies
-5. Consult the following resources:
-   - Wiki.js License: https://github.com/requarks/wiki/blob/main/LICENSE
-   - pgvector License: https://github.com/pgvector/pgvector/blob/master/LICENSE
-   - npm package licenses: Use `npm list --depth=0` to review
+1. Review the license of each dependency in build.gradle
+2. Include proper attribution for all components
+3. Do not remove copyright notices from dependencies
+4. Consult the following resources:
+   - Spring Licenses: https://spring.io/legal
+   - PostgreSQL License: https://www.postgresql.org/about/licence/
+   - OpenRewrite License: https://docs.openrewrite.org/licensing/openrewrite-licensing
+   - Gradle dependency licenses: Use `./gradlew dependencies` to review
 
 ================================================================================
 
