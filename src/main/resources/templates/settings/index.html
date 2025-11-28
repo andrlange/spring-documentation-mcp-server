@@ -536,19 +536,19 @@
                 <div class="col-md-6 mb-3">
                     <label class="form-label text-muted">Application Version</label>
                     <div>
-                        <code>1.0.0</code>
+                        <code th:text="${appVersion}">1.1.0</code>
                     </div>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label text-muted">Spring Boot Version</label>
                     <div>
-                        <code>3.5.7</code>
+                        <code th:text="${springBootVersion}">3.5.8</code>
                     </div>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label text-muted">Java Version</label>
                     <div>
-                        <code>25</code>
+                        <code th:text="${javaVersion}">25</code>
                     </div>
                 </div>
                 <div class="col-md-6 mb-3">

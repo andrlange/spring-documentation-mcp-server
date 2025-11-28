@@ -8,6 +8,9 @@ import com.spring.mcp.service.SettingsService;
 import com.spring.mcp.service.scheduler.SchedulerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringBootVersion;
+import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -25,7 +28,7 @@ import java.util.Map;
  * Handles MCP server configuration and settings (Admin only).
  *
  * @author Spring MCP Server
- * @version 1.0
+ * @version 1.1
  * @since 2025-01-08
  */
 @Controller
@@ -38,6 +41,10 @@ public class SettingsController {
     private final SettingsService settingsService;
     private final ApiKeyService apiKeyService;
     private final SchedulerService schedulerService;
+    private final ServletWebServerApplicationContext webServerAppContext;
+
+    @Value("${info.app.version:1.1.0}")
+    private String appVersion;
 
     /**
      * Display settings page.
@@ -57,8 +64,13 @@ public class SettingsController {
         Settings settings = settingsService.getSettings();
         model.addAttribute("settings", settings);
         model.addAttribute("mcpServerStatus", "Running");
-        model.addAttribute("mcpServerPort", 8080);
+        model.addAttribute("mcpServerPort", webServerAppContext.getWebServer().getPort());
         model.addAttribute("databaseStatus", "Connected");
+
+        // System information
+        model.addAttribute("appVersion", appVersion);
+        model.addAttribute("springBootVersion", SpringBootVersion.getVersion());
+        model.addAttribute("javaVersion", System.getProperty("java.version"));
 
         // Load API keys
         List<ApiKey> apiKeys = apiKeyService.getAllApiKeys();
