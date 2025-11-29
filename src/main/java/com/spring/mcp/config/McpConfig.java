@@ -27,11 +27,11 @@ public class McpConfig {
 
     /**
      * Register all MCP tools for the server.
-     *
+     * <p>
      * The MethodToolCallbackProvider scans the provided tool objects for @Tool annotated methods
      * and automatically registers them with the MCP server. All methods annotated with @Tool
      * will be exposed as MCP tools.
-     *
+     * <p>
      * Tools registered:
      * - SpringDocumentationTools: 10 documentation tools (always available)
      * - MigrationTools: 7 OpenRewrite migration tools (optional, when enabled)

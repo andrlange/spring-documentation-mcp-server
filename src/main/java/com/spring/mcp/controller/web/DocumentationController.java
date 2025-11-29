@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Controller for managing documentation links.
@@ -130,7 +131,7 @@ public class DocumentationController {
                 // Convert search results to DocumentationLink objects
                 documentationLinks = linkIds.stream()
                     .map(linkId -> documentationLinkRepository.findById(linkId).orElse(null))
-                    .filter(link -> link != null)
+                    .filter(Objects::nonNull)
                     .filter(link -> !activeOnly || link.getIsActive())
                     .toList();
 

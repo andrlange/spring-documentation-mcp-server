@@ -13,7 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * Server-Sent Events (SSE).
  *
  * @author Spring MCP Server Team
- * @version 1.0.2
+ * @version 1.1.0
  */
 @SpringBootApplication
 @EnableJpaAuditing

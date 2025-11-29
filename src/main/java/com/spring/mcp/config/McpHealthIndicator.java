@@ -14,12 +14,12 @@ public class McpHealthIndicator implements HealthIndicator {
     @Override
     public Health health() {
         try {
-            // MCP Server is auto-configured by Spring AI
+            // MCP Server is autoconfigured by Spring AI
             // If this bean exists, the server is operational
             return Health.up()
                 .withDetail("endpoint", "/mcp/spring/sse")
                 .withDetail("protocol", "SSE (Server-Sent Events)")
-                .withDetail("springAiVersion", "1.0.3")
+                .withDetail("springAiVersion", "1.1.0")
                 .withDetail("serverName", "Spring Documentation MCP Server")
                 .withDetail("status", "operational")
                 .withDetail("autoConfigured", true)
