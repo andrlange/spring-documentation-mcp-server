@@ -5,6 +5,7 @@ import com.spring.mcp.service.sync.DocumentationSyncService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -12,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Full integration test to sync all Spring project documentation using HtmlUnit
  */
 @SpringBootTest
+@Transactional
 public class FullDocumentationSyncTest {
 
     @Autowired

@@ -12,10 +12,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.PostConstruct;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
 /**
@@ -67,16 +69,40 @@ public class SchedulerService {
      */
     @Transactional
     public SchedulerSettings updateSettings(Boolean syncEnabled, String syncTime, String timeFormat) {
+        return updateSettings(syncEnabled, syncTime, timeFormat, null, null);
+    }
+
+    /**
+     * Update scheduler settings with weekday support and reschedule task
+     *
+     * @param syncEnabled whether sync is enabled
+     * @param syncTime time in HH:mm format
+     * @param timeFormat display format (12h or 24h)
+     * @param weekdays comma-separated weekday codes (MON,TUE,WED,THU,FRI,SAT,SUN)
+     * @param allWeekdays whether all weekdays are selected
+     * @return updated settings
+     */
+    @Transactional
+    public SchedulerSettings updateSettings(Boolean syncEnabled, String syncTime, String timeFormat,
+                                           String weekdays, Boolean allWeekdays) {
         SchedulerSettings settings = getSettings();
 
         settings.setSyncEnabled(syncEnabled);
         settings.setSyncTime(syncTime);
         settings.setTimeFormat(timeFormat);
-        settings.setNextSyncRun(calculateNextRun(syncTime));
+
+        if (weekdays != null) {
+            settings.setWeekdays(weekdays);
+        }
+        if (allWeekdays != null) {
+            settings.setAllWeekdays(allWeekdays);
+        }
+
+        settings.setNextSyncRun(calculateNextRun(settings));
 
         settings = schedulerSettingsRepository.save(settings);
-        log.info("Scheduler settings updated: enabled={}, time={}, format={}",
-            syncEnabled, syncTime, timeFormat);
+        log.info("Scheduler settings updated: enabled={}, time={}, format={}, weekdays={}, allWeekdays={}",
+            syncEnabled, syncTime, timeFormat, settings.getWeekdays(), settings.getAllWeekdays());
 
         // Reschedule task with new settings
         rescheduleTask();
@@ -117,6 +143,13 @@ public class SchedulerService {
         // Check if current minute matches scheduled time (with 1-minute window)
         if (currentTime.getHour() == scheduledTime.getHour() &&
             currentTime.getMinute() == scheduledTime.getMinute()) {
+
+            // Check weekday restriction
+            String todayCode = now.getDayOfWeek().toString().substring(0, 3); // MON, TUE, etc.
+            if (!settings.shouldRunOnWeekday(todayCode)) {
+                log.debug("Skipping sync - not scheduled for {}", todayCode);
+                return;
+            }
 
             // Check if we haven't run today yet
             if (settings.getLastSyncRun() == null ||
@@ -183,13 +216,37 @@ public class SchedulerService {
      * Calculate next run time based on sync time
      */
     private LocalDateTime calculateNextRun(String syncTime) {
-        LocalTime time = LocalTime.parse(syncTime, TIME_FORMATTER);
+        SchedulerSettings settings = getSettings();
+        return calculateNextRun(settings);
+    }
+
+    /**
+     * Calculate next run time based on settings (including weekday restrictions)
+     */
+    private LocalDateTime calculateNextRun(SchedulerSettings settings) {
+        LocalTime time = LocalTime.parse(settings.getSyncTime(), TIME_FORMATTER);
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime nextRun = LocalDateTime.of(LocalDate.now(), time);
 
-        // If time has passed today, schedule for tomorrow
+        // If time has passed today, start checking from tomorrow
         if (nextRun.isBefore(now) || nextRun.isEqual(now)) {
             nextRun = nextRun.plusDays(1);
+        }
+
+        // Find next allowed weekday
+        if (!Boolean.TRUE.equals(settings.getAllWeekdays())) {
+            Set<String> allowedDays = settings.getWeekdaySet();
+            if (!allowedDays.isEmpty()) {
+                int attempts = 0;
+                while (attempts < 7) {
+                    String dayCode = nextRun.getDayOfWeek().toString().substring(0, 3);
+                    if (allowedDays.contains(dayCode)) {
+                        break;
+                    }
+                    nextRun = nextRun.plusDays(1);
+                    attempts++;
+                }
+            }
         }
 
         return nextRun;

@@ -1,5 +1,6 @@
 package com.spring.mcp.config;
 
+import com.spring.mcp.service.tools.LanguageEvolutionTools;
 import com.spring.mcp.service.tools.MigrationTools;
 import com.spring.mcp.service.tools.SpringDocumentationTools;
 import org.springframework.ai.tool.ToolCallbackProvider;
@@ -35,21 +36,27 @@ public class McpConfig {
      * Tools registered:
      * - SpringDocumentationTools: 10 documentation tools (always available)
      * - MigrationTools: 7 OpenRewrite migration tools (optional, when enabled)
+     * - LanguageEvolutionTools: 6 language evolution tools (optional, when enabled)
      *
      * @param springDocumentationTools the Spring Documentation tools service
      * @param migrationTools optional Migration tools service (when OpenRewrite feature is enabled)
+     * @param languageEvolutionTools optional Language Evolution tools (when feature is enabled)
      * @return ToolCallbackProvider configured with all available tools
      */
     @Bean
     public ToolCallbackProvider toolCallbackProvider(
             SpringDocumentationTools springDocumentationTools,
-            Optional<MigrationTools> migrationTools) {
+            Optional<MigrationTools> migrationTools,
+            Optional<LanguageEvolutionTools> languageEvolutionTools) {
 
         List<Object> toolObjects = new ArrayList<>();
         toolObjects.add(springDocumentationTools);
 
         // Add migration tools if OpenRewrite feature is enabled
         migrationTools.ifPresent(toolObjects::add);
+
+        // Add language evolution tools if feature is enabled
+        languageEvolutionTools.ifPresent(toolObjects::add);
 
         return MethodToolCallbackProvider.builder()
             .toolObjects(toolObjects.toArray())

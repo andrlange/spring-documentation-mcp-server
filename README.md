@@ -2,10 +2,6 @@
 
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
-Commiter:
-[@andrlange](https://github.com/andrlange)
-[@bsmahi](https://github.com/bsmahi)
-
 ## What is this?
 
 This MCP server enables AI assistants (like Claude) to search, browse, and retrieve Spring Framework documentation, code examples, and API references. It includes:
@@ -15,8 +11,22 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - **Full-Text Search**: PostgreSQL-powered search across all Spring documentation
 - **Web Management UI**: Thymeleaf-based interface for managing projects, versions, and documentation
 - **Code Examples**: Searchable repository of Spring code snippets
+- **Migration Recipes**: OpenRewrite-based migration knowledge for Spring Boot version upgrades with breaking changes and transformations
+- **Language Evolution**: Java (8+) and Kotlin (1.6+) feature tracking with deprecations, removals, and code pattern examples
 
 ## Changelog
+
+### v1.2.0 (2025-11-29)
+- **Language Evolution Tracking**: New optional feature for tracking Java (8+) and Kotlin (1.6+) language evolution
+    - Track new features, deprecations, removals, and preview features for each language version
+    - JEP (Java Enhancement Proposal) and KEP (Kotlin Enhancement Proposal) tracking
+    - Code pattern examples showing old vs new idioms (e.g., pre-records vs records)
+    - Spring Boot language version requirements mapping
+    - Version comparison to see what changed between versions
+    - Dedicated UI page with filters by language, version, status, and category
+    - 6 new MCP tools for AI assistants to query language evolution data
+    - Configurable scheduler (DAILY/WEEKLY/MONTHLY) for language data sync
+    - Configurable via `mcp.features.language-evolution.enabled` (default: true)
 
 ### v1.1.0 (2025-11-28)
 - **OpenRewrite Migration Recipes**: New optional feature providing migration knowledge for Spring ecosystem upgrades
@@ -118,13 +128,23 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
       <p align="center"><b>OpenRewrite Recipe Details</b> - Migration recipe transformations with code patterns</p>
     </td>
   </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/screen-16.png" alt="Claude Code JDK Deprecations" />
+      <p align="center"><b>JDK Deprecation Query</b> - Claude Code console querying Java deprecations since JDK 8</p>
+    </td>
+    <td width="50%">
+      <img src="assets/screen-17.png" alt="Languages Page Records Example" />
+      <p align="center"><b>Language Evolution</b> - Languages page showing Java Records code example</p>
+    </td>
+  </tr>
 </table>
 
 ## Current Status
 
 ### ✅ Fully Implemented Features
 
-#### MCP Tools (17 tools available)
+#### MCP Tools (23 tools available)
 
 **Documentation Tools (10 tools)**
 1. **searchSpringDocs** - Full-text search across all Spring documentation with filters
@@ -147,6 +167,14 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 16. **getDeprecationReplacement** - Find the replacement for a deprecated class or method
 17. **checkVersionCompatibility** - Check if dependencies are compatible with a target Spring Boot version
 
+**Language Evolution Tools (6 tools - optional)**
+18. **getLanguageVersions** - List all versions for Java or Kotlin with feature counts and status
+19. **getLanguageFeatures** - Get features for a language version with optional filters (status, category)
+20. **getModernPatterns** - Get old vs new code patterns for a specific feature (e.g., pre-records vs records)
+21. **getLanguageVersionDiff** - Compare features between two versions to see what changed
+22. **getSpringBootLanguageRequirements** - Get minimum Java/Kotlin versions required for a Spring Boot version
+23. **searchLanguageFeatures** - Search language features by keyword across all versions
+
 #### Web Management UI
 - **Dashboard** - Overview statistics and recent updates
 - **Projects** - Manage Spring projects (Spring Boot, Framework, Data, Security, Cloud, etc.)
@@ -154,8 +182,9 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - **Documentation** - Browse and search documentation links with full-text search
 - **Code Examples** - Code snippet library with tagging
 - **Migration Recipes** - OpenRewrite-inspired migration knowledge browser (optional feature)
+- **Languages** - Java/Kotlin version tracking with features, deprecations, and code patterns (optional feature)
 - **Users** - User management with role-based access
-- **Settings** - Application configuration, feature toggles, and API Key Management
+- **Settings** - Application configuration, feature toggles, schedulers, and API Key Management
 - **Authentication** - Spring Security with session management
 - **API Key Management** - Secure token-based authentication for MCP endpoints
 
@@ -168,6 +197,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - Scheduled updates (configurable cron)
 - Bootstrap data loading
 - OpenRewrite migration recipe sync (optional)
+- Language evolution sync for Java/Kotlin (optional, configurable DAILY/WEEKLY/MONTHLY)
 
 #### Database Features
 - PostgreSQL 18 with full-text search (tsvector)
@@ -228,7 +258,7 @@ docker-compose ps
 
 ### 4. Run the Application
 ```bash
-java -jar build/libs/spring-mcp-server-1.1.0.jar
+java -jar build/libs/spring-mcp-server-1.2.0.jar
 ```
 
 Or using Gradle:
@@ -371,7 +401,7 @@ Add to your Claude Desktop or Claude Code MCP configuration (`.mcp.json`):
 
 ### Available MCP Tools
 
-Once connected, the following **17 tools** are available to AI assistants (7 OpenRewrite tools are optional):
+Once connected, the following **23 tools** are available to AI assistants (7 OpenRewrite and 6 Language Evolution tools are optional):
 
 #### Documentation Tools
 
@@ -632,6 +662,106 @@ Check if specific dependencies are compatible with a target Spring Boot version.
 }
 ```
 
+#### Language Evolution Tools (Optional)
+
+These tools are only available when `mcp.features.language-evolution.enabled=true` (default).
+
+##### 18. getLanguageVersions
+List all versions for Java or Kotlin with feature counts and support status.
+
+**Parameters**:
+- `language` (required): Language to query ('java' or 'kotlin')
+
+**Example**:
+```json
+{
+  "language": "java"
+}
+```
+
+##### 19. getLanguageFeatures
+Get features for a language version with optional filtering by status and category.
+
+**Parameters**:
+- `language` (required): Language ('java' or 'kotlin')
+- `version` (optional): Specific version (e.g., '21', '1.9')
+- `status` (optional): Feature status ('NEW', 'DEPRECATED', 'REMOVED', 'PREVIEW', 'INCUBATING')
+- `category` (optional): Feature category (e.g., 'Language', 'API', 'Performance')
+
+**Example**:
+```json
+{
+  "language": "java",
+  "version": "21",
+  "status": "NEW",
+  "category": "Language"
+}
+```
+
+##### 20. getModernPatterns
+Get old vs new code patterns for a specific feature (e.g., how to migrate from pre-records to records).
+
+**Parameters**:
+- `featureId` (required): The ID of the feature to get patterns for
+
+**Example**:
+```json
+{
+  "featureId": 42
+}
+```
+
+**Returns**: Code patterns showing the old way vs the new modern way with explanations.
+
+##### 21. getLanguageVersionDiff
+Compare features between two versions to see what was added, deprecated, or removed.
+
+**Parameters**:
+- `language` (required): Language ('java' or 'kotlin')
+- `fromVersion` (required): Starting version (e.g., '17')
+- `toVersion` (required): Target version (e.g., '21')
+
+**Example**:
+```json
+{
+  "language": "java",
+  "fromVersion": "17",
+  "toVersion": "21"
+}
+```
+
+**Returns**: Lists of new features, deprecated features, and removed features between versions.
+
+##### 22. getSpringBootLanguageRequirements
+Get minimum Java and Kotlin versions required for a specific Spring Boot version.
+
+**Parameters**:
+- `springBootVersion` (required): Spring Boot version (e.g., '3.5.8', '4.0.0')
+
+**Example**:
+```json
+{
+  "springBootVersion": "3.5.8"
+}
+```
+
+**Returns**: Minimum required versions for Java and Kotlin, plus recommended versions.
+
+##### 23. searchLanguageFeatures
+Search language features by keyword across all versions.
+
+**Parameters**:
+- `searchTerm` (required): Search keyword (e.g., 'record', 'sealed', 'pattern matching')
+- `language` (optional): Filter by language ('java' or 'kotlin')
+
+**Example**:
+```json
+{
+  "searchTerm": "pattern matching",
+  "language": "java"
+}
+```
+
 ## Configuration
 
 ### Environment Variables
@@ -735,139 +865,6 @@ mcp:
 - **Session Management**: HTTP Session
 - **Health Checks**: Spring Boot Actuator
 - **Logging**: Logback
-
-## Project Structure
-
-```
-spring-mcp-server/
-├── src/main/java/com/spring/mcp/
-│   ├── config/                    # Spring configuration
-│   │   ├── CacheConfig.java       # Caching configuration
-│   │   ├── McpConfig.java         # MCP server tool registration
-│   │   ├── McpHealthIndicator.java # Health check for MCP server
-│   │   ├── SecurityConfig.java    # Security & authentication
-│   │   ├── StartupSyncRunner.java # Startup sync initialization
-│   │   ├── WebClientConfig.java   # WebClient for HTTP requests
-│   │   └── WebMvcConfig.java      # Web MVC configuration
-│   ├── controller/
-│   │   ├── advice/                # Controller advice
-│   │   │   └── GlobalModelAttributesAdvice.java # Global model attributes
-│   │   ├── api/                   # REST API controllers
-│   │   │   ├── DocumentationApiController.java
-│   │   │   └── McpTestController.java
-│   │   └── web/                   # Web UI controllers
-│   │       ├── BootstrapController.java
-│   │       ├── DashboardController.java
-│   │       ├── DocumentationController.java
-│   │       ├── ExamplesController.java
-│   │       ├── ProjectsController.java
-│   │       ├── SettingsController.java
-│   │       ├── SpringBootController.java
-│   │       ├── SyncController.java
-│   │       ├── UsersController.java
-│   │       └── VersionsController.java
-│   ├── model/
-│   │   ├── entity/                # JPA entities
-│   │   │   ├── ApiKey.java
-│   │   │   ├── CodeExample.java
-│   │   │   ├── DocumentationContent.java
-│   │   │   ├── DocumentationLink.java
-│   │   │   ├── DocumentationType.java
-│   │   │   ├── ExternalDoc.java
-│   │   │   ├── McpConnection.java
-│   │   │   ├── McpRequest.java
-│   │   │   ├── ProjectRelationship.java
-│   │   │   ├── ProjectVersion.java
-│   │   │   ├── SchedulerSettings.java
-│   │   │   ├── Settings.java
-│   │   │   ├── SpringBootCompatibility.java
-│   │   │   ├── SpringBootVersion.java
-│   │   │   ├── SpringProject.java
-│   │   │   └── User.java
-│   │   └── dto/                   # Data Transfer Objects
-│   │       ├── mcp/               # MCP response DTOs
-│   │       │   ├── SearchDocsResponse.java
-│   │       │   ├── VersionsResponse.java
-│   │       │   ├── ProjectsListResponse.java
-│   │       │   ├── DocumentationByVersionResponse.java
-│   │       │   ├── CodeExamplesResponse.java
-│   │       │   ├── SpringBootVersionsResponse.java
-│   │       │   ├── LatestSpringBootVersionResponse.java
-│   │       │   ├── FilteredSpringBootVersionsResponse.java
-│   │       │   ├── ProjectsBySpringBootVersionResponse.java
-│   │       │   └── ProjectsByUseCaseResponse.java
-│   │       └── ... (other DTOs)
-│   ├── repository/                # Spring Data JPA repositories
-│   │   ├── ApiKeyRepository.java
-│   │   ├── CodeExampleRepository.java
-│   │   ├── DocumentationContentRepository.java
-│   │   ├── DocumentationLinkRepository.java
-│   │   ├── DocumentationTypeRepository.java
-│   │   ├── ExternalDocRepository.java
-│   │   ├── McpConnectionRepository.java
-│   │   ├── McpRequestRepository.java
-│   │   ├── ProjectRelationshipRepository.java
-│   │   ├── ProjectVersionRepository.java
-│   │   ├── SchedulerSettingsRepository.java
-│   │   ├── SpringBootCompatibilityRepository.java
-│   │   ├── SpringBootVersionRepository.java
-│   │   ├── SpringProjectRepository.java
-│   │   └── UserRepository.java
-│   ├── service/
-│   │   ├── tools/
-│   │   │   └── SpringDocumentationTools.java  # MCP @Tool methods
-│   │   ├── documentation/
-│   │   │   ├── DocumentationFetchService.java
-│   │   │   └── DocumentationService.java
-│   │   ├── indexing/              # Content indexing services
-│   │   │   ├── CodeExampleExtractor.java
-│   │   │   └── DocumentationIndexer.java
-│   │   ├── mcp/
-│   │   │   └── McpRequestLoggerService.java
-│   │   ├── scheduler/             # Scheduler services
-│   │   │   └── SchedulerService.java
-│   │   ├── sync/                  # Documentation sync services
-│   │   │   ├── ComprehensiveSyncService.java
-│   │   │   ├── DocumentationSyncService.java
-│   │   │   ├── ProjectSyncService.java
-│   │   │   ├── SpringBootVersionSyncService.java
-│   │   │   ├── SpringGenerationsSyncService.java
-│   │   │   └── SpringProjectPageCrawlerService.java
-│   │   ├── version/
-│   │   │   └── VersionDetectionService.java
-│   │   ├── bootstrap/
-│   │   │   └── DocumentationBootstrapService.java
-│   │   ├── ApiKeyService.java
-│   │   ├── CodeExampleService.java
-│   │   ├── ExternalDocService.java
-│   │   ├── ProjectRelationshipService.java
-│   │   ├── ProjectService.java
-│   │   ├── SettingsService.java
-│   │   ├── SpringBootCompatibilityService.java
-│   │   ├── SpringBootService.java
-│   │   └── UserService.java
-│   └── SpringMcpServerApplication.java
-├── src/main/resources/
-│   ├── db/migration/              # Flyway database migrations
-│   │   └── V1__init.sql           # Consolidated initial schema
-│   ├── templates/                 # Thymeleaf templates
-│   │   ├── layouts/               # Page layouts
-│   │   ├── fragments/             # Reusable fragments
-│   │   ├── dashboard/
-│   │   ├── projects/
-│   │   ├── versions/
-│   │   ├── documentation/
-│   │   ├── examples/
-│   │   ├── users/
-│   │   └── settings/
-│   ├── static/                    # CSS, JS, images
-│   │   ├── css/
-│   │   ├── js/
-│   │   └── images/
-│   └── application.yml            # Application configuration
-├── docker-compose.yml             # PostgreSQL service
-└── build.gradle                   # Gradle build configuration
-```
 
 ## Database Schema
 
@@ -1046,6 +1043,52 @@ export MCP_FEATURES_OPENREWRITE_ENABLED=false
 
 **Attribution**: Migration knowledge is inspired by [OpenRewrite](https://docs.openrewrite.org/) - an open-source automated refactoring ecosystem. Visit their documentation for detailed migration recipes and tooling.
 
+### Language Evolution Tracking (Optional Feature)
+
+The Language Evolution feature provides comprehensive tracking of Java (8+) and Kotlin (1.6+) language changes, helping developers understand what features are available in each version.
+
+**Configuration**:
+
+```yaml
+# application.yml
+mcp:
+  features:
+    language-evolution:
+      enabled: true  # Set to false to disable (default: true)
+```
+
+Or via environment variable:
+```bash
+export LANGUAGE_EVOLUTION_ENABLED=false
+```
+
+**Features**:
+- **Version Tracking**: All Java versions from 8 onwards, Kotlin from 1.6 onwards
+- **Feature Status**: NEW, DEPRECATED, REMOVED, PREVIEW, INCUBATING
+- **JEP/KEP Tracking**: Links to Java Enhancement Proposals and Kotlin Evolution Proposals
+- **Code Patterns**: Old vs new code examples showing how to modernize code
+- **Spring Boot Compatibility**: Which Java/Kotlin versions are required for each Spring Boot version
+- **Version Comparison**: Compare features between two versions to see what changed
+- **Flexible Scheduling**: DAILY, WEEKLY (with weekday selection), or MONTHLY sync
+
+**How It Works**:
+1. **Navigate to Languages page**: View all tracked language versions and features
+2. **Filter by criteria**: Language, version, feature status, category, or search term
+3. **View feature details**: Click on any feature to see description, JEP/KEP link, and code patterns
+4. **Compare versions**: Use the version diff tool to see what changed between releases
+5. **Check Spring Boot requirements**: Know minimum language versions for your Spring Boot version
+
+**Use Cases**:
+- **Modernization**: Find deprecated APIs and their modern replacements
+- **Migration Planning**: Understand what features you gain/lose when upgrading Java versions
+- **Code Review**: Verify code uses modern idioms for the target Java version
+- **Learning**: Discover new language features with practical code examples
+- **AI Assistance**: Let AI assistants query language evolution data to suggest modernizations
+
+**Attribution**: Language data is compiled from official sources:
+- Java: [OpenJDK JEPs](https://openjdk.org/jeps) (GPL-2.0)
+- Kotlin: [Kotlin KEEP](https://github.com/Kotlin/KEEP) (Apache-2.0)
+
 ### Scheduler Configuration
 
 The built-in scheduler allows you to automate documentation synchronization on a configurable schedule.
@@ -1154,7 +1197,7 @@ lsof -ti :8080 | xargs kill -9
 - [x] Spring Security with API Key authentication
 - [x] Thymeleaf UI with Bootstrap 5
 - [x] MCP Server with Spring AI (SSE-based)
-- [x] 10 MCP tools implemented with typed DTOs
+- [x] 23 MCP tools implemented with typed DTOs (10 documentation + 7 migration + 6 language)
 - [x] Full-text search with PostgreSQL
 - [x] Documentation sync services
 - [x] Version detection and tracking
@@ -1166,6 +1209,7 @@ lsof -ti :8080 | xargs kill -9
 - [x] Spring Boot version compatibility tracking
 - [x] Scheduler configuration for automated syncs
 - [x] OpenRewrite migration recipes (optional feature)
+- [x] Language Evolution tracking for Java/Kotlin (optional feature)
 
 ### In Progress 🚧
 - [ ] Comprehensive documentation coverage for all Spring projects

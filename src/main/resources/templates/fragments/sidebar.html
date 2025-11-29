@@ -40,6 +40,12 @@
                     <i class="bi bi-arrow-repeat" style="color: #f97316;"></i> Recipes
                 </a>
             </li>
+            <!-- Language Evolution (conditional) -->
+            <li class="nav-item" th:if="${languageEvolutionEnabled}">
+                <a class="nav-link" th:href="@{/languages}" th:classappend="${activePage == 'languages'} ? 'active' : ''">
+                    <i class="bi bi-braces" style="color: #fbbf24;"></i> Languages
+                </a>
+            </li>
 
             <hr class="my-3">
 

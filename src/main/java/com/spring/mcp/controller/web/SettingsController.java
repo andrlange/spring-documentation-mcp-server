@@ -1,13 +1,16 @@
 package com.spring.mcp.controller.web;
 
 import com.spring.mcp.model.entity.ApiKey;
+import com.spring.mcp.model.entity.LanguageSchedulerSettings;
 import com.spring.mcp.model.entity.SchedulerSettings;
 import com.spring.mcp.model.entity.Settings;
+import com.spring.mcp.model.enums.SyncFrequency;
 import com.spring.mcp.service.ApiKeyService;
 import com.spring.mcp.service.SettingsService;
+import com.spring.mcp.service.scheduler.LanguageSchedulerService;
 import com.spring.mcp.service.scheduler.SchedulerService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
@@ -33,7 +36,6 @@ import java.util.Map;
  */
 @Controller
 @RequestMapping("/settings")
-@RequiredArgsConstructor
 @Slf4j
 @PreAuthorize("hasRole('ADMIN')")
 public class SettingsController {
@@ -41,10 +43,30 @@ public class SettingsController {
     private final SettingsService settingsService;
     private final ApiKeyService apiKeyService;
     private final SchedulerService schedulerService;
+    private final LanguageSchedulerService languageSchedulerService;
+
+    // Optional - may not be available in test contexts
     private final ServletWebServerApplicationContext webServerAppContext;
 
     @Value("${info.app.version:1.1.0}")
     private String appVersion;
+
+    @Value("${server.port:8080}")
+    private int serverPort;
+
+    @Autowired
+    public SettingsController(
+            SettingsService settingsService,
+            ApiKeyService apiKeyService,
+            SchedulerService schedulerService,
+            LanguageSchedulerService languageSchedulerService,
+            @Autowired(required = false) ServletWebServerApplicationContext webServerAppContext) {
+        this.settingsService = settingsService;
+        this.apiKeyService = apiKeyService;
+        this.schedulerService = schedulerService;
+        this.languageSchedulerService = languageSchedulerService;
+        this.webServerAppContext = webServerAppContext;
+    }
 
     /**
      * Display settings page.
@@ -64,7 +86,9 @@ public class SettingsController {
         Settings settings = settingsService.getSettings();
         model.addAttribute("settings", settings);
         model.addAttribute("mcpServerStatus", "Running");
-        model.addAttribute("mcpServerPort", webServerAppContext.getWebServer().getPort());
+        // Use actual server port if available, otherwise use configured port
+        int port = webServerAppContext != null ? webServerAppContext.getWebServer().getPort() : serverPort;
+        model.addAttribute("mcpServerPort", port);
         model.addAttribute("databaseStatus", "Connected");
 
         // System information
@@ -87,6 +111,18 @@ public class SettingsController {
             schedulerSettings.getTimeFormat()
         );
         model.addAttribute("displayTime", displayTime);
+
+        // Load language scheduler settings
+        LanguageSchedulerSettings languageSchedulerSettings = languageSchedulerService.getSettings();
+        model.addAttribute("languageSchedulerSettings", languageSchedulerSettings);
+        model.addAttribute("syncFrequencies", SyncFrequency.values());
+
+        // Format language scheduler time for display
+        String languageDisplayTime = languageSchedulerService.formatTimeForDisplay(
+            languageSchedulerSettings.getSyncTime(),
+            languageSchedulerSettings.getTimeFormat()
+        );
+        model.addAttribute("languageDisplayTime", languageDisplayTime);
 
         return "settings/index";
     }
@@ -184,6 +220,81 @@ public class SettingsController {
             log.error("Error updating time format", e);
             return ResponseEntity.internalServerError()
                 .body(Map.of("success", false, "error", "Failed to update time format"));
+        }
+    }
+
+    // ==================== Language Scheduler Configuration ====================
+
+    /**
+     * Update language scheduler settings
+     */
+    @PostMapping("/language-scheduler")
+    public String updateLanguageSchedulerSettings(
+            @RequestParam(value = "syncEnabled", defaultValue = "false") boolean syncEnabled,
+            @RequestParam String frequency,
+            @RequestParam String syncTime,
+            @RequestParam(required = false) String weekdays,
+            @RequestParam(required = false) Integer dayOfMonth,
+            RedirectAttributes redirectAttributes) {
+
+        log.debug("Updating language scheduler settings: syncEnabled={}, frequency={}, syncTime={}",
+                syncEnabled, frequency, syncTime);
+
+        try {
+            SyncFrequency syncFrequency = SyncFrequency.valueOf(frequency.toUpperCase());
+            LanguageSchedulerSettings currentSettings = languageSchedulerService.getSettings();
+
+            languageSchedulerService.updateSettings(
+                    syncEnabled, syncFrequency, syncTime, weekdays,
+                    dayOfMonth != null ? dayOfMonth : 1,
+                    currentSettings.getTimeFormat());
+
+            redirectAttributes.addFlashAttribute("success",
+                    "Language scheduler settings updated successfully. " +
+                    (syncEnabled ? "Automatic language sync enabled" : "Automatic language sync disabled"));
+
+            log.info("Language scheduler settings updated: syncEnabled={}, frequency={}, syncTime={}",
+                    syncEnabled, frequency, syncTime);
+        } catch (Exception e) {
+            log.error("Error updating language scheduler settings", e);
+            redirectAttributes.addFlashAttribute("error",
+                    "Failed to update language scheduler settings: " + e.getMessage());
+        }
+
+        return "redirect:/settings";
+    }
+
+    /**
+     * Update language scheduler time format (AJAX endpoint)
+     */
+    @PostMapping("/language-scheduler/time-format")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateLanguageTimeFormat(@RequestParam String timeFormat) {
+        log.debug("Updating language scheduler time format to: {}", timeFormat);
+
+        try {
+            if (!timeFormat.equals("12h") && !timeFormat.equals("24h")) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("success", false, "error", "Invalid time format"));
+            }
+
+            LanguageSchedulerSettings settings = languageSchedulerService.updateTimeFormat(timeFormat);
+
+            String displayTime = languageSchedulerService.formatTimeForDisplay(
+                    settings.getSyncTime(),
+                    settings.getTimeFormat()
+            );
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Time format updated to " + timeFormat,
+                    "displayTime", displayTime
+            ));
+
+        } catch (Exception e) {
+            log.error("Error updating language scheduler time format", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("success", false, "error", "Failed to update time format"));
         }
     }
 

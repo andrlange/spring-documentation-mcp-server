@@ -491,6 +491,44 @@
                 </div>
             </div>
         </div>
+
+        <!-- Languages Evolution (Java/Kotlin) - Conditional -->
+        <div class="col-md-6 col-lg-4" th:if="${languageEvolutionEnabled}">
+            <div class="card h-100 shadow-sm" style="border-color: #8b5cf6;">
+                <div class="card-header text-white" style="background-color: #8b5cf6;">
+                    <h6 class="card-title mb-0">
+                        <span class="badge bg-white me-2" style="color: #8b5cf6;">
+                            <i class="bi bi-braces"></i>
+                        </span>
+                        <i class="bi bi-code-slash"></i>
+                        Languages (Java/Kotlin)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text small">
+                        Sync Java and Kotlin language versions, features, deprecations, and code examples.
+                    </p>
+                    <form method="post" th:action="@{/sync/languages}" class="mb-0 sync-form">
+                        <button type="submit" class="btn btn-sm w-100 sync-btn" style="background-color: #8b5cf6; border-color: #8b5cf6; color: white;">
+                            <span class="btn-text">
+                                <i class="bi bi-arrow-repeat"></i>
+                                Sync
+                            </span>
+                            <span class="btn-spinner d-none">
+                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                Syncing...
+                            </span>
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer bg-light">
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i>
+                        ~10-20 seconds
+                    </small>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Sync Guide -->

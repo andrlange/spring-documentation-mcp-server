@@ -1,0 +1,508 @@
+{
+  "description": "Curated code examples for language features, keyed by JEP/KEP number or normalized feature name",
+  "version": "2.0.0",
+  "java": {
+    "395": {
+      "title": "Records",
+      "example": "// Before: Traditional class with boilerplate\nclass Person {\n    private final String name;\n    private final int age;\n    \n    public Person(String name, int age) {\n        this.name = name;\n        this.age = age;\n    }\n    // getters, equals, hashCode, toString...\n}\n\n// After: Record (Java 16+)\nrecord Person(String name, int age) {}"
+    },
+    "409": {
+      "title": "Sealed Classes",
+      "example": "// Sealed class restricts which classes can extend it\nsealed interface Shape permits Circle, Rectangle, Triangle {\n    double area();\n}\n\nfinal class Circle implements Shape {\n    private final double radius;\n    public double area() { return Math.PI * radius * radius; }\n}\n\nnon-sealed class Rectangle implements Shape {\n    // Can be further extended\n}"
+    },
+    "394": {
+      "title": "Pattern Matching for instanceof",
+      "example": "// Before: Cast after instanceof check\nif (obj instanceof String) {\n    String s = (String) obj;\n    System.out.println(s.length());\n}\n\n// After: Pattern variable (Java 16+)\nif (obj instanceof String s) {\n    System.out.println(s.length());\n}"
+    },
+    "441": {
+      "title": "Pattern Matching for switch",
+      "example": "// Pattern matching in switch expressions (Java 21+)\nString describe(Object obj) {\n    return switch (obj) {\n        case Integer i -> \"Integer: \" + i;\n        case String s -> \"String: \" + s;\n        case null -> \"null value\";\n        default -> \"Unknown type\";\n    };\n}"
+    },
+    "444": {
+      "title": "Virtual Threads",
+      "example": "// Virtual Threads (Java 21+) - lightweight threads\ntry (var executor = Executors.newVirtualThreadPerTaskExecutor()) {\n    IntStream.range(0, 10_000).forEach(i -> {\n        executor.submit(() -> {\n            Thread.sleep(Duration.ofSeconds(1));\n            return i;\n        });\n    });\n} // All tasks complete here"
+    },
+    "443": {
+      "title": "Unnamed Patterns and Variables",
+      "example": "// Unnamed variable _ (Java 21+)\ntry {\n    processData();\n} catch (Exception _) { // Don't need the exception\n    log.warn(\"Processing failed\");\n}\n\n// Unnamed pattern in switch\nswitch (obj) {\n    case Point(int x, _) -> useX(x); // Ignore y\n}"
+    },
+    "440": {
+      "title": "Record Patterns",
+      "example": "// Record patterns for deconstruction (Java 21+)\nrecord Point(int x, int y) {}\n\nvoid printSum(Object obj) {\n    if (obj instanceof Point(int x, int y)) {\n        System.out.println(x + y);\n    }\n}"
+    },
+    "430": {
+      "title": "String Templates",
+      "example": "// String Templates (Preview in Java 21)\nString name = \"World\";\nint year = 2024;\n\n// Template expression with STR processor\nString message = STR.\"Hello \\{name}! Year: \\{year}\";\n// Result: \"Hello World! Year: 2024\""
+    },
+    "431": {
+      "title": "Sequenced Collections",
+      "example": "// Sequenced Collections (Java 21+)\nList<String> list = List.of(\"a\", \"b\", \"c\");\n\nlist.getFirst(); // \"a\" - new method\nlist.getLast();  // \"c\" - new method\nlist.reversed(); // [\"c\", \"b\", \"a\"] - reversed view"
+    },
+    "378": {
+      "title": "Text Blocks",
+      "example": "// Text Blocks (Java 15+)\nString json = \"\"\"\n    {\n        \"name\": \"John\",\n        \"age\": 30,\n        \"city\": \"NYC\"\n    }\n    \"\"\";\n\nString html = \"\"\"\n    <html>\n        <body>Hello World</body>\n    </html>\n    \"\"\";"
+    },
+    "361": {
+      "title": "Switch Expressions",
+      "example": "// Switch Expressions (Java 14+)\nint numDays = switch (month) {\n    case JANUARY, MARCH, MAY, JULY,\n         AUGUST, OCTOBER, DECEMBER -> 31;\n    case APRIL, JUNE, SEPTEMBER, NOVEMBER -> 30;\n    case FEBRUARY -> isLeapYear ? 29 : 28;\n};"
+    },
+    "286": {
+      "title": "Local Variable Type Inference (var)",
+      "example": "// var keyword (Java 10+)\nvar list = new ArrayList<String>();\nvar stream = list.stream();\nvar map = Map.of(\"key\", \"value\");\n\n// Cannot use with:\n// var x; // no initializer\n// var f = (x) -> x; // lambda needs explicit type"
+    },
+    "425": {
+      "title": "Primitive Types in Patterns",
+      "example": "// Primitive type patterns (Preview in Java 23)\nswitch (obj) {\n    case int i when i > 0 -> \"positive int: \" + i;\n    case int i -> \"non-positive int: \" + i;\n    case long l -> \"long: \" + l;\n    default -> \"other\";\n}"
+    },
+    "455": {
+      "title": "Flexible Constructor Bodies",
+      "example": "// Flexible Constructor Bodies (Preview Java 22)\nclass Point {\n    int x, y;\n    \n    Point(int x, int y) {\n        // Can validate before super() call\n        if (x < 0 || y < 0) {\n            throw new IllegalArgumentException();\n        }\n        super(); // explicit super call\n        this.x = x;\n        this.y = y;\n    }\n}"
+    },
+    "477": {
+      "title": "Implicitly Declared Classes",
+      "example": "// Implicitly Declared Classes (Java 21+)\n// Simple main-class programs without class declaration\n\n// File: HelloWorld.java\nvoid main() {\n    System.out.println(\"Hello, World!\");\n}\n\n// No class, package, or public modifier needed!"
+    },
+    "454": {
+      "title": "Foreign Function & Memory API",
+      "example": "// Foreign Function & Memory API (Java 22+)\ntry (Arena arena = Arena.ofConfined()) {\n    MemorySegment segment = arena.allocate(100);\n    segment.set(ValueLayout.JAVA_INT, 0, 42);\n    int value = segment.get(ValueLayout.JAVA_INT, 0);\n}"
+    },
+    "466": {
+      "title": "Class-File API",
+      "example": "// Class-File API (Preview in Java 22)\nClassFile cf = ClassFile.of();\nbyte[] bytes = cf.build(CD_MyClass, classBuilder -> {\n    classBuilder.withMethodBody(\"main\",\n        MTD_void_StringArray, ACC_PUBLIC | ACC_STATIC,\n        codeBuilder -> codeBuilder.return_());\n});"
+    },
+    "461": {
+      "title": "Stream Gatherers",
+      "example": "// Stream Gatherers (Preview in Java 22)\nList<List<Integer>> result = Stream.of(1, 2, 3, 4, 5)\n    .gather(Gatherers.windowFixed(2))\n    .toList();\n// [[1, 2], [3, 4]] - groups elements into windows"
+    },
+    "501": {
+      "title": "Flexible Constructor Bodies (Standard)",
+      "example": "// Flexible Constructor Bodies (Java 25 - Standard)\nclass Rectangle extends Shape {\n    private final int width, height;\n    \n    Rectangle(int width, int height) {\n        // Validate BEFORE calling super()\n        if (width <= 0 || height <= 0) {\n            throw new IllegalArgumentException(\"Invalid dimensions\");\n        }\n        super(); // Now allowed after validation\n        this.width = width;\n        this.height = height;\n    }\n}"
+    },
+    "511": {
+      "title": "Module Import Declarations",
+      "example": "// Module Import Declarations (Preview Java 25)\n// Import all exported packages from a module\nimport module java.base;\nimport module java.sql;\n\n// Now can use classes without individual imports\nvar list = new ArrayList<String>();\nvar conn = DriverManager.getConnection(url);"
+    },
+    "507": {
+      "title": "Primitive Types in Patterns (3rd Preview)",
+      "example": "// Primitive Types in Patterns (Java 25 Preview)\nObject obj = 42;\nString result = switch (obj) {\n    case int i when i > 0 -> \"positive: \" + i;\n    case int i when i < 0 -> \"negative: \" + i;\n    case int _ -> \"zero\";\n    default -> \"not an int\";\n};"
+    },
+    "502": {
+      "title": "Scoped Values",
+      "example": "// Scoped Values (Preview Java 25)\n// Thread-safe, immutable alternative to ThreadLocal\nfinal static ScopedValue<User> CURRENT_USER = ScopedValue.newInstance();\n\nvoid handleRequest(User user) {\n    ScopedValue.where(CURRENT_USER, user)\n        .run(() -> processRequest());\n}\n\nvoid processRequest() {\n    User user = CURRENT_USER.get(); // Available in scope\n}"
+    },
+    "505": {
+      "title": "Structured Concurrency",
+      "example": "// Structured Concurrency (Preview Java 25)\nResponse handle() throws InterruptedException {\n    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {\n        Subtask<User> user = scope.fork(() -> fetchUser());\n        Subtask<Order> order = scope.fork(() -> fetchOrder());\n        \n        scope.join().throwIfFailed();\n        \n        return new Response(user.get(), order.get());\n    }\n}"
+    },
+    "484": {
+      "title": "Class-File API (2nd Preview)",
+      "example": "// Class-File API (Java 24 Preview)\nClassFile cf = ClassFile.of();\nbyte[] classBytes = cf.build(ClassDesc.of(\"com.example.Hello\"),\n    clb -> clb.withMethod(\"greet\", MethodTypeDesc.of(CD_void),\n        ACC_PUBLIC | ACC_STATIC,\n        mb -> mb.withCode(cb -> {\n            cb.getstatic(CD_System, \"out\", CD_PrintStream);\n            cb.ldc(\"Hello!\");\n            cb.invokevirtual(CD_PrintStream, \"println\", MTD_void_String);\n            cb.return_();\n        })));"
+    },
+    "492": {
+      "title": "Flexible Constructor Bodies (2nd Preview)",
+      "example": "// Flexible Constructor Bodies (Java 24 Preview)\nclass Employee extends Person {\n    private final String department;\n    \n    Employee(String name, String dept) {\n        // Prologue: statements before super()\n        Objects.requireNonNull(dept, \"Department required\");\n        this.department = dept.toUpperCase();\n        super(name); // Call super after prologue\n    }\n}"
+    },
+    "494": {
+      "title": "Module Import Declarations (2nd Preview)",
+      "example": "// Module Import Declarations (Java 24 Preview)\nimport module java.base;\nimport module java.logging;\n\nclass App {\n    void run() {\n        var logger = Logger.getLogger(\"app\");\n        var list = new ArrayList<String>();\n        logger.info(\"List size: \" + list.size());\n    }\n}"
+    },
+    "488": {
+      "title": "Primitive Types in Patterns (2nd Preview)",
+      "example": "// Primitive Types in Patterns (Java 24 Preview)\nint evaluate(Object o) {\n    return switch (o) {\n        case byte b -> b;\n        case short s -> s;\n        case int i -> i;\n        case Integer i -> i;\n        default -> -1;\n    };\n}"
+    },
+    "487": {
+      "title": "Scoped Values (3rd Preview)",
+      "example": "// Scoped Values (Java 24 Preview)\nstatic final ScopedValue<RequestContext> REQUEST = ScopedValue.newInstance();\n\nvoid serve(Request req) {\n    var ctx = new RequestContext(req);\n    ScopedValue.where(REQUEST, ctx).run(() -> {\n        handleRequest();\n        logRequest();\n    });\n}"
+    },
+    "486": {
+      "title": "SecurityManager Removed",
+      "example": "// SecurityManager Removed (Java 24)\n// The following code no longer works:\n// System.setSecurityManager(new SecurityManager()); // Error!\n\n// Migration: Use modern alternatives\n// - Module system for encapsulation\n// - ProcessBuilder for process control\n// - Container isolation for sandboxing"
+    },
+    "485": {
+      "title": "Stream Gatherers (Standard)",
+      "example": "// Stream Gatherers (Java 24 - Standard)\n// Window fixed-size groups\nvar windows = Stream.of(1, 2, 3, 4, 5, 6)\n    .gather(Gatherers.windowFixed(3))\n    .toList(); // [[1,2,3], [4,5,6]]\n\n// Sliding window\nvar sliding = Stream.of(1, 2, 3, 4)\n    .gather(Gatherers.windowSliding(2))\n    .toList(); // [[1,2], [2,3], [3,4]]"
+    },
+    "499": {
+      "title": "Structured Concurrency (3rd Preview)",
+      "example": "// Structured Concurrency (Java 24 Preview)\ntry (var scope = new StructuredTaskScope.ShutdownOnSuccess<String>()) {\n    scope.fork(() -> fetchFromServer1());\n    scope.fork(() -> fetchFromServer2());\n    scope.join();\n    return scope.result(); // First successful result\n}"
+    },
+    "482": {
+      "title": "Flexible Constructor Bodies (Preview)",
+      "example": "// Flexible Constructor Bodies (Java 23 Preview)\nclass Circle extends Shape {\n    private final double radius;\n    \n    Circle(double radius) {\n        if (radius <= 0) throw new IllegalArgumentException();\n        this.radius = radius; // Before super()!\n        super();\n    }\n}"
+    },
+    "476": {
+      "title": "Module Import Declarations (Preview)",
+      "example": "// Module Import Declarations (Java 23 Preview)\nimport module java.base; // Import entire module\n\npublic class Demo {\n    void example() {\n        var list = new ArrayList<String>();\n        var map = new HashMap<String, Integer>();\n        // No individual imports needed!\n    }\n}"
+    },
+    "481": {
+      "title": "Scoped Values (2nd Preview)",
+      "example": "// Scoped Values (Java 23 Preview)\nfinal static ScopedValue<Transaction> TX = ScopedValue.newInstance();\n\nvoid transfer(Account from, Account to, int amount) {\n    try (var tx = new Transaction()) {\n        ScopedValue.where(TX, tx).run(() -> {\n            from.debit(amount);\n            to.credit(amount);\n        });\n    }\n}"
+    },
+    "473": {
+      "title": "Stream Gatherers (2nd Preview)",
+      "example": "// Stream Gatherers (Java 23 Preview)\n// Fold: reduce with intermediate results\nvar runningSum = Stream.of(1, 2, 3, 4)\n    .gather(Gatherers.fold(() -> 0, Integer::sum))\n    .toList(); // [1, 3, 6, 10]\n\n// Scan: like fold but emits all intermediates\nvar scanned = Stream.of(1, 2, 3)\n    .gather(Gatherers.scan(() -> 0, Integer::sum))\n    .toList(); // [0, 1, 3, 6]"
+    },
+    "480": {
+      "title": "Structured Concurrency (2nd Preview)",
+      "example": "// Structured Concurrency (Java 23 Preview)\nRecord fetchUserData(long userId) throws Exception {\n    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {\n        var profile = scope.fork(() -> fetchProfile(userId));\n        var orders = scope.fork(() -> fetchOrders(userId));\n        scope.join().throwIfFailed();\n        return new UserData(profile.get(), orders.get());\n    }\n}"
+    },
+    "string-templates-withdrawn": {
+      "title": "String Templates Withdrawn",
+      "example": "// String Templates - WITHDRAWN in Java 23\n// The STR template processor was removed\n// Use String.format() or concatenation instead:\n\nString name = \"World\";\nint count = 42;\n\n// Instead of: STR.\"Hello \\{name}, count: \\{count}\"\n// Use:\nString msg = \"Hello %s, count: %d\".formatted(name, count);\n// Or:\nString msg2 = \"Hello \" + name + \", count: \" + count;"
+    },
+    "457": {
+      "title": "Class-File API (Preview)",
+      "example": "// Class-File API (Java 22 Preview)\n// Generate bytecode programmatically\nClassFile cf = ClassFile.of();\nbyte[] bytes = cf.build(\n    ClassDesc.of(\"HelloWorld\"),\n    cb -> cb.withMethod(\"main\",\n        MethodTypeDesc.ofDescriptor(\"([Ljava/lang/String;)V\"),\n        ACC_PUBLIC | ACC_STATIC,\n        mb -> mb.withCode(code -> code.return_())));"
+    },
+    "447": {
+      "title": "Statements before super()",
+      "example": "// Statements before super() (Java 22 Preview)\nclass PositivePoint extends Point {\n    PositivePoint(int x, int y) {\n        // Validation before super()!\n        if (x < 0 || y < 0) {\n            throw new IllegalArgumentException(\"Coordinates must be positive\");\n        }\n        super(x, y);\n    }\n}"
+    },
+    "459": {
+      "title": "String Templates (2nd Preview)",
+      "example": "// String Templates (Java 22 Preview)\nString name = \"Alice\";\nint age = 30;\n\n// STR template processor\nString bio = STR.\"\\{name} is \\{age} years old\";\n\n// FMT for formatting\nString formatted = FMT.\"Balance: $%.2f\\{balance}\";"
+    },
+    "456": {
+      "title": "Unnamed Variables & Patterns (Standard)",
+      "example": "// Unnamed Variables & Patterns (Java 22)\n// Ignore exception variable\ntry {\n    parse(input);\n} catch (ParseException _) {\n    return defaultValue;\n}\n\n// Ignore unused lambda param\nlist.forEach((var _) -> count++);\n\n// Pattern matching - ignore components\nif (obj instanceof Point(int x, _)) {\n    System.out.println(\"x = \" + x);\n}"
+    },
+    "446": {
+      "title": "Scoped Values (Preview)",
+      "example": "// Scoped Values (Java 21 Preview)\n// Immutable, inheritable, thread-safe values\nfinal static ScopedValue<String> USER = ScopedValue.newInstance();\n\nvoid processAs(String user, Runnable task) {\n    ScopedValue.where(USER, user).run(task);\n}\n\nvoid doWork() {\n    String currentUser = USER.get(); // Get scoped value\n}"
+    },
+    "453": {
+      "title": "Structured Concurrency (Preview)",
+      "example": "// Structured Concurrency (Java 21 Preview)\nResponse fetch() throws Exception {\n    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {\n        var user = scope.fork(() -> fetchUser());\n        var order = scope.fork(() -> fetchOrder());\n        \n        scope.join();           // Wait for both\n        scope.throwIfFailed();  // Propagate errors\n        \n        return combine(user.get(), order.get());\n    }\n}"
+    },
+    "445": {
+      "title": "Unnamed Classes (Preview)",
+      "example": "// Unnamed Classes (Java 21 Preview)\n// File: HelloWorld.java - no class declaration needed!\nvoid main() {\n    System.out.println(\"Hello, World!\");\n}\n\n// Can also have helper methods\nString greet(String name) {\n    return \"Hello, \" + name;\n}"
+    },
+    "433": {
+      "title": "Pattern Matching for switch (4th Preview)",
+      "example": "// Pattern Matching for switch (Java 20 Preview)\nstatic String format(Object obj) {\n    return switch (obj) {\n        case Integer i -> String.format(\"int %d\", i);\n        case Long l -> String.format(\"long %d\", l);\n        case Double d -> String.format(\"double %f\", d);\n        case String s -> String.format(\"String %s\", s);\n        case null -> \"null\";\n        default -> obj.toString();\n    };\n}"
+    },
+    "432": {
+      "title": "Record Patterns (2nd Preview)",
+      "example": "// Record Patterns (Java 20 Preview)\nrecord Point(int x, int y) {}\nrecord Rectangle(Point upperLeft, Point lowerRight) {}\n\nstatic void printRectangle(Rectangle r) {\n    if (r instanceof Rectangle(Point(var x1, var y1), Point(var x2, var y2))) {\n        System.out.printf(\"(%d,%d) to (%d,%d)%n\", x1, y1, x2, y2);\n    }\n}"
+    },
+    "429": {
+      "title": "Scoped Values (Incubator)",
+      "example": "// Scoped Values (Java 20 Incubator)\n// Early preview of thread-scoped values\nfinal static ScopedValue<Principal> PRINCIPAL = ScopedValue.newInstance();\n\nvoid serve(Request req, Principal user) {\n    ScopedValue.where(PRINCIPAL, user).run(() -> {\n        // PRINCIPAL available in entire call tree\n        handleRequest(req);\n    });\n}"
+    },
+    "436": {
+      "title": "Virtual Threads (2nd Preview)",
+      "example": "// Virtual Threads (Java 20 Preview)\n// Create virtual thread directly\nThread vt = Thread.ofVirtual().start(() -> {\n    System.out.println(\"Running in virtual thread\");\n});\n\n// Or use executor\ntry (var executor = Executors.newVirtualThreadPerTaskExecutor()) {\n    executor.submit(() -> doTask());\n}"
+    },
+    "424": {
+      "title": "Foreign Function & Memory API (Preview)",
+      "example": "// Foreign Function & Memory API (Java 19 Preview)\ntry (MemorySession session = MemorySession.openConfined()) {\n    // Allocate off-heap memory\n    MemorySegment segment = session.allocate(100);\n    segment.set(ValueLayout.JAVA_INT, 0, 42);\n    int value = segment.get(ValueLayout.JAVA_INT, 0);\n}"
+    },
+    "427": {
+      "title": "Pattern Matching for switch (3rd Preview)",
+      "example": "// Pattern Matching for switch (Java 19 Preview)\nstatic String formatter(Object obj) {\n    return switch (obj) {\n        case Integer i when i > 0 -> \"positive int\";\n        case Integer i -> \"non-positive int\";\n        case String s -> \"string: \" + s;\n        default -> \"unknown\";\n    };\n}"
+    },
+    "405": {
+      "title": "Record Patterns (Preview)",
+      "example": "// Record Patterns (Java 19 Preview)\nrecord Point(int x, int y) {}\n\nvoid printPoint(Object obj) {\n    if (obj instanceof Point(int x, int y)) {\n        System.out.println(\"x=\" + x + \", y=\" + y);\n    }\n}"
+    },
+    "428": {
+      "title": "Structured Concurrency (Incubator)",
+      "example": "// Structured Concurrency (Java 19 Incubator)\ntry (var scope = new StructuredTaskScope<String>()) {\n    Future<String> task1 = scope.fork(() -> query1());\n    Future<String> task2 = scope.fork(() -> query2());\n    scope.join();\n    // Both tasks complete when scope closes\n}"
+    },
+    "413": {
+      "title": "Code Snippets in JavaDoc",
+      "example": "// Code Snippets in JavaDoc (Java 18)\n/**\n * Example usage:\n * {@snippet :\n * var list = new ArrayList<String>();\n * list.add(\"Hello\");\n * System.out.println(list.size()); // @highlight substring=\"size\"\n * }\n */\npublic void example() { }"
+    },
+    "420": {
+      "title": "Pattern Matching for switch (2nd Preview)",
+      "example": "// Pattern Matching for switch (Java 18 Preview)\nstatic double getArea(Shape shape) {\n    return switch (shape) {\n        case Circle c -> Math.PI * c.radius() * c.radius();\n        case Rectangle r -> r.width() * r.height();\n        case null -> 0;\n        default -> throw new IllegalArgumentException();\n    };\n}"
+    },
+    "408": {
+      "title": "Simple Web Server",
+      "example": "// Simple Web Server (Java 18)\n// Start from command line:\n// jwebserver -p 8000\n\n// Or programmatically:\nvar server = SimpleFileServer.createFileServer(\n    new InetSocketAddress(8000),\n    Path.of(\".\"),\n    OutputLevel.VERBOSE\n);\nserver.start();"
+    },
+    "400": {
+      "title": "UTF-8 by Default",
+      "example": "// UTF-8 by Default (Java 18)\n// Before Java 18: charset depended on OS\n// After Java 18: UTF-8 is always default\n\n// These now use UTF-8 by default:\nFiles.readString(path);           // UTF-8\nnew FileReader(\"file.txt\");       // UTF-8\nnew PrintWriter(\"out.txt\");       // UTF-8\n\n// To use other charset, specify explicitly:\nnew FileReader(\"file.txt\", StandardCharsets.ISO_8859_1);"
+    },
+    "398": {
+      "title": "Applet API Deprecated",
+      "example": "// Applet API Deprecated for Removal (Java 17)\n// The following are deprecated:\n// - java.applet.Applet\n// - java.applet.AppletContext\n// - java.applet.AppletStub\n// - java.applet.AudioClip\n\n// Migration: Use modern alternatives\n// - JavaFX for rich client applications\n// - Web technologies (HTML5, JavaScript)\n// - Desktop apps with Swing/JavaFX"
+    },
+    "406": {
+      "title": "Pattern Matching for switch (Preview)",
+      "example": "// Pattern Matching for switch (Java 17 Preview)\nstatic String format(Object obj) {\n    return switch (obj) {\n        case Integer i -> \"Integer: \" + i;\n        case Long l -> \"Long: \" + l;\n        case String s -> \"String: \" + s;\n        default -> \"Unknown\";\n    };\n}"
+    },
+    "407": {
+      "title": "RMI Activation Removed",
+      "example": "// RMI Activation Removed (Java 17)\n// The java.rmi.activation package is removed\n// Classes no longer available:\n// - Activatable\n// - ActivationDesc\n// - ActivationGroup\n// - ActivationID\n\n// Migration: Use modern alternatives\n// - gRPC for remote procedure calls\n// - REST APIs\n// - Message queues (Kafka, RabbitMQ)"
+    },
+    "411": {
+      "title": "SecurityManager Deprecated",
+      "example": "// SecurityManager Deprecated (Java 17)\n// Deprecated for removal - will fail in future\nSystem.setSecurityManager(new SecurityManager());\n\n// Migration strategies:\n// - Use module system for encapsulation\n// - Use container-based isolation (Docker)\n// - Use OS-level security features\n// - Use agent-based monitoring"
+    },
+    "403": {
+      "title": "Strong Encapsulation by Default",
+      "example": "// Strong Encapsulation by Default (Java 17)\n// Internal APIs no longer accessible by default\n// This will fail:\n// var unsafe = sun.misc.Unsafe.getUnsafe();\n\n// To allow (not recommended for production):\n// --add-opens java.base/sun.misc=ALL-UNNAMED\n\n// Better: Use supported APIs\nvar handle = MethodHandles.lookup();\nvar varHandle = MethodHandles.privateLookupIn(...);"
+    },
+    "397": {
+      "title": "Sealed Classes (2nd Preview)",
+      "example": "// Sealed Classes (Java 16 Preview)\nsealed interface Vehicle permits Car, Truck, Motorcycle {\n    String name();\n}\n\nfinal class Car implements Vehicle {\n    public String name() { return \"Car\"; }\n}\n\nnon-sealed class Truck implements Vehicle {\n    public String name() { return \"Truck\"; }\n}"
+    },
+    "stream-tolist": {
+      "title": "Stream.toList()",
+      "example": "// Stream.toList() (Java 16)\n// Before: collect(Collectors.toList())\nList<String> old = stream.collect(Collectors.toList());\n\n// After: toList() - simpler and unmodifiable\nList<String> list = stream.toList();\n\n// Note: toList() returns unmodifiable list\n// list.add(\"x\"); // UnsupportedOperationException!"
+    },
+    "371": {
+      "title": "Hidden Classes",
+      "example": "// Hidden Classes (Java 15)\n// Create classes not discoverable by other classes\nLookup lookup = MethodHandles.lookup();\nbyte[] classBytes = ...; // bytecode\n\nClass<?> hiddenClass = lookup.defineHiddenClass(\n    classBytes,\n    true, // initialize\n    ClassOption.NESTMATE\n).lookupClass();\n\n// Hidden class cannot be found by Class.forName()"
+    },
+    "372": {
+      "title": "Nashorn Removed",
+      "example": "// Nashorn JavaScript Engine Removed (Java 15)\n// This no longer works:\n// ScriptEngine engine = new ScriptEngineManager()\n//     .getEngineByName(\"nashorn\");\n\n// Migration options:\n// 1. GraalJS (recommended)\nContext context = Context.create(\"js\");\nValue result = context.eval(\"js\", \"40 + 2\");\n\n// 2. Rhino JavaScript engine\n// 3. Other JS engines via JSR-223"
+    },
+    "384": {
+      "title": "Records (2nd Preview)",
+      "example": "// Records (Java 15 Preview)\n// Compact syntax for data classes\nrecord Point(int x, int y) {\n    // Compact constructor for validation\n    public Point {\n        if (x < 0 || y < 0) throw new IllegalArgumentException();\n    }\n    \n    // Additional methods allowed\n    public double distance() {\n        return Math.sqrt(x * x + y * y);\n    }\n}"
+    },
+    "360": {
+      "title": "Sealed Classes (Preview)",
+      "example": "// Sealed Classes (Java 15 Preview)\nsealed class Shape permits Circle, Square, Rectangle {\n    abstract double area();\n}\n\nfinal class Circle extends Shape {\n    double radius;\n    double area() { return Math.PI * radius * radius; }\n}\n\nfinal class Square extends Shape {\n    double side;\n    double area() { return side * side; }\n}"
+    },
+    "358": {
+      "title": "Helpful NullPointerExceptions",
+      "example": "// Helpful NullPointerExceptions (Java 14)\n// Before: java.lang.NullPointerException\n// After: More detailed message\n\nString city = person.getAddress().getCity();\n// If address is null, message shows:\n// \"Cannot invoke 'Address.getCity()' because\n//  the return value of 'Person.getAddress()' is null\"\n\n// Enable with: -XX:+ShowCodeDetailsInExceptionMessages"
+    },
+    "305": {
+      "title": "Pattern Matching instanceof (Preview)",
+      "example": "// Pattern Matching for instanceof (Java 14 Preview)\n// Before\nif (obj instanceof String) {\n    String s = (String) obj;\n    System.out.println(s.toUpperCase());\n}\n\n// After - pattern variable\nif (obj instanceof String s) {\n    System.out.println(s.toUpperCase());\n}"
+    },
+    "359": {
+      "title": "Records (Preview)",
+      "example": "// Records (Java 14 Preview)\n// Immutable data carrier with minimal syntax\nrecord Person(String name, int age) {}\n\n// Automatically generates:\n// - Constructor\n// - Getters (name(), age())\n// - equals(), hashCode()\n// - toString()\n\nvar p = new Person(\"Alice\", 30);\nSystem.out.println(p.name()); // \"Alice\""
+    },
+    "354": {
+      "title": "Switch Expressions (2nd Preview)",
+      "example": "// Switch Expressions (Java 13 Preview)\n// Yield keyword for returning values\nint numLetters = switch (day) {\n    case MONDAY, FRIDAY, SUNDAY -> 6;\n    case TUESDAY -> 7;\n    default -> {\n        String s = day.toString();\n        yield s.length(); // yield in block\n    }\n};"
+    },
+    "355": {
+      "title": "Text Blocks (Preview)",
+      "example": "// Text Blocks (Java 13 Preview)\nString html = \"\"\"\n    <html>\n        <body>\n            <h1>Hello</h1>\n        </body>\n    </html>\n    \"\"\";\n\n// Preserves formatting and handles escapes\nString json = \"\"\"\n    {\"name\": \"John\", \"age\": 30}\n    \"\"\";"
+    },
+    "compact-number-formatting": {
+      "title": "Compact Number Formatting",
+      "example": "// Compact Number Formatting (Java 12)\nvar fmt = NumberFormat.getCompactNumberInstance(\n    Locale.US, NumberFormat.Style.SHORT);\n\nfmt.format(1000);      // \"1K\"\nfmt.format(1000000);   // \"1M\"\nfmt.format(1000000000); // \"1B\"\n\n// Long style\nvar longFmt = NumberFormat.getCompactNumberInstance(\n    Locale.US, NumberFormat.Style.LONG);\nlongFmt.format(1000);  // \"1 thousand\""
+    },
+    "325": {
+      "title": "Switch Expressions (Preview)",
+      "example": "// Switch Expressions (Java 12 Preview)\n// Arrow syntax - no fall-through\nint numDays = switch (month) {\n    case JAN, MAR, MAY, JUL, AUG, OCT, DEC -> 31;\n    case APR, JUN, SEP, NOV -> 30;\n    case FEB -> 28;\n};\n\n// Switch as expression returns a value\nString text = switch (status) {\n    case 1 -> \"Active\";\n    case 2 -> \"Pending\";\n    default -> \"Unknown\";\n};"
+    },
+    "files-readstring-writestring": {
+      "title": "Files.readString/writeString",
+      "example": "// Files.readString/writeString (Java 11)\n// Read entire file as String\nString content = Files.readString(Path.of(\"file.txt\"));\n\n// Write String to file\nFiles.writeString(\n    Path.of(\"output.txt\"),\n    \"Hello, World!\",\n    StandardOpenOption.CREATE\n);\n\n// With charset\nString utf16 = Files.readString(path, StandardCharsets.UTF_16);"
+    },
+    "321": {
+      "title": "HTTP Client API",
+      "example": "// HTTP Client API (Java 11)\nHttpClient client = HttpClient.newHttpClient();\n\n// Synchronous request\nHttpRequest request = HttpRequest.newBuilder()\n    .uri(URI.create(\"https://api.example.com/data\"))\n    .GET()\n    .build();\n\nHttpResponse<String> response = client.send(\n    request, HttpResponse.BodyHandlers.ofString());\n\nSystem.out.println(response.body());"
+    },
+    "320": {
+      "title": "Java EE Modules Removed",
+      "example": "// Java EE Modules Removed (Java 11)\n// These packages are removed:\n// - java.xml.ws (JAX-WS)\n// - java.xml.bind (JAXB)\n// - java.activation\n// - java.xml.ws.annotation\n// - java.corba\n// - java.transaction\n\n// Migration: Add dependencies\n// Maven:\n// <dependency>\n//   <groupId>jakarta.xml.bind</groupId>\n//   <artifactId>jakarta.xml.bind-api</artifactId>\n// </dependency>"
+    },
+    "323": {
+      "title": "Local-Variable Syntax for Lambda",
+      "example": "// Local-Variable Syntax for Lambda (Java 11)\n// Use var in lambda parameters\nlist.stream()\n    .map((var s) -> s.toUpperCase())\n    .forEach(System.out::println);\n\n// Why useful? Can add annotations!\nlist.stream()\n    .map((@NotNull var s) -> s.toUpperCase())\n    .toList();"
+    },
+    "string-methods": {
+      "title": "String Methods",
+      "example": "// New String Methods (Java 11)\nString text = \"  Hello  \";\n\ntext.isBlank();        // false (checks whitespace only)\ntext.strip();          // \"Hello\" (Unicode-aware trim)\ntext.stripLeading();   // \"Hello  \"\ntext.stripTrailing();  // \"  Hello\"\n\n\"Hi\\nWorld\".lines()    // Stream of [\"Hi\", \"World\"]\n    .forEach(System.out::println);\n\n\"ab\".repeat(3);        // \"ababab\""
+    },
+    "unmodifiable-collections": {
+      "title": "Unmodifiable Collections",
+      "example": "// Unmodifiable Collections (Java 10)\n// Copy to unmodifiable\nList<String> original = new ArrayList<>();\noriginal.add(\"a\");\n\nList<String> copy = List.copyOf(original);\n// copy.add(\"b\"); // UnsupportedOperationException!\n\n// Also for Set and Map\nSet<Integer> set = Set.copyOf(Arrays.asList(1, 2, 3));\nMap<String, Integer> map = Map.copyOf(originalMap);"
+    },
+    "269": {
+      "title": "Collection Factory Methods",
+      "example": "// Collection Factory Methods (Java 9)\n// Immutable List\nList<String> list = List.of(\"a\", \"b\", \"c\");\n\n// Immutable Set\nSet<Integer> set = Set.of(1, 2, 3);\n\n// Immutable Map\nMap<String, Integer> map = Map.of(\n    \"one\", 1,\n    \"two\", 2\n);\n\n// For more than 10 entries\nMap<String, Integer> bigMap = Map.ofEntries(\n    Map.entry(\"a\", 1),\n    Map.entry(\"b\", 2)\n);"
+    },
+    "222": {
+      "title": "JShell REPL",
+      "example": "// JShell - Interactive Java (Java 9)\n// Start with: jshell\n\njshell> int x = 10\nx ==> 10\n\njshell> x * 2\n$2 ==> 20\n\njshell> String greet(String name) {\n   ...>     return \"Hello, \" + name;\n   ...> }\n|  created method greet(String)\n\njshell> greet(\"World\")\n$4 ==> \"Hello, World\""
+    },
+    "261": {
+      "title": "Module System (Jigsaw)",
+      "example": "// Module System (Java 9)\n// module-info.java\nmodule com.myapp {\n    requires java.base;        // implicit\n    requires java.sql;         // database access\n    requires transitive java.logging; // exported\n    \n    exports com.myapp.api;     // public API\n    exports com.myapp.internal to com.myapp.tests;\n    \n    opens com.myapp.model to com.fasterxml.jackson.databind;\n}"
+    },
+    "213": {
+      "title": "Private Interface Methods",
+      "example": "// Private Interface Methods (Java 9)\npublic interface Calculator {\n    default int addSquares(int a, int b) {\n        return square(a) + square(b);\n    }\n    \n    default int multiplySquares(int a, int b) {\n        return square(a) * square(b);\n    }\n    \n    // Private helper method\n    private int square(int n) {\n        return n * n;\n    }\n}"
+    },
+    "stream-improvements": {
+      "title": "Stream Improvements",
+      "example": "// Stream Improvements (Java 9)\n// takeWhile - take elements while condition true\nStream.of(1, 2, 3, 4, 5)\n    .takeWhile(n -> n < 4)\n    .toList(); // [1, 2, 3]\n\n// dropWhile - skip elements while condition true\nStream.of(1, 2, 3, 4, 5)\n    .dropWhile(n -> n < 3)\n    .toList(); // [3, 4, 5]\n\n// ofNullable - stream of 0 or 1 element\nStream.ofNullable(getValue())\n    .forEach(System.out::println);"
+    },
+    "completablefuture": {
+      "title": "CompletableFuture",
+      "example": "// CompletableFuture (Java 8)\nCompletableFuture<String> future = CompletableFuture\n    .supplyAsync(() -> fetchData())\n    .thenApply(data -> process(data))\n    .thenApply(result -> format(result));\n\n// Combine futures\nCompletableFuture<String> combined = user\n    .thenCombine(order, (u, o) -> u + \": \" + o);\n\n// Handle errors\nfuture.exceptionally(ex -> \"Error: \" + ex.getMessage());"
+    },
+    "150": {
+      "title": "Date/Time API",
+      "example": "// Date/Time API (Java 8)\nLocalDate date = LocalDate.now();          // 2024-03-15\nLocalTime time = LocalTime.of(14, 30);     // 14:30\nLocalDateTime dt = LocalDateTime.now();    // combined\n\n// Timezone aware\nZonedDateTime zdt = ZonedDateTime.now(ZoneId.of(\"UTC\"));\n\n// Duration and Period\nDuration d = Duration.ofHours(2);\nPeriod p = Period.ofMonths(3);\n\n// Formatting\ndt.format(DateTimeFormatter.ISO_DATE_TIME);"
+    },
+    "default-methods": {
+      "title": "Default Methods",
+      "example": "// Default Methods in Interfaces (Java 8)\npublic interface Vehicle {\n    void start();\n    \n    // Default implementation\n    default void honk() {\n        System.out.println(\"Beep!\");\n    }\n    \n    // Static method\n    static Vehicle create() {\n        return new Car();\n    }\n}\n\nclass Car implements Vehicle {\n    public void start() { /* ... */ }\n    // honk() inherited with default impl\n}"
+    },
+    "126": {
+      "title": "Lambda Expressions",
+      "example": "// Lambda Expressions (Java 8)\n// Before: Anonymous class\nRunnable r1 = new Runnable() {\n    public void run() { System.out.println(\"Hello\"); }\n};\n\n// After: Lambda\nRunnable r2 = () -> System.out.println(\"Hello\");\n\n// With parameters\nComparator<String> comp = (a, b) -> a.compareTo(b);\n\n// In streams\nlist.stream()\n    .filter(s -> s.length() > 3)\n    .map(s -> s.toUpperCase())\n    .forEach(s -> System.out.println(s));"
+    },
+    "method-references": {
+      "title": "Method References",
+      "example": "// Method References (Java 8)\n// Instead of lambda\nlist.forEach(s -> System.out.println(s));\n// Use method reference\nlist.forEach(System.out::println);\n\n// Static method\nlist.stream().map(Integer::parseInt);\n\n// Instance method\nlist.stream().map(String::toUpperCase);\n\n// Constructor\nlist.stream().map(StringBuilder::new);"
+    },
+    "optional-class": {
+      "title": "Optional Class",
+      "example": "// Optional Class (Java 8)\nOptional<String> opt = Optional.ofNullable(getValue());\n\n// Check and get\nif (opt.isPresent()) {\n    System.out.println(opt.get());\n}\n\n// Or with default\nString value = opt.orElse(\"default\");\n\n// Or throw\nString required = opt.orElseThrow(\n    () -> new IllegalStateException(\"Value required\"));\n\n// Transform\nOptional<Integer> length = opt.map(String::length);"
+    },
+    "107": {
+      "title": "Stream API",
+      "example": "// Stream API (Java 8)\nList<String> result = names.stream()\n    .filter(n -> n.startsWith(\"A\"))  // filter\n    .map(String::toUpperCase)         // transform\n    .sorted()                          // sort\n    .distinct()                        // unique\n    .limit(10)                         // limit\n    .collect(Collectors.toList());     // collect\n\n// Parallel processing\nlong count = list.parallelStream()\n    .filter(s -> s.length() > 5)\n    .count();"
+    }
+  },
+  "kotlin": {
+    "value-classes": {
+      "title": "Value Classes",
+      "example": "// Value classes (Kotlin 1.5+)\n@JvmInline\nvalue class Password(private val s: String) {\n    init {\n        require(s.length >= 8) { \"Too short\" }\n    }\n}\n\nval pwd = Password(\"secret123\") // No allocation overhead"
+    },
+    "sealed-interfaces": {
+      "title": "Sealed Interfaces",
+      "example": "// Sealed interfaces (Kotlin 1.5+)\nsealed interface Error {\n    data class Network(val code: Int) : Error\n    data class Database(val msg: String) : Error\n    data object Unknown : Error\n}\n\nfun handle(e: Error) = when (e) {\n    is Error.Network -> \"Network: ${e.code}\"\n    is Error.Database -> \"DB: ${e.msg}\"\n    Error.Unknown -> \"Unknown error\"\n}"
+    },
+    "context-receivers": {
+      "title": "Context Receivers",
+      "example": "// Context receivers (Kotlin 1.6.20+)\ncontext(LoggingContext, Transaction)\nfun transfer(from: Account, to: Account, amount: Int) {\n    log(\"Transferring $amount\")  // from LoggingContext\n    execute { /* transactional */ }  // from Transaction\n}"
+    },
+    "data-objects": {
+      "title": "Data Objects",
+      "example": "// Data objects (Kotlin 1.9+)\nsealed interface Response\ndata object Loading : Response\ndata class Success(val data: String) : Response\ndata class Error(val msg: String) : Response\n\n// data object has proper toString(), equals(), hashCode()"
+    },
+    "k2-compiler": {
+      "title": "K2 Compiler",
+      "example": "// K2 Compiler (Kotlin 2.0+)\n// Enable in gradle.properties:\n// kotlin.experimental.tryK2=true\n\n// Benefits:\n// - 2x faster compilation\n// - Better type inference\n// - Improved smart casts\n// - Future language features"
+    },
+    "explicit-backing-fields": {
+      "title": "Explicit Backing Fields",
+      "example": "// Explicit backing fields (Kotlin 2.0+)\nclass Counter {\n    var count: Int = 0\n        field = 0  // explicit backing field\n        set(value) {\n            if (value >= 0) field = value\n        }\n}"
+    },
+    "enum-entries": {
+      "title": "Enum entries Property",
+      "example": "// entries property (Kotlin 1.9+)\nenum class Color { RED, GREEN, BLUE }\n\n// Before\nColor.values() // creates new array each time\n\n// After - preferred\nColor.entries  // returns immutable List<Color>"
+    },
+    "rangeuntil-operator": {
+      "title": "rangeUntil Operator",
+      "example": "// Open-ended range operator (Kotlin 1.8+)\nfor (i in 0..<10) {  // 0 to 9, exclusive end\n    print(i)\n}\n\n// Equivalent to\nfor (i in 0 until 10) {\n    print(i)\n}"
+    },
+    "common-supertype-smart-casts": {
+      "title": "Common Supertype Smart Casts",
+      "example": "// Common Supertype Smart Casts (Kotlin 2.0)\nfun process(x: Any) {\n    if (x is String || x is List<*>) {\n        // x smart cast to common supertype\n        println(x.toString()) // Works!\n    }\n}"
+    },
+    "context-parameters-preview": {
+      "title": "Context Parameters (Preview)",
+      "example": "// Context Parameters (Kotlin 2.1 Preview)\n// More flexible than context receivers\ncontext(logger: Logger)\nfun doSomething() {\n    logger.info(\"Starting...\")\n}\n\n// Call with context\nwith(myLogger) {\n    doSomething()\n}"
+    },
+    "guard-conditions-when": {
+      "title": "Guard Conditions in when",
+      "example": "// Guard Conditions in when (Kotlin 2.1)\nwhen (val result = fetchData()) {\n    is Success if result.data.isNotEmpty() -> process(result.data)\n    is Success -> handleEmpty()\n    is Error if result.code == 404 -> handleNotFound()\n    is Error -> handleError(result)\n}"
+    },
+    "immediate-property-initialization": {
+      "title": "Immediate Property Initialization",
+      "example": "// Immediate Property Initialization (Kotlin 2.0)\nclass User(name: String) {\n    // K2 allows smarter initialization\n    val displayName = name.uppercase()\n    val greeting = \"Hello, $displayName!\"\n}"
+    },
+    "improved-smart-casts": {
+      "title": "Improved Smart Casts",
+      "example": "// Improved Smart Casts (Kotlin 2.0)\nclass Container(val value: Any?)\n\nfun process(c: Container) {\n    if (c.value is String) {\n        // K2: Smart cast works even through property!\n        println(c.value.length)\n    }\n}"
+    },
+    "k2-compiler-stable": {
+      "title": "K2 Compiler (Stable)",
+      "example": "// K2 Compiler Stable (Kotlin 2.0)\n// build.gradle.kts:\nkotlin {\n    compilerOptions {\n        // K2 is now default in Kotlin 2.0\n        // Benefits:\n        // - Up to 2x faster compilation\n        // - Better type inference\n        // - Improved diagnostics\n    }\n}"
+    },
+    "k2-kapt-improvements": {
+      "title": "K2 kapt Improvements",
+      "example": "// K2 kapt Improvements (Kotlin 2.1)\n// build.gradle.kts:\nkapt {\n    // Works with K2 compiler\n    useBuildCache = true\n}\n\n// Better support for:\n// - Dagger/Hilt\n// - Room\n// - Other annotation processors"
+    },
+    "lambda-parameters-improvements": {
+      "title": "Lambda Parameters Improvements",
+      "example": "// Lambda Parameters Improvements (Kotlin 2.0)\n// Destructuring in lambdas\nval pairs = listOf(1 to \"one\", 2 to \"two\")\npairs.forEach { (num, text) ->\n    println(\"$num = $text\")\n}\n\n// Better type inference\nval transform: (String) -> Int = { it.length }"
+    },
+    "multi-dollar-string-interpolation": {
+      "title": "Multi-dollar String Interpolation (Preview)",
+      "example": "// Multi-dollar String Interpolation (Kotlin 2.1 Preview)\n// Use $$ to include literal $ in strings\nval price = 99\nval text = $$$\"The price is $$price dollars\"\n// Result: \"The price is $99 dollars\"\n\n// Useful for:\n// - JSON templates\n// - Shell scripts\n// - Regular expressions"
+    },
+    "non-packed-klib-artifacts": {
+      "title": "Non-Packed klib Artifacts",
+      "example": "// Non-Packed klib Artifacts (Kotlin 2.1)\n// build.gradle.kts:\nkotlin {\n    targets.all {\n        compilations.all {\n            // Faster incremental builds\n            // klib artifacts are not packed by default\n        }\n    }\n}"
+    },
+    "smart-casts-catch-finally": {
+      "title": "Smart Casts in catch/finally",
+      "example": "// Smart Casts in catch/finally (Kotlin 2.0)\nfun process(x: Any?) {\n    try {\n        // ...\n    } catch (e: Exception) {\n        if (x is String) {\n            // K2: Smart cast works in catch!\n            println(x.length)\n        }\n    } finally {\n        if (x is List<*>) {\n            // K2: Smart cast works in finally!\n            println(x.size)\n        }\n    }\n}"
+    },
+    "builder-inference": {
+      "title": "Builder Inference",
+      "example": "// Builder Inference (Kotlin 1.6)\nval list = buildList {\n    add(\"Hello\")  // Type inferred as String\n    add(\"World\")\n}\n\nval map = buildMap {\n    put(\"key\", 42)  // Types inferred\n}\n\n// Works with custom builders too\nfun <T> myBuilder(block: MutableList<T>.() -> Unit): List<T> =\n    mutableListOf<T>().apply(block)"
+    },
+    "definitely-non-nullable-types": {
+      "title": "Definitely Non-Nullable Types",
+      "example": "// Definitely Non-Nullable Types (Kotlin 1.7)\nfun <T> process(value: T & Any): T & Any {\n    // T & Any means: T but definitely not null\n    return value\n}\n\n// Useful with Java interop\nfun <T> fromJava(list: List<T & Any>): T & Any {\n    return list.first() // Guaranteed non-null\n}"
+    },
+    "exhaustive-when-statements": {
+      "title": "Exhaustive when Statements",
+      "example": "// Exhaustive when Statements (Kotlin 1.6)\nsealed class Result {\n    data class Success(val data: String) : Result()\n    data class Error(val msg: String) : Result()\n}\n\nfun handle(result: Result) {\n    when (result) {\n        is Result.Success -> println(result.data)\n        is Result.Error -> println(result.msg)\n        // No else needed - compiler knows all cases\n    }\n}"
+    },
+    "jvm-ir-backend-default": {
+      "title": "JVM IR Backend Default",
+      "example": "// JVM IR Backend Default (Kotlin 1.8)\n// The IR backend is now default for JVM\n// Benefits:\n// - Better optimization\n// - Smaller bytecode\n// - Foundation for future features\n\n// build.gradle.kts:\nkotlin {\n    jvmToolchain(17)\n    // IR is already the default\n}"
+    },
+    "k2-compiler-beta": {
+      "title": "K2 Compiler (Beta)",
+      "example": "// K2 Compiler Beta (Kotlin 1.9)\n// Enable in gradle.properties:\nkotlin.experimental.tryK2=true\n\n// Or in build.gradle.kts:\ntasks.withType<KotlinCompile> {\n    compilerOptions {\n        languageVersion.set(KotlinVersion.KOTLIN_2_0)\n    }\n}"
+    },
+    "kotlin-js-ir-stable": {
+      "title": "Kotlin/JS IR Stable",
+      "example": "// Kotlin/JS IR Stable (Kotlin 1.8)\n// build.gradle.kts:\nkotlin {\n    js(IR) { // IR backend now stable\n        browser {\n            commonWebpackConfig {\n                cssSupport { enabled.set(true) }\n            }\n        }\n        binaries.executable()\n    }\n}"
+    },
+    "named-arguments-function-types": {
+      "title": "Named Arguments in Function Types",
+      "example": "// Named Arguments in Function Types (Kotlin 1.7)\n// Function type with named parameters\nval format: (value: Int, prefix: String) -> String = { value, prefix ->\n    \"$prefix: $value\"\n}\n\n// More readable at call site\nval result = format(value = 42, prefix = \"Count\")"
+    },
+    "open-ended-ranges": {
+      "title": "Open-Ended Ranges",
+      "example": "// Open-Ended Ranges (Kotlin 1.9)\n// Exclusive end with ..<\nfor (i in 0..<10) {\n    print(i) // 0 to 9\n}\n\n// Works with when\nwhen (score) {\n    in 0..<50 -> \"Fail\"\n    in 50..<70 -> \"Pass\"\n    in 70..<90 -> \"Good\"\n    in 90..100 -> \"Excellent\"\n    else -> \"Invalid\"\n}"
+    },
+    "recursive-copyof-arrays": {
+      "title": "Recursive copyOf in Arrays",
+      "example": "// Recursive copyOf in Arrays (Kotlin 1.8)\nval original = arrayOf(\n    arrayOf(1, 2),\n    arrayOf(3, 4)\n)\n\n// Deep copy with contentDeepEquals check\nval copy = original.copyOf()\noriginal.contentDeepEquals(copy) // true\n\n// Also: contentDeepToString()\noriginal.contentDeepToString() // [[1, 2], [3, 4]]"
+    },
+    "secondary-constructor-inline-classes": {
+      "title": "Secondary Constructor Body in Inline Classes",
+      "example": "// Secondary Constructor in Inline Classes (Kotlin 1.9)\n@JvmInline\nvalue class Email(val address: String) {\n    init {\n        require(address.contains(\"@\"))\n    }\n    \n    // Secondary constructor now allowed\n    constructor(user: String, domain: String) : this(\"$user@$domain\")\n}\n\nval email = Email(\"user\", \"example.com\")"
+    },
+    "stable-builder-inference": {
+      "title": "Stable Builder Inference",
+      "example": "// Stable Builder Inference (Kotlin 1.7)\n// Type inference in builder lambdas is now stable\nval sequence = sequence {\n    yield(1)\n    yieldAll(listOf(2, 3))\n    yield(4)\n}\n\nval flow = flow {\n    emit(\"Hello\")\n    delay(100)\n    emit(\"World\")\n}"
+    },
+    "stable-kotlin-time-api": {
+      "title": "Stable kotlin.time API",
+      "example": "// Stable kotlin.time API (Kotlin 1.8)\nimport kotlin.time.*\n\nval duration = 5.seconds + 300.milliseconds\nprintln(duration.inWholeMilliseconds) // 5300\n\n// Measure time\nval elapsed = measureTime {\n    Thread.sleep(100)\n}\nprintln(elapsed) // ~100ms\n\n// Time source\nval mark = TimeSource.Monotonic.markNow()\n// ... later\nprintln(mark.elapsedNow())"
+    },
+    "suspend-functions-supertypes": {
+      "title": "Suspend Functions as Supertypes",
+      "example": "// Suspend Functions as Supertypes (Kotlin 1.6)\nclass MyClickHandler : suspend (ClickEvent) -> Unit {\n    override suspend fun invoke(event: ClickEvent) {\n        delay(100)\n        handleClick(event)\n    }\n}\n\n// Use as function type\nval handler: suspend (ClickEvent) -> Unit = MyClickHandler()"
+    },
+    "underscore-operator-type-arguments": {
+      "title": "Underscore Operator for Type Arguments",
+      "example": "// Underscore Operator for Type Arguments (Kotlin 1.7)\n// Use _ to let compiler infer type argument\nval map: Map<String, _> = mapOf(\"key\" to 42)\n// Compiler infers: Map<String, Int>\n\n// Useful with complex generics\nfun <T, R> transform(value: T, mapper: (T) -> R): R = mapper(value)\nval result: _ = transform(\"hello\") { it.length }\n// Compiler infers: Int"
+    }
+  }
+}

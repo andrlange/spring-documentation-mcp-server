@@ -408,6 +408,216 @@
         </div>
     </div>
 
+    <!-- Language Sync Scheduler -->
+    <div class="card border-0 shadow-sm mb-4" th:if="${languageEvolutionEnabled}">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0">
+                <i class="bi bi-braces" style="color: #fbbf24;"></i> Language Evolution Scheduler
+            </h5>
+            <small class="text-muted">Configure automatic Java/Kotlin language data synchronization</small>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/settings/language-scheduler}" method="post" id="languageSchedulerForm">
+                <div class="row mb-4">
+                    <!-- Enable/Disable Scheduling -->
+                    <div class="col-md-12 mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox"
+                                   id="languageSyncEnabled"
+                                   name="syncEnabled"
+                                   th:checked="${languageSchedulerSettings.syncEnabled}">
+                            <label class="form-check-label" for="languageSyncEnabled">
+                                <strong>Enable Language Sync</strong>
+                            </label>
+                        </div>
+                        <small class="form-text text-muted d-block mt-1">
+                            <i class="bi bi-info-circle"></i>
+                            When enabled, language data (Java/Kotlin versions, features, deprecations) syncs automatically.
+                        </small>
+                    </div>
+
+                    <!-- Frequency -->
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-calendar-range"></i> Sync Frequency
+                        </label>
+                        <select class="form-select" id="languageFrequency" name="frequency"
+                                onchange="updateLanguageFrequencyUI()">
+                            <option th:each="freq : ${syncFrequencies}"
+                                    th:value="${freq.name()}"
+                                    th:text="${freq.displayName}"
+                                    th:selected="${languageSchedulerSettings.frequency == freq}">
+                            </option>
+                        </select>
+                        <small class="form-text text-muted d-block mt-1">
+                            How often to sync language data
+                        </small>
+                    </div>
+
+                    <!-- Weekday Selection (for WEEKLY) -->
+                    <div class="col-md-4 mb-3" id="languageWeekdayContainer">
+                        <label class="form-label">
+                            <i class="bi bi-calendar-week"></i> Days of Week
+                        </label>
+                        <div class="btn-group-vertical w-100" role="group" id="languageWeekdayGroup">
+                            <th:block th:with="days=${ {'MON','TUE','WED','THU','FRI','SAT','SUN'} },
+                                              labels=${ {'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'} }">
+                                <div th:each="day,iter : ${days}" class="form-check">
+                                    <input class="form-check-input language-weekday-check" type="checkbox"
+                                           th:id="'langDay' + ${day}"
+                                           th:value="${day}"
+                                           th:checked="${languageSchedulerSettings.weekdays != null and languageSchedulerSettings.weekdays.contains(day)}">
+                                    <label class="form-check-label" th:for="'langDay' + ${day}"
+                                           th:text="${labels[iter.index]}">Monday</label>
+                                </div>
+                            </th:block>
+                        </div>
+                        <input type="hidden" id="languageWeekdays" name="weekdays"
+                               th:value="${languageSchedulerSettings.weekdays}">
+                    </div>
+
+                    <!-- Day of Month (for MONTHLY) -->
+                    <div class="col-md-4 mb-3 d-none" id="languageDayOfMonthContainer">
+                        <label class="form-label">
+                            <i class="bi bi-calendar-date"></i> Day of Month
+                        </label>
+                        <select class="form-select" id="languageDayOfMonth" name="dayOfMonth">
+                            <option th:each="day : ${#numbers.sequence(1, 31)}"
+                                    th:value="${day}"
+                                    th:text="${day}"
+                                    th:selected="${languageSchedulerSettings.dayOfMonth == day}">
+                            </option>
+                        </select>
+                        <small class="form-text text-muted d-block mt-1">
+                            Day 29-31 will fallback to last day for shorter months
+                        </small>
+                    </div>
+
+                    <!-- Sync Time -->
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-clock"></i> Sync Time
+                        </label>
+                        <input type="hidden" id="languageSyncTime" name="syncTime"
+                               th:value="${languageSchedulerSettings.syncTime}">
+                        <!-- 24h Format -->
+                        <div id="langTime24hContainer" class="d-flex gap-2">
+                            <select class="form-select" id="langHour24" style="width: 80px;"></select>
+                            <span class="align-self-center">:</span>
+                            <select class="form-select" id="langMinute24" style="width: 80px;"></select>
+                        </div>
+                        <!-- 12h Format -->
+                        <div id="langTime12hContainer" class="d-none d-flex gap-2">
+                            <select class="form-select" id="langHour12" style="width: 80px;"></select>
+                            <span class="align-self-center">:</span>
+                            <select class="form-select" id="langMinute12" style="width: 80px;"></select>
+                            <select class="form-select" id="langAmpm" style="width: 80px;">
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Time Format Toggle -->
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-toggle-on"></i> Time Format
+                        </label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="langTimeFormatToggle" id="langFormat24h"
+                                   value="24h" th:checked="${languageSchedulerSettings.timeFormat == '24h'}"
+                                   onchange="updateLanguageTimeFormat('24h')">
+                            <label class="btn btn-outline-primary" for="langFormat24h">24h</label>
+                            <input type="radio" class="btn-check" name="langTimeFormatToggle" id="langFormat12h"
+                                   value="12h" th:checked="${languageSchedulerSettings.timeFormat == '12h'}"
+                                   onchange="updateLanguageTimeFormat('12h')">
+                            <label class="btn btn-outline-primary" for="langFormat12h">12h</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Schedule Status -->
+                <div th:if="${languageSchedulerSettings.syncEnabled}" class="schedule-status-card mb-3">
+                    <div class="schedule-status-header">
+                        <i class="bi bi-braces me-2" style="color: #fbbf24;"></i>
+                        <span>Language Sync Status</span>
+                    </div>
+                    <div class="schedule-status-body">
+                        <div class="row g-3">
+                            <div class="col-md-6 col-lg-3">
+                                <div class="status-item">
+                                    <div class="status-label">
+                                        <i class="bi bi-power text-success me-1"></i> Status
+                                    </div>
+                                    <div class="status-value">
+                                        <span class="badge-status badge-status-active">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Active
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="status-item">
+                                    <div class="status-label">
+                                        <i class="bi bi-calendar-range text-info me-1"></i> Frequency
+                                    </div>
+                                    <div class="status-value">
+                                        <span th:text="${languageSchedulerSettings.frequency.displayName}">Daily</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="status-item">
+                                    <div class="status-label">
+                                        <i class="bi bi-clock-history text-warning me-1"></i> Last Run
+                                    </div>
+                                    <div class="status-value">
+                                        <span th:if="${languageSchedulerSettings.lastSyncRun}"
+                                              th:text="${#temporals.format(languageSchedulerSettings.lastSyncRun, 'MMM dd, HH:mm')}">
+                                            Never
+                                        </span>
+                                        <span class="text-muted-custom" th:unless="${languageSchedulerSettings.lastSyncRun}">
+                                            Never
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="status-item">
+                                    <div class="status-label">
+                                        <i class="bi bi-calendar-event text-primary me-1"></i> Next Run
+                                    </div>
+                                    <div class="status-value">
+                                        <span class="text-primary-custom" th:if="${languageSchedulerSettings.nextSyncRun}"
+                                              th:text="${#temporals.format(languageSchedulerSettings.nextSyncRun, 'MMM dd, HH:mm')}">
+                                            Calculating...
+                                        </span>
+                                        <span class="text-muted-custom" th:unless="${languageSchedulerSettings.nextSyncRun}">
+                                            Not scheduled
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-calendar-check"></i> Save Language Scheduler
+                    </button>
+                </div>
+            </form>
+
+            <div class="alert alert-info border-0 mt-3 mb-0">
+                <i class="bi bi-info-circle-fill text-warning"></i>
+                <strong>Note:</strong> Language sync fetches Java JEP data and Kotlin KEP data from official sources.
+                Daily sync is recommended for development environments.
+            </div>
+        </div>
+    </div>
+
     <!-- API Key Management -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white border-bottom">
@@ -1068,6 +1278,186 @@
                 alert('Failed to delete API key');
             }
         });
+
+        // ==================== Language Scheduler Functions ====================
+
+        // Initialize language scheduler time dropdowns
+        function initializeLanguageTimeDropdowns() {
+            const langSyncTimeEl = document.getElementById('languageSyncTime');
+            if (!langSyncTimeEl) return; // Language scheduler not enabled
+
+            const syncTimeValue = langSyncTimeEl.value || '04:00';
+            const [hours24, minutes] = syncTimeValue.split(':').map(Number);
+
+            // Populate 24h hour dropdown
+            const langHour24Select = document.getElementById('langHour24');
+            langHour24Select.innerHTML = '';
+            for (let i = 0; i < 24; i++) {
+                const option = document.createElement('option');
+                option.value = String(i).padStart(2, '0');
+                option.textContent = String(i).padStart(2, '0');
+                if (i === hours24) option.selected = true;
+                langHour24Select.appendChild(option);
+            }
+
+            // Populate 24h minute dropdown
+            const langMinute24Select = document.getElementById('langMinute24');
+            langMinute24Select.innerHTML = '';
+            for (let i = 0; i < 60; i++) {
+                const option = document.createElement('option');
+                option.value = String(i).padStart(2, '0');
+                option.textContent = String(i).padStart(2, '0');
+                if (i === minutes) option.selected = true;
+                langMinute24Select.appendChild(option);
+            }
+
+            // Populate 12h hour dropdown
+            const langHour12Select = document.getElementById('langHour12');
+            langHour12Select.innerHTML = '';
+            for (let i = 1; i <= 12; i++) {
+                const option = document.createElement('option');
+                option.value = String(i).padStart(2, '0');
+                option.textContent = String(i).padStart(2, '0');
+                langHour12Select.appendChild(option);
+            }
+
+            // Populate 12h minute dropdown
+            const langMinute12Select = document.getElementById('langMinute12');
+            langMinute12Select.innerHTML = '';
+            for (let i = 0; i < 60; i++) {
+                const option = document.createElement('option');
+                option.value = String(i).padStart(2, '0');
+                option.textContent = String(i).padStart(2, '0');
+                langMinute12Select.appendChild(option);
+            }
+
+            // Convert and set 12h values
+            const isPM = hours24 >= 12;
+            const hours12 = hours24 === 0 ? 12 : (hours24 > 12 ? hours24 - 12 : hours24);
+            langHour12Select.value = String(hours12).padStart(2, '0');
+            langMinute12Select.value = String(minutes).padStart(2, '0');
+            document.getElementById('langAmpm').value = isPM ? 'PM' : 'AM';
+
+            // Add change listeners
+            [langHour24Select, langMinute24Select, langHour12Select, langMinute12Select, document.getElementById('langAmpm')].forEach(select => {
+                select.addEventListener('change', updateLanguageHiddenTimeInput);
+            });
+
+            // Add weekday checkbox listeners
+            document.querySelectorAll('.language-weekday-check').forEach(checkbox => {
+                checkbox.addEventListener('change', updateLanguageWeekdaysInput);
+            });
+        }
+
+        // Update hidden languageSyncTime input
+        function updateLanguageHiddenTimeInput() {
+            const currentFormatEl = document.querySelector('input[name="langTimeFormatToggle"]:checked');
+            if (!currentFormatEl) return;
+            const currentFormat = currentFormatEl.value;
+            let hours24, minutes;
+
+            if (currentFormat === '24h') {
+                hours24 = document.getElementById('langHour24').value;
+                minutes = document.getElementById('langMinute24').value;
+            } else {
+                const hours12 = parseInt(document.getElementById('langHour12').value);
+                const ampm = document.getElementById('langAmpm').value;
+                minutes = document.getElementById('langMinute12').value;
+
+                if (ampm === 'AM') {
+                    hours24 = hours12 === 12 ? '00' : String(hours12).padStart(2, '0');
+                } else {
+                    hours24 = hours12 === 12 ? '12' : String(hours12 + 12).padStart(2, '0');
+                }
+            }
+
+            document.getElementById('languageSyncTime').value = `${hours24}:${minutes}`;
+        }
+
+        // Update weekdays hidden input
+        function updateLanguageWeekdaysInput() {
+            const checked = Array.from(document.querySelectorAll('.language-weekday-check:checked'))
+                .map(cb => cb.value);
+            document.getElementById('languageWeekdays').value = checked.join(',');
+        }
+
+        // Toggle language time pickers
+        function toggleLanguageTimePickers(format) {
+            const time24Container = document.getElementById('langTime24hContainer');
+            const time12Container = document.getElementById('langTime12hContainer');
+            if (!time24Container || !time12Container) return;
+
+            if (format === '24h') {
+                time24Container.classList.remove('d-none');
+                time12Container.classList.add('d-none');
+            } else {
+                time24Container.classList.add('d-none');
+                time12Container.classList.remove('d-none');
+            }
+            updateLanguageHiddenTimeInput();
+        }
+
+        // Update language time format (AJAX)
+        async function updateLanguageTimeFormat(format) {
+            try {
+                const formData = new FormData();
+                formData.append('timeFormat', format);
+
+                const csrfToken = getCsrfToken();
+                if (csrfToken) {
+                    formData.append('_csrf', csrfToken);
+                }
+
+                const response = await fetch('/settings/language-scheduler/time-format', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    toggleLanguageTimePickers(format);
+                }
+            } catch (error) {
+                console.error('Error updating language time format:', error);
+            }
+        }
+
+        // Update UI based on frequency selection
+        function updateLanguageFrequencyUI() {
+            const frequency = document.getElementById('languageFrequency').value;
+            const weekdayContainer = document.getElementById('languageWeekdayContainer');
+            const dayOfMonthContainer = document.getElementById('languageDayOfMonthContainer');
+
+            if (frequency === 'DAILY') {
+                weekdayContainer.classList.add('d-none');
+                dayOfMonthContainer.classList.add('d-none');
+            } else if (frequency === 'WEEKLY') {
+                weekdayContainer.classList.remove('d-none');
+                dayOfMonthContainer.classList.add('d-none');
+            } else if (frequency === 'MONTHLY') {
+                weekdayContainer.classList.add('d-none');
+                dayOfMonthContainer.classList.remove('d-none');
+            }
+        }
+
+        // Initialize language scheduler on page load
+        (function() {
+            const origInit = window.onload;
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize language scheduler if present
+                if (document.getElementById('languageSyncTime')) {
+                    initializeLanguageTimeDropdowns();
+
+                    // Set initial time picker visibility
+                    const langFormatEl = document.querySelector('input[name="langTimeFormatToggle"]:checked');
+                    if (langFormatEl) {
+                        toggleLanguageTimePickers(langFormatEl.value);
+                    }
+
+                    // Set initial frequency UI
+                    updateLanguageFrequencyUI();
+                }
+            });
+        })();
     </script>
 </div>
 </body>

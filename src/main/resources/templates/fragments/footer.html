@@ -5,10 +5,10 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-6">
-                    <span class="text-muted">Spring MCP Server v1.0.0</span>
+                    <span class="text-muted" th:text="${appName + ' v' + appVersion}">Spring MCP Server v1.0.0</span>
                 </div>
                 <div class="col-md-6 text-end">
-                    <span class="text-muted">Powered by Spring Boot 3.5.7</span>
+                    <span class="text-muted" th:text="'Powered by Spring Boot ' + ${springBootVersion}">Powered by Spring Boot 3.5.8</span>
                 </div>
             </div>
         </div>
