@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title>Language Evolution - Spring MCP Server</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="bi bi-braces" style="color: #fbbf24;"></i>
+            Language Evolution
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2" sec:authorize="hasRole('ADMIN')">
+                <button type="button" class="btn btn-sm btn-outline-light" id="syncLanguagesBtn">
+                    <i class="bi bi-arrow-repeat"></i> Sync Now
+                </button>
+            </div>
+            <div class="btn-group">
+                <span class="badge bg-info me-2" th:if="${lastSyncRun != null}">
+                    Last sync: <span th:text="${#temporals.format(lastSyncRun, 'yyyy-MM-dd HH:mm')}">2024-01-01</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="text-primary" th:text="${javaVersionCount}">0</h3>
+                    <small class="text-muted">Java Versions</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="text-info" th:text="${kotlinVersionCount}">0</h3>
+                    <small class="text-muted">Kotlin Versions</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="text-success" th:text="${stats.get('new')}">0</h3>
+                    <small class="text-muted">New Features</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="text-warning" th:text="${stats.get('deprecated')}">0</h3>
+                    <small class="text-muted">Deprecated</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="text-danger" th:text="${stats.get('removed')}">0</h3>
+                    <small class="text-muted">Removed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 th:text="${stats.get('total')}">0</h3>
+                    <small class="text-muted">Total Features</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="get" th:action="@{/languages}" class="row g-3 align-items-end">
+                        <div class="col-md-2">
+                            <label for="languageFilter" class="form-label fw-semibold">
+                                <i class="bi bi-code-slash text-spring-green"></i> Language
+                            </label>
+                            <select id="languageFilter" name="language" class="form-select">
+                                <option value="" th:selected="${selectedLanguage == null}">All Languages</option>
+                                <option value="JAVA" th:selected="${selectedLanguage == 'JAVA'}">Java</option>
+                                <option value="KOTLIN" th:selected="${selectedLanguage == 'KOTLIN'}">Kotlin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="versionFilter" class="form-label fw-semibold">
+                                <i class="bi bi-tags text-spring-green"></i> Version
+                            </label>
+                            <select id="versionFilter" name="version" class="form-select">
+                                <option value="" th:selected="${selectedVersion == null}">All Versions</option>
+                                <optgroup label="Java">
+                                    <option th:each="v : ${javaVersions}"
+                                            th:value="${v.version}"
+                                            th:text="${v.displayName + (v.isLts ? ' (LTS)' : '')}"
+                                            th:selected="${selectedVersion == v.version}">
+                                    </option>
+                                </optgroup>
+                                <optgroup label="Kotlin">
+                                    <option th:each="v : ${kotlinVersions}"
+                                            th:value="${v.version}"
+                                            th:text="${v.displayName}"
+                                            th:selected="${selectedVersion == v.version}">
+                                    </option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="statusFilter" class="form-label fw-semibold">
+                                <i class="bi bi-funnel text-spring-green"></i> Status
+                            </label>
+                            <select id="statusFilter" name="status" class="form-select">
+                                <option value="" th:selected="${selectedStatus == null}">All Statuses</option>
+                                <option th:each="s : ${statuses}"
+                                        th:value="${s.name()}"
+                                        th:text="${s.displayName}"
+                                        th:selected="${selectedStatus == s.name()}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="categoryFilter" class="form-label fw-semibold">
+                                <i class="bi bi-collection text-spring-green"></i> Category
+                            </label>
+                            <select id="categoryFilter" name="category" class="form-select">
+                                <option value="" th:selected="${selectedCategory == null}">All Categories</option>
+                                <option th:each="c : ${categories}"
+                                        th:value="${c}"
+                                        th:text="${c}"
+                                        th:selected="${selectedCategory == c}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="searchInput" class="form-label fw-semibold">
+                                <i class="bi bi-search text-spring-green"></i> Search
+                            </label>
+                            <input type="text" id="searchInput" name="search" class="form-control"
+                                   placeholder="e.g. records, virtual threads..."
+                                   th:value="${searchTerm}">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end gap-2">
+                            <button type="submit" class="btn btn-spring-green">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                            <a th:href="@{/languages}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg"></i> Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LTS Versions Quick Links -->
+    <div class="row mb-4" th:if="${!#lists.isEmpty(ltsVersions)}">
+        <div class="col-12">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <span class="text-muted small">LTS Versions:</span>
+                <th:block th:each="v : ${ltsVersions}">
+                    <a th:href="@{/languages(language='JAVA', version=${v.version})}"
+                       class="badge bg-success text-decoration-none"
+                       th:text="${'Java ' + v.version}">Java 21</a>
+                </th:block>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Filters Display -->
+    <div class="row mb-3" th:if="${selectedLanguage != null or selectedVersion != null or selectedStatus != null or selectedCategory != null or searchTerm != null}">
+        <div class="col-12">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <span class="text-muted small me-2"><i class="bi bi-funnel-fill"></i> Active filters:</span>
+                <span th:if="${selectedLanguage != null}" class="badge bg-primary">
+                    Language: <span th:text="${selectedLanguage}">JAVA</span>
+                    <a th:href="@{/languages(version=${selectedVersion}, status=${selectedStatus}, category=${selectedCategory}, search=${searchTerm})}" class="text-white ms-1">&times;</a>
+                </span>
+                <span th:if="${selectedVersion != null}" class="badge bg-secondary">
+                    Version: <span th:text="${selectedVersion}">21</span>
+                    <a th:href="@{/languages(language=${selectedLanguage}, status=${selectedStatus}, category=${selectedCategory}, search=${searchTerm})}" class="text-white ms-1">&times;</a>
+                </span>
+                <span th:if="${selectedStatus != null}" class="badge bg-info">
+                    Status: <span th:text="${selectedStatus}">NEW</span>
+                    <a th:href="@{/languages(language=${selectedLanguage}, version=${selectedVersion}, category=${selectedCategory}, search=${searchTerm})}" class="text-white ms-1">&times;</a>
+                </span>
+                <span th:if="${selectedCategory != null}" class="badge bg-warning text-dark">
+                    Category: <span th:text="${selectedCategory}">Language</span>
+                    <a th:href="@{/languages(language=${selectedLanguage}, version=${selectedVersion}, status=${selectedStatus}, search=${searchTerm})}" class="text-dark ms-1">&times;</a>
+                </span>
+                <span th:if="${searchTerm != null}" class="badge bg-spring-green">
+                    Search: "<span th:text="${searchTerm}">records</span>"
+                    <a th:href="@{/languages(language=${selectedLanguage}, version=${selectedVersion}, status=${selectedStatus}, category=${selectedCategory})}" class="text-white ms-1">&times;</a>
+                </span>
+                <a th:href="@{/languages}" class="btn btn-sm btn-outline-secondary ms-2">
+                    <i class="bi bi-x-lg"></i> Clear All
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${#lists.isEmpty(features)}" class="text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-braces display-1 text-muted"></i>
+        </div>
+        <h3 class="text-muted mb-3">No Features Found</h3>
+        <p class="text-muted mb-4">
+            Try adjusting your filters or search term.
+        </p>
+        <a th:href="@{/languages}" class="btn btn-spring-green">
+            <i class="bi bi-arrow-counterclockwise"></i> Clear Filters
+        </a>
+    </div>
+
+    <!-- Features Table -->
+    <div th:if="${!#lists.isEmpty(features)}" class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Feature</th>
+                        <th scope="col">Language</th>
+                        <th scope="col">Version</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">JEP/KEP</th>
+                        <th scope="col" class="text-center">Patterns</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <th:block th:each="feature, iterStat : ${features}">
+                    <tr class="feature-row" th:data-feature-id="${feature.id}">
+                        <td>
+                            <div class="d-flex align-items-start">
+                                <button type="button"
+                                        class="btn btn-sm btn-link p-0 me-2 expand-patterns-btn"
+                                        th:if="${feature.codeExample != null or @languageCodePatternRepository.existsByFeatureId(feature.id)}"
+                                        th:data-feature-id="${feature.id}"
+                                        th:data-row-index="${iterStat.index}"
+                                        title="Show code examples and patterns">
+                                    <i class="bi bi-chevron-right expand-icon"></i>
+                                </button>
+                                <div>
+                                    <div class="fw-semibold" th:text="${feature.featureName}">Feature Name</div>
+                                    <small class="text-muted" th:text="${#strings.abbreviate(feature.description, 80)}">Description</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${feature.languageVersion.language.name() == 'JAVA'} ? 'bg-primary' : 'bg-info'"
+                                  th:text="${feature.languageVersion.language.displayName}">Java</span>
+                        </td>
+                        <td>
+                            <span th:text="${feature.languageVersion.version}">21</span>
+                            <span th:if="${feature.languageVersion.isLts}" class="badge bg-success-subtle text-success ms-1">LTS</span>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${'bg-' + feature.status.badgeClass}"
+                                  th:title="${feature.status.displayName}">
+                                <i th:class="${'bi ' + feature.status.iconClass}"></i>
+                                <span th:text="${feature.status.displayName}">NEW</span>
+                            </span>
+                        </td>
+                        <td th:text="${feature.category ?: '-'}">Pattern Matching</td>
+                        <td>
+                            <a th:if="${feature.jepNumber != null}"
+                               th:href="${feature.enhancementProposalUrl}"
+                               th:text="${'JEP ' + feature.jepNumber}"
+                               target="_blank"
+                               class="text-decoration-none">JEP 441</a>
+                            <a th:if="${feature.kepNumber != null}"
+                               th:href="${feature.enhancementProposalUrl}"
+                               th:text="${'KEP-' + feature.kepNumber}"
+                               target="_blank"
+                               class="text-decoration-none">KEP-123</a>
+                            <span th:if="${feature.jepNumber == null and feature.kepNumber == null}">-</span>
+                        </td>
+                        <td class="text-center">
+                            <span th:if="${@languageCodePatternRepository.existsByFeatureId(feature.id)}"
+                                  class="badge bg-spring-green"
+                                  th:text="${@languageCodePatternRepository.countByFeatureId(feature.id)}">0</span>
+                            <span th:unless="${@languageCodePatternRepository.existsByFeatureId(feature.id)}"
+                                  class="text-muted">-</span>
+                        </td>
+                    </tr>
+                    <!-- Expandable Code Examples and Patterns Row -->
+                    <tr th:id="${'patterns-row-' + iterStat.index}"
+                        class="patterns-row d-none"
+                        th:if="${feature.codeExample != null or @languageCodePatternRepository.existsByFeatureId(feature.id)}">
+                        <td colspan="7" class="bg-light p-0">
+                            <div th:id="${'patterns-content-' + iterStat.index}" class="patterns-content p-3">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm text-spring-green" role="status">
+                                        <span class="visually-hidden">Loading patterns...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    </th:block>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer text-muted small">
+            Showing <span th:text="${#lists.size(features)}">0</span> features
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<div layout:fragment="scripts">
+<script th:inline="javascript">
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.querySelector('form[action*="/languages"]');
+
+    // Auto-submit on filter dropdown change
+    ['languageFilter', 'versionFilter', 'statusFilter', 'categoryFilter'].forEach(filterId => {
+        const filterElement = document.getElementById(filterId);
+        if (filterElement) {
+            filterElement.addEventListener('change', function() {
+                filterForm.submit();
+            });
+        }
+    });
+
+    // Submit search on Enter key
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                filterForm.submit();
+            }
+        });
+    }
+
+    // Sync Languages Button
+    const syncBtn = document.getElementById('syncLanguagesBtn');
+    if (syncBtn) {
+        syncBtn.addEventListener('click', function() {
+            syncBtn.disabled = true;
+            syncBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Syncing...';
+
+            fetch('/languages/sync', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.content || ''
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Sync completed successfully!');
+                    location.reload();
+                } else {
+                    alert('Sync failed: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            })
+            .finally(() => {
+                syncBtn.disabled = false;
+                syncBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Sync Now';
+            });
+        });
+    }
+
+    // Track loaded patterns to avoid re-fetching
+    const loadedPatterns = new Set();
+
+    // Expand/Collapse Code Patterns
+    document.querySelectorAll('.expand-patterns-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const featureId = this.dataset.featureId;
+            const rowIndex = this.dataset.rowIndex;
+            const patternsRow = document.getElementById(`patterns-row-${rowIndex}`);
+            const patternsContent = document.getElementById(`patterns-content-${rowIndex}`);
+            const icon = this.querySelector('.expand-icon');
+
+            if (patternsRow.classList.contains('d-none')) {
+                // Show patterns row
+                patternsRow.classList.remove('d-none');
+                icon.classList.remove('bi-chevron-right');
+                icon.classList.add('bi-chevron-down');
+
+                // Load feature details if not already loaded
+                if (!loadedPatterns.has(featureId)) {
+                    fetch(`/languages/feature/${featureId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            loadedPatterns.add(featureId);
+                            let html = '';
+
+                            // Show code example if available (prominently displayed)
+                            if (data.codeExample) {
+                                html += `
+                                    <div class="mb-4">
+                                        <h6 class="mb-3"><i class="bi bi-lightning-charge text-warning"></i> Quick Example</h6>
+                                        <pre class="p-3 rounded" style="background-color: #1e1e1e; color: #d4d4d4; font-size: 0.85rem;"><code>${escapeHtml(data.codeExample)}</code></pre>
+                                    </div>
+                                `;
+                            }
+
+                            // Show patterns if available
+                            const patterns = data.patterns || [];
+                            if (patterns.length > 0) {
+                                html += `<h6 class="mb-3"><i class="bi bi-code-square text-spring-green"></i> Migration Patterns (${patterns.length})</h6>`;
+                                patterns.forEach((pattern, index) => {
+                                    html += `
+                                        <div class="card mb-2 ${index > 0 ? 'mt-3' : ''}">
+                                            <div class="card-header py-2 bg-white">
+                                                <strong>${escapeHtml(pattern.explanation || 'Migration Pattern ' + (index + 1))}</strong>
+                                                ${pattern.minVersion ? `<span class="badge bg-info ms-2">Since ${pattern.minVersion}</span>` : ''}
+                                            </div>
+                                            <div class="card-body py-2">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center mb-1">
+                                                            <i class="bi bi-x-circle text-danger me-1"></i>
+                                                            <small class="fw-semibold text-danger">Old Pattern</small>
+                                                        </div>
+                                                        <pre class="p-2 rounded mb-0 small" style="background-color: #4a1c1c; color: #f8d7da;"><code>${escapeHtml(pattern.oldPattern || 'N/A')}</code></pre>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center mb-1">
+                                                            <i class="bi bi-check-circle text-success me-1"></i>
+                                                            <small class="fw-semibold text-success">New Pattern</small>
+                                                        </div>
+                                                        <pre class="p-2 rounded mb-0 small" style="background-color: #1c3a1c; color: #d1e7dd;"><code>${escapeHtml(pattern.newPattern || 'N/A')}</code></pre>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                });
+                            }
+
+                            // If no content available
+                            if (!html) {
+                                html = `
+                                    <div class="text-muted text-center py-2">
+                                        <i class="bi bi-info-circle"></i> No code examples or patterns available for this feature.
+                                    </div>
+                                `;
+                            }
+
+                            patternsContent.innerHTML = html;
+                        })
+                        .catch(error => {
+                            patternsContent.innerHTML = `
+                                <div class="alert alert-danger mb-0">
+                                    <i class="bi bi-exclamation-triangle"></i> Error loading feature details
+                                </div>
+                            `;
+                        });
+                }
+            } else {
+                // Hide patterns row
+                patternsRow.classList.add('d-none');
+                icon.classList.remove('bi-chevron-down');
+                icon.classList.add('bi-chevron-right');
+            }
+        });
+    });
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+});
+</script>
+</div>
+</body>
+</html>

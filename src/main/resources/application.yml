@@ -1,3 +1,12 @@
+# Application Info
+info:
+  app:
+    name: Spring MCP Server
+    version: 1.2.0
+    description: MCP Server providing comprehensive access to Spring ecosystem documentation
+  spring-boot:
+    version: 3.5.8
+
 spring:
   application:
     name: spring-mcp-server
@@ -59,11 +68,11 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.1.0"
+        version: "1.2.0"
         instructions: |
           Spring Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 
-          Total: 17 tools available (10 documentation + 7 migration)
+          Total: 23 tools available (10 documentation + 7 migration + 6 language evolution)
 
           Documentation Tools (10):
           1. searchSpringDocs: Search across all Spring documentation
@@ -86,6 +95,14 @@ spring:
           16. getDeprecationReplacement: Find replacement for deprecated APIs
           17. checkVersionCompatibility: Check dependency compatibility
 
+          Language Evolution Tools (6) - Language feature tracking:
+          18. getLanguageVersions: List all versions for Java or Kotlin
+          19. getLanguageFeatures: Get features for a language version with filters
+          20. getModernPatterns: Get old vs new code patterns for a feature
+          21. getLanguageVersionDiff: Compare features between two versions
+          22. getSpringBootLanguageRequirements: Get language requirements for Spring Boot
+          23. searchLanguageFeatures: Search language features by keyword
+
           SSE endpoint: /mcp/spring/sse
           Message endpoint: /mcp/spring/messages
 
@@ -100,6 +117,7 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  shutdown: graceful  # Enable graceful shutdown
   error:
     include-message: always
     include-binding-errors: always
@@ -108,6 +126,10 @@ server:
   servlet:
     session:
       timeout: 30m
+
+# Lifecycle configuration - limit shutdown wait time
+spring.lifecycle:
+  timeout-per-shutdown-phase: 10s  # Don't wait more than 10 seconds for connections to close
 
 # MCP Server Configuration
 mcp:
@@ -185,6 +207,32 @@ mcp:
         license-url: "https://docs.openrewrite.org/licensing/openrewrite-licensing"
         repository: "https://github.com/openrewrite/rewrite-spring"
         notice: "Recipe data sourced from OpenRewrite project. Not for commercial redistribution."
+
+    # Language Evolution Feature Configuration
+    language-evolution:
+      enabled: ${LANGUAGE_EVOLUTION_ENABLED:true}
+      sync:
+        enabled: ${LANGUAGE_SYNC_ENABLED:true}
+        default-frequency: DAILY
+        default-time: "04:00"
+      sources:
+        java:
+          jep-base-url: "https://openjdk.org/jeps"
+          oracle-docs: "https://docs.oracle.com/en/java"
+          min-version: 8
+        kotlin:
+          kep-base-url: "https://github.com/Kotlin/KEEP/tree/master/proposals"
+          docs: "https://kotlinlang.org/docs"
+          min-version: "1.6"
+      attribution:
+        java:
+          name: "OpenJDK"
+          license: "GPL-2.0"
+          repository: "https://github.com/openjdk/jdk"
+        kotlin:
+          name: "Kotlin"
+          license: "Apache-2.0"
+          repository: "https://github.com/JetBrains/kotlin"
 
 # Actuator for health checks and monitoring
 management:

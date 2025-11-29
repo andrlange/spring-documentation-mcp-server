@@ -1,6 +1,9 @@
 package com.spring.mcp.controller.web;
 
+import com.spring.mcp.config.LanguageEvolutionFeatureConfig;
 import com.spring.mcp.config.OpenRewriteFeatureConfig;
+import com.spring.mcp.service.language.LanguageSyncService;
+import com.spring.mcp.service.scheduler.LanguageSchedulerService;
 import com.spring.mcp.service.sync.CodeExamplesSyncService;
 import com.spring.mcp.service.sync.ComprehensiveSyncService;
 import com.spring.mcp.service.sync.ProjectSyncService;
@@ -50,6 +53,10 @@ public class SyncController {
     // OpenRewrite recipe sync (optional - depends on feature being enabled)
     private final OpenRewriteFeatureConfig openRewriteFeatureConfig;
     private final Optional<RecipeSyncService> recipeSyncService;
+
+    // Language Evolution sync (optional - depends on feature being enabled)
+    private final LanguageEvolutionFeatureConfig languageEvolutionFeatureConfig;
+    private final Optional<LanguageSchedulerService> languageSchedulerService;
 
     /**
      * Show sync page with options.
@@ -368,6 +375,55 @@ public class SyncController {
 
         } catch (Exception e) {
             String errorMsg = "Error during recipe sync: " + e.getMessage();
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+            log.error(errorMsg, e);
+        }
+
+        return "redirect:/sync";
+    }
+
+    /**
+     * Trigger manual sync of language evolution data (Java/Kotlin versions, features, patterns).
+     * Only available when Language Evolution feature is enabled.
+     *
+     * @param redirectAttributes for flash messages
+     * @return redirect to sync page
+     */
+    @PostMapping("/languages")
+    public String syncLanguages(RedirectAttributes redirectAttributes) {
+        log.info("Manual languages sync triggered");
+
+        if (!languageEvolutionFeatureConfig.isEnabled()) {
+            redirectAttributes.addFlashAttribute("error", "Language Evolution feature is disabled");
+            return "redirect:/sync";
+        }
+
+        if (languageSchedulerService.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Language scheduler service is not available");
+            return "redirect:/sync";
+        }
+
+        try {
+            LanguageSyncService.SyncResult result = languageSchedulerService.get().triggerManualSync();
+
+            if (result.isSuccess()) {
+                String message = String.format(
+                    "Languages sync completed successfully! Updated %d versions, %d features, %d compatibility mappings, %d code examples",
+                    result.getVersionsUpdated(),
+                    result.getFeaturesUpdated(),
+                    result.getCompatibilityUpdated(),
+                    result.getCodeExamplesUpdated()
+                );
+                redirectAttributes.addFlashAttribute("success", message);
+                log.info(message);
+            } else {
+                String errorMsg = "Languages sync completed with errors: " + result.getErrorMessage();
+                redirectAttributes.addFlashAttribute("error", errorMsg);
+                log.error(errorMsg);
+            }
+
+        } catch (Exception e) {
+            String errorMsg = "Error during languages sync: " + e.getMessage();
             redirectAttributes.addFlashAttribute("error", errorMsg);
             log.error(errorMsg, e);
         }

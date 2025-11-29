@@ -1,6 +1,9 @@
 package com.spring.mcp.controller.web;
 
+import com.spring.mcp.config.LanguageEvolutionFeatureConfig;
 import com.spring.mcp.config.OpenRewriteFeatureConfig;
+import com.spring.mcp.model.enums.FeatureStatus;
+import com.spring.mcp.model.enums.LanguageType;
 import com.spring.mcp.repository.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +47,9 @@ public class DashboardController {
     private final OpenRewriteFeatureConfig openRewriteFeatureConfig;
     private final MigrationRecipeRepository migrationRecipeRepository;
     private final MigrationTransformationRepository migrationTransformationRepository;
+    private final LanguageEvolutionFeatureConfig languageEvolutionFeatureConfig;
+    private final LanguageVersionRepository languageVersionRepository;
+    private final LanguageFeatureRepository languageFeatureRepository;
 
     /**
      * Display the dashboard page with statistics.
@@ -133,6 +139,30 @@ public class DashboardController {
 
                 log.debug("Recipe stats - Recipes: {}, Transformations: {}, Breaking: {}",
                     recipeCount, transformationCount, breakingChangeCount);
+            }
+
+            // Language Evolution Statistics (conditional on feature flag)
+            model.addAttribute("languageEvolutionEnabled", languageEvolutionFeatureConfig.isEnabled());
+            if (languageEvolutionFeatureConfig.isEnabled()) {
+                long javaVersionCount = languageVersionRepository.countByLanguage(LanguageType.JAVA);
+                long kotlinVersionCount = languageVersionRepository.countByLanguage(LanguageType.KOTLIN);
+                long newFeaturesCount = languageFeatureRepository.countByStatus(FeatureStatus.NEW);
+                long deprecatedFeaturesCount = languageFeatureRepository.countByStatus(FeatureStatus.DEPRECATED);
+                long removedFeaturesCount = languageFeatureRepository.countByStatus(FeatureStatus.REMOVED);
+                long previewFeaturesCount = languageFeatureRepository.countByStatus(FeatureStatus.PREVIEW);
+                long totalFeaturesCount = languageFeatureRepository.count();
+
+                model.addAttribute("javaVersionCount", javaVersionCount);
+                model.addAttribute("kotlinVersionCount", kotlinVersionCount);
+                model.addAttribute("newFeaturesCount", newFeaturesCount);
+                model.addAttribute("deprecatedFeaturesCount", deprecatedFeaturesCount);
+                model.addAttribute("removedFeaturesCount", removedFeaturesCount);
+                model.addAttribute("previewFeaturesCount", previewFeaturesCount);
+                model.addAttribute("totalFeaturesCount", totalFeaturesCount);
+
+                log.debug("Language stats - Java: {}, Kotlin: {}, New: {}, Deprecated: {}, Removed: {}, Total: {}",
+                    javaVersionCount, kotlinVersionCount, newFeaturesCount, deprecatedFeaturesCount,
+                    removedFeaturesCount, totalFeaturesCount);
             }
 
             // Set active page for sidebar navigation

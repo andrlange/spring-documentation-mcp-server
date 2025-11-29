@@ -185,6 +185,86 @@
             </div>
         </div>
 
+        <!-- Language Evolution Statistics Row (conditional on feature flag) -->
+        <div class="row g-4 mb-4" th:if="${languageEvolutionEnabled}">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-code-slash text-info"></i> Language Evolution
+                            <a th:href="@{/languages}" class="btn btn-sm btn-outline-info float-end">
+                                <i class="bi bi-arrow-right"></i> View All
+                            </a>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <!-- Java Versions -->
+                            <div class="col-xl-2 col-md-4 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm bg-warning-light mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-cup-hot-fill text-warning fs-5"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${javaVersionCount}">0</h4>
+                                    <small class="text-muted">Java Versions</small>
+                                </div>
+                            </div>
+                            <!-- Kotlin Versions -->
+                            <div class="col-xl-2 col-md-4 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm bg-primary-light mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-filetype-kt text-primary fs-5"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${kotlinVersionCount}">0</h4>
+                                    <small class="text-muted">Kotlin Versions</small>
+                                </div>
+                            </div>
+                            <!-- New Features -->
+                            <div class="col-xl-2 col-md-4 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm bg-success-light mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-plus-circle-fill text-success fs-5"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${newFeaturesCount}">0</h4>
+                                    <small class="text-muted">New Features</small>
+                                </div>
+                            </div>
+                            <!-- Preview Features -->
+                            <div class="col-xl-2 col-md-4 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm bg-info-light mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-eye-fill text-info fs-5"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${previewFeaturesCount}">0</h4>
+                                    <small class="text-muted">Preview</small>
+                                </div>
+                            </div>
+                            <!-- Deprecated Features -->
+                            <div class="col-xl-2 col-md-4 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm bg-warning-light mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${deprecatedFeaturesCount}">0</h4>
+                                    <small class="text-muted">Deprecated</small>
+                                </div>
+                            </div>
+                            <!-- Total Features -->
+                            <div class="col-xl-2 col-md-4 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm bg-secondary mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background-color: rgba(108, 117, 125, 0.1) !important;">
+                                        <i class="bi bi-collection-fill text-secondary fs-5"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${totalFeaturesCount}">0</h4>
+                                    <small class="text-muted">Total Features</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Secondary Statistics Row -->
         <div class="row g-4 mb-4">
             <!-- Users Card -->

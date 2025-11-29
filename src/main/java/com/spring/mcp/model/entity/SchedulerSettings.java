@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Entity representing scheduler settings for automatic synchronization.
@@ -55,6 +58,20 @@ public class SchedulerSettings {
     @Column(name = "next_sync_run")
     private LocalDateTime nextSyncRun;
 
+    /**
+     * Comma-separated weekday codes (MON,TUE,WED,THU,FRI,SAT,SUN)
+     */
+    @Column(name = "weekdays", length = 30)
+    @Builder.Default
+    private String weekdays = "MON,TUE,WED,THU,FRI,SAT,SUN";
+
+    /**
+     * Whether all weekdays are selected
+     */
+    @Column(name = "all_weekdays")
+    @Builder.Default
+    private Boolean allWeekdays = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -70,5 +87,30 @@ public class SchedulerSettings {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Get selected weekdays as a Set
+     */
+    public Set<String> getWeekdaySet() {
+        if (weekdays == null || weekdays.isBlank()) {
+            return Set.of();
+        }
+        return Arrays.stream(weekdays.split(","))
+                .map(String::trim)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Check if sync should run on a specific weekday
+     *
+     * @param weekday weekday code (MON, TUE, etc.)
+     * @return true if sync should run on this day
+     */
+    public boolean shouldRunOnWeekday(String weekday) {
+        if (Boolean.TRUE.equals(allWeekdays)) {
+            return true;
+        }
+        return getWeekdaySet().contains(weekday.toUpperCase());
     }
 }
