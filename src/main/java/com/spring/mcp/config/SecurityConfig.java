@@ -99,7 +99,7 @@ public class SecurityConfig {
      */
     @Bean
     public JdbcUserDetailsManager userDetailsManager() {
-        JdbcUserDetailsManager manager = new JdbcUserDetailsManager(dataSource);
+        var manager = new JdbcUserDetailsManager(dataSource);
 
         // Custom query for loading user by username
         // Returns: username, password, enabled
@@ -117,7 +117,6 @@ public class SecurityConfig {
 
         // Optional: Custom queries for groups (not used in this project)
         // manager.setGroupAuthoritiesByUsernameQuery(...);
-
         return manager;
     }
 }

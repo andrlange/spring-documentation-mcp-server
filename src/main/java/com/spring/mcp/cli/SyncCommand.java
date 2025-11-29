@@ -21,9 +21,9 @@ public class SyncCommand implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        log.info("=" + "=".repeat(79));
+        log.info("={}", "=".repeat(79));
         log.info("DOCUMENTATION SYNC - Starting comprehensive sync");
-        log.info("=" + "=".repeat(79));
+        log.info("={}", "=".repeat(79));
 
         long startTime = System.currentTimeMillis();
 
@@ -32,10 +32,10 @@ public class SyncCommand implements CommandLineRunner {
         long duration = System.currentTimeMillis() - startTime;
 
         log.info("");
-        log.info("=" + "=".repeat(79));
+        log.info("={}", "=".repeat(79));
         log.info("SYNC COMPLETED SUCCESSFULLY!");
         log.info("Duration: {} seconds", duration / 1000);
         log.info("Result: {}", result);
-        log.info("=" + "=".repeat(79));
+        log.info("={}", "=".repeat(79));
     }
 }

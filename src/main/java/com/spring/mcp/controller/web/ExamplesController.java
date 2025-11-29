@@ -1,6 +1,7 @@
 package com.spring.mcp.controller.web;
 
 import com.spring.mcp.model.entity.CodeExample;
+import com.spring.mcp.model.entity.SpringProject;
 import com.spring.mcp.repository.CodeExampleRepository;
 import com.spring.mcp.repository.ProjectVersionRepository;
 import com.spring.mcp.repository.SpringProjectRepository;
@@ -74,8 +75,8 @@ public class ExamplesController {
 
             // Prepare filter data for dropdowns
             var allProjects = springProjectRepository.findAll(Sort.by(Sort.Direction.ASC, "name")).stream()
-                .filter(p -> p.getActive())
-                .map(p -> p.getSlug())
+                .filter(SpringProject::getActive)
+                .map(SpringProject::getSlug)
                 .distinct()
                 .toList();
 
