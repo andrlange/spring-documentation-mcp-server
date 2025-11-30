@@ -46,6 +46,12 @@
                     <i class="bi bi-braces" style="color: #fbbf24;"></i> Languages
                 </a>
             </li>
+            <!-- Flavors (conditional) -->
+            <li class="nav-item" th:if="${flavorsEnabled}">
+                <a class="nav-link" th:href="@{/flavors}" th:classappend="${activePage == 'flavors'} ? 'active' : ''">
+                    <i class="bi bi-palette" style="color: #a78bfa;"></i> Flavors
+                </a>
+            </li>
 
             <hr class="my-3">
 

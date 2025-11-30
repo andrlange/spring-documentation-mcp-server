@@ -1,5 +1,6 @@
 package com.spring.mcp.controller.advice;
 
+import com.spring.mcp.config.FlavorsFeatureConfig;
 import com.spring.mcp.config.LanguageEvolutionFeatureConfig;
 import com.spring.mcp.config.OpenRewriteFeatureConfig;
 import com.spring.mcp.service.SettingsService;
@@ -24,6 +25,7 @@ public class GlobalModelAttributesAdvice {
     private final SettingsService settingsService;
     private final OpenRewriteFeatureConfig openRewriteFeatureConfig;
     private final LanguageEvolutionFeatureConfig languageEvolutionFeatureConfig;
+    private final FlavorsFeatureConfig flavorsFeatureConfig;
 
     @Value("${info.app.name:Spring MCP Server}")
     private String appName;
@@ -87,6 +89,17 @@ public class GlobalModelAttributesAdvice {
     @ModelAttribute("languageEvolutionAttribution")
     public LanguageEvolutionFeatureConfig.AttributionConfig addLanguageEvolutionAttribution() {
         return languageEvolutionFeatureConfig.getAttribution();
+    }
+
+    /**
+     * Adds the Flavors feature flag to all models.
+     * This controls visibility of company guidelines, patterns, and configurations.
+     *
+     * @return true if Flavors feature is enabled, false otherwise
+     */
+    @ModelAttribute("flavorsEnabled")
+    public boolean addFlavorsEnabled() {
+        return flavorsFeatureConfig.isEnabled();
     }
 
     /**

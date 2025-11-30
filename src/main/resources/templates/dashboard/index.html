@@ -265,6 +265,86 @@
             </div>
         </div>
 
+        <!-- Flavors Statistics Row (conditional on feature flag) -->
+        <div class="row g-4 mb-4" th:if="${flavorsEnabled}">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-palette text-purple"></i> Flavors
+                            <a th:href="@{/flavors}" class="btn btn-sm btn-outline-purple float-end">
+                                <i class="bi bi-arrow-right"></i> View All
+                            </a>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <!-- Active Flavors -->
+                            <div class="col-xl-2 col-md-4 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm bg-success-light mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${flavorStats?.totalActive} ?: 0">0</h4>
+                                    <small class="text-muted">Active Flavors</small>
+                                </div>
+                            </div>
+                            <!-- Architecture -->
+                            <div class="col-xl-2 col-md-4 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm bg-purple-light mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-diagram-3-fill text-purple fs-5"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${flavorStats?.architectureCount} ?: 0">0</h4>
+                                    <small class="text-muted">Architecture</small>
+                                </div>
+                            </div>
+                            <!-- Compliance -->
+                            <div class="col-xl-2 col-md-4 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm bg-danger-light mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-shield-fill-check text-danger fs-5"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${flavorStats?.complianceCount} ?: 0">0</h4>
+                                    <small class="text-muted">Compliance</small>
+                                </div>
+                            </div>
+                            <!-- Agents -->
+                            <div class="col-xl-2 col-md-4 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm bg-info-light mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-robot text-info fs-5"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${flavorStats?.agentsCount} ?: 0">0</h4>
+                                    <small class="text-muted">Agents</small>
+                                </div>
+                            </div>
+                            <!-- Initialization -->
+                            <div class="col-xl-2 col-md-4 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm bg-warning-light mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-play-circle-fill text-warning fs-5"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${flavorStats?.initializationCount} ?: 0">0</h4>
+                                    <small class="text-muted">Initialization</small>
+                                </div>
+                            </div>
+                            <!-- General -->
+                            <div class="col-xl-2 col-md-4 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm bg-secondary mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background-color: rgba(108, 117, 125, 0.1) !important;">
+                                        <i class="bi bi-file-text-fill text-secondary fs-5"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${flavorStats?.generalCount} ?: 0">0</h4>
+                                    <small class="text-muted">General</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Secondary Statistics Row -->
         <div class="row g-4 mb-4">
             <!-- Users Card -->
@@ -575,6 +655,19 @@
             .bg-warning-light { background-color: rgba(255, 193, 7, 0.1) !important; }
             .bg-success-light { background-color: rgba(25, 135, 84, 0.1) !important; }
             .bg-danger-light { background-color: rgba(220, 53, 69, 0.1) !important; }
+
+            /* Flavors Purple Theme */
+            .text-purple { color: #8b5cf6 !important; }
+            .bg-purple-light { background-color: rgba(139, 92, 246, 0.1) !important; }
+            .btn-outline-purple {
+                color: #8b5cf6;
+                border-color: #8b5cf6;
+            }
+            .btn-outline-purple:hover {
+                background-color: #8b5cf6;
+                border-color: #8b5cf6;
+                color: #fff;
+            }
 
             /* OpenRewrite Orange Theme */
             .text-orange { color: #f97316 !important; }

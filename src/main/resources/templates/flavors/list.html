@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title>Flavors - Spring MCP Server</title>
+    <style>
+        /* Category color classes */
+        .flavor-purple { color: #a78bfa; }
+        .flavor-pink { color: #f472b6; }
+        .flavor-cyan { color: #22d3d8; }
+        .flavor-green { color: #6db33f; }
+        .flavor-amber { color: #fbbf24; }
+
+        .bg-flavor-purple { background-color: rgba(167, 139, 250, 0.15); }
+        .bg-flavor-pink { background-color: rgba(244, 114, 182, 0.15); }
+        .bg-flavor-cyan { background-color: rgba(34, 211, 216, 0.15); }
+        .bg-flavor-green { background-color: rgba(109, 179, 63, 0.15); }
+        .bg-flavor-amber { background-color: rgba(251, 191, 36, 0.15); }
+
+        .flavor-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .flavor-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .tag-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            background-color: rgba(109, 179, 63, 0.2);
+            color: #6db33f;
+            border-radius: 0.25rem;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="bi bi-palette" style="color: #a78bfa;"></i>
+            Flavors
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2" sec:authorize="hasRole('ADMIN')">
+                <a th:href="@{/flavors/new}" class="btn btn-sm btn-spring-green">
+                    <i class="bi bi-plus-lg"></i> New Flavor
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#importModal">
+                    <i class="bi bi-upload"></i> Import
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        <span th:text="${successMessage}">Success message</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span th:text="${errorMessage}">Error message</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 th:text="${stats.totalActive}">0</h3>
+                    <small class="text-muted">Active Flavors</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="flavor-purple" th:text="${stats.architectureCount}">0</h3>
+                    <small class="text-muted">Architecture</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="flavor-pink" th:text="${stats.complianceCount}">0</h3>
+                    <small class="text-muted">Compliance</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="flavor-cyan" th:text="${stats.agentsCount}">0</h3>
+                    <small class="text-muted">Agents</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="flavor-green" th:text="${stats.initializationCount}">0</h3>
+                    <small class="text-muted">Initialization</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="flavor-amber" th:text="${stats.generalCount}">0</h3>
+                    <small class="text-muted">General</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="get" th:action="@{/flavors}" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="categoryFilter" class="form-label fw-semibold">
+                                <i class="bi bi-collection text-spring-green"></i> Category
+                            </label>
+                            <select id="categoryFilter" name="category" class="form-select">
+                                <option value="">All Categories</option>
+                                <option th:each="cat : ${categories}"
+                                        th:value="${cat.name()}"
+                                        th:text="${cat.displayName}"
+                                        th:selected="${selectedCategory == cat.name()}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="activeFilter" class="form-label fw-semibold">
+                                <i class="bi bi-toggle-on text-spring-green"></i> Status
+                            </label>
+                            <select id="activeFilter" name="active" class="form-select">
+                                <option value="">All</option>
+                                <option value="true" th:selected="${selectedActive == true}">Active</option>
+                                <option value="false" th:selected="${selectedActive == false}">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="searchInput" class="form-label fw-semibold">
+                                <i class="bi bi-search text-spring-green"></i> Search
+                            </label>
+                            <input type="text" id="searchInput" name="search" class="form-control"
+                                   placeholder="Search flavors..."
+                                   th:value="${searchTerm}">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                            <a th:href="@{/flavors}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg"></i> Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${#lists.isEmpty(flavors)}" class="text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-palette display-1 text-muted"></i>
+        </div>
+        <h3 class="text-muted mb-3">No Flavors Found</h3>
+        <p class="text-muted mb-4">
+            Create your first flavor or import an existing markdown file.
+        </p>
+        <a th:href="@{/flavors/new}" class="btn btn-spring-green me-2" sec:authorize="hasRole('ADMIN')">
+            <i class="bi bi-plus-lg"></i> Create Flavor
+        </a>
+        <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#importModal" sec:authorize="hasRole('ADMIN')">
+            <i class="bi bi-upload"></i> Import Markdown
+        </button>
+    </div>
+
+    <!-- Flavors Table -->
+    <div th:if="${!#lists.isEmpty(flavors)}" class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Pattern</th>
+                        <th scope="col">Tags</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Updated</th>
+                        <th scope="col" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="flavor : ${flavors}" class="flavor-card">
+                        <td>
+                            <div class="d-flex flex-column">
+                                <a th:href="@{/flavors/{id}(id=${flavor.id})}"
+                                   class="fw-semibold text-decoration-none text-light"
+                                   th:text="${flavor.displayName}">
+                                    Flavor Name
+                                </a>
+                                <small class="text-muted" th:text="${flavor.uniqueName}">unique-name</small>
+                            </div>
+                        </td>
+                        <td>
+                            <span th:class="'badge bg-flavor-' + ${flavor.categoryColorClass}">
+                                <i th:class="${flavor.categoryIconClass} + ' me-1'"></i>
+                                <span th:text="${flavor.categoryDisplayName}">Category</span>
+                            </span>
+                        </td>
+                        <td>
+                            <span th:if="${flavor.patternName}" th:text="${flavor.patternName}" class="text-muted">Pattern</span>
+                            <span th:unless="${flavor.patternName}" class="text-muted">-</span>
+                        </td>
+                        <td>
+                            <span th:if="${flavor.tags != null and !flavor.tags.isEmpty()}">
+                                <span th:each="tag, iter : ${flavor.tags}" th:if="${iter.index < 3}"
+                                      class="tag-badge" th:text="${tag}">tag</span>
+                                <span th:if="${#lists.size(flavor.tags) > 3}" class="text-muted">
+                                    +[[${#lists.size(flavor.tags) - 3}]] more
+                                </span>
+                            </span>
+                            <span th:unless="${flavor.tags != null and !flavor.tags.isEmpty()}" class="text-muted">-</span>
+                        </td>
+                        <td>
+                            <span th:if="${flavor.isActive}" class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> Active
+                            </span>
+                            <span th:unless="${flavor.isActive}" class="badge bg-secondary">
+                                <i class="bi bi-pause-circle"></i> Inactive
+                            </span>
+                        </td>
+                        <td>
+                            <small th:if="${flavor.updatedAt}"
+                                   th:text="${#temporals.format(flavor.updatedAt, 'yyyy-MM-dd HH:mm')}"
+                                   class="text-muted">
+                                2024-01-01
+                            </small>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a th:href="@{/flavors/{id}(id=${flavor.id})}"
+                                   class="btn btn-outline-light" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a th:href="@{/flavors/{id}/edit(id=${flavor.id})}"
+                                   class="btn btn-outline-light" title="Edit"
+                                   sec:authorize="hasRole('ADMIN')">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-light toggle-active-btn"
+                                        th:data-id="${flavor.id}"
+                                        th:data-active="${flavor.isActive}"
+                                        th:title="${flavor.isActive ? 'Deactivate' : 'Activate'}"
+                                        sec:authorize="hasRole('ADMIN')">
+                                    <i th:class="${flavor.isActive ? 'bi bi-toggle-on' : 'bi bi-toggle-off'}"></i>
+                                </button>
+                                <a th:href="@{/flavors/{id}/export(id=${flavor.id})}"
+                                   class="btn btn-outline-light" title="Export as Markdown">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger delete-flavor-btn"
+                                        th:data-id="${flavor.id}"
+                                        th:data-name="${flavor.displayName}"
+                                        title="Delete"
+                                        sec:authorize="hasRole('ADMIN')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="importModalLabel">
+                        <i class="bi bi-upload me-2"></i>Import Markdown
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form th:action="@{/flavors/import}" method="post" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="importCategory" class="form-label">Category</label>
+                            <select id="importCategory" name="category" class="form-select" required>
+                                <option value="">Select category...</option>
+                                <option th:each="cat : ${categories}"
+                                        th:value="${cat.name()}"
+                                        th:text="${cat.displayName}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="importFile" class="form-label">Markdown File</label>
+                            <input type="file" id="importFile" name="file" class="form-control"
+                                   accept=".md,.markdown,text/markdown" required>
+                            <div class="form-text">
+                                Upload a .md or .markdown file. The first H1 heading will be used as the title.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-spring-green">
+                            <i class="bi bi-upload me-1"></i>Import
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        <i class="bi bi-exclamation-triangle text-danger me-2"></i>Delete Flavor
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete <strong id="deleteFlavorName"></strong>?</p>
+                    <p class="text-muted small">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="bi bi-trash me-1"></i>Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div layout:fragment="scripts">
+<script th:inline="javascript">
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+    // Toggle active status
+    document.querySelectorAll('.toggle-active-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const currentActive = this.dataset.active === 'true';
+            const newActive = !currentActive;
+
+            const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/flavors/${id}/toggle-active?active=${newActive}`, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error toggling status');
+            });
+        });
+    });
+
+    // Delete flavor
+    let flavorToDelete = null;
+    const deleteModal = document.getElementById('deleteModal');
+    const deleteModalInstance = new bootstrap.Modal(deleteModal);
+
+    document.querySelectorAll('.delete-flavor-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            flavorToDelete = this.dataset.id;
+            document.getElementById('deleteFlavorName').textContent = this.dataset.name;
+            deleteModalInstance.show();
+        });
+    });
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        if (!flavorToDelete) return;
+
+        const headers = {};
+        if (csrfToken && csrfHeader) {
+            headers[csrfHeader] = csrfToken;
+        }
+
+        fetch(`/flavors/${flavorToDelete}`, {
+            method: 'DELETE',
+            headers: headers
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting flavor');
+        })
+        .finally(() => {
+            deleteModalInstance.hide();
+            flavorToDelete = null;
+        });
+    });
+});
+</script>
+</div>
+</body>
+</html>

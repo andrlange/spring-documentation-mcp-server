@@ -13,8 +13,20 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - **Code Examples**: Searchable repository of Spring code snippets
 - **Migration Recipes**: OpenRewrite-based migration knowledge for Spring Boot version upgrades with breaking changes and transformations
 - **Language Evolution**: Java (8+) and Kotlin (1.6+) feature tracking with deprecations, removals, and code pattern examples
+- **Flavors**: Company-specific guidelines, architecture patterns, compliance rules, AI agent configurations, and project initialization templates
 
 ## Changelog
+
+### v1.3.0 (2025-11-30)
+- **Flavors Feature**: New optional feature for managing company-specific guidelines and configurations
+    - Support for 5 categories: Architecture, Compliance, Agents, Initialization, General
+    - Markdown-based content with full-text search using PostgreSQL tsvector
+    - Import/Export functionality for sharing flavors between teams
+    - Create flavors from scratch or import from markdown files
+    - Dedicated UI with category filtering and search
+    - 8 new MCP tools for AI assistants to query flavor data
+    - Dashboard integration showing flavor statistics by category
+    - Configurable via `mcp.features.flavors.enabled` (default: true)
 
 ### v1.2.0 (2025-11-29)
 - **Language Evolution Tracking**: New optional feature for tracking Java (8+) and Kotlin (1.6+) language evolution
@@ -138,13 +150,23 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
       <p align="center"><b>Language Evolution</b> - Languages page showing Java Records code example</p>
     </td>
   </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/screen-18.png" alt="Flavors Feature" />
+      <p align="center"><b>Flavors</b> - Company guidelines and patterns with category filtering</p>
+    </td>
+    <td width="50%">
+      <img src="assets/screen-19.png" alt="Flavor Details - Hexagonal Architecture" />
+      <p align="center"><b>Flavor Details</b> - Hexagonal Architecture pattern with markdown content</p>
+    </td>
+  </tr>
 </table>
 
 ## Current Status
 
 ### ✅ Fully Implemented Features
 
-#### MCP Tools (23 tools available)
+#### MCP Tools (31 tools available)
 
 **Documentation Tools (10 tools)**
 1. **searchSpringDocs** - Full-text search across all Spring documentation with filters
@@ -175,6 +197,16 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 22. **getSpringBootLanguageRequirements** - Get minimum Java/Kotlin versions required for a Spring Boot version
 23. **searchLanguageFeatures** - Search language features by keyword across all versions
 
+**Flavors Tools (8 tools - optional)**
+24. **searchFlavors** - Search company guidelines, patterns, and configurations with full-text search
+25. **getFlavorByName** - Get complete flavor content by unique name
+26. **getFlavorsByCategory** - List flavors in a category (ARCHITECTURE, COMPLIANCE, AGENTS, INITIALIZATION, GENERAL)
+27. **getArchitecturePatterns** - Get architecture patterns for specific technologies (e.g., hexagonal, microservices)
+28. **getComplianceRules** - Get compliance rules by framework (GDPR, SOC2, HIPAA, etc.)
+29. **getAgentConfiguration** - Get AI agent configuration for specific use cases
+30. **getProjectInitialization** - Get project initialization templates and setup guides
+31. **listFlavorCategories** - List all categories with counts and descriptions
+
 #### Web Management UI
 - **Dashboard** - Overview statistics and recent updates
 - **Projects** - Manage Spring projects (Spring Boot, Framework, Data, Security, Cloud, etc.)
@@ -183,6 +215,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - **Code Examples** - Code snippet library with tagging
 - **Migration Recipes** - OpenRewrite-inspired migration knowledge browser (optional feature)
 - **Languages** - Java/Kotlin version tracking with features, deprecations, and code patterns (optional feature)
+- **Flavors** - Company guidelines, architecture patterns, compliance rules, and agent configurations (optional feature)
 - **Users** - User management with role-based access
 - **Settings** - Application configuration, feature toggles, schedulers, and API Key Management
 - **Authentication** - Spring Security with session management
@@ -258,7 +291,7 @@ docker-compose ps
 
 ### 4. Run the Application
 ```bash
-java -jar build/libs/spring-mcp-server-1.2.0.jar
+java -jar build/libs/spring-mcp-server-1.3.0.jar
 ```
 
 Or using Gradle:
@@ -401,7 +434,7 @@ Add to your Claude Desktop or Claude Code MCP configuration (`.mcp.json`):
 
 ### Available MCP Tools
 
-Once connected, the following **23 tools** are available to AI assistants (7 OpenRewrite and 6 Language Evolution tools are optional):
+Once connected, the following **31 tools** are available to AI assistants (7 OpenRewrite, 6 Language Evolution, and 8 Flavors tools are optional):
 
 #### Documentation Tools
 
@@ -762,6 +795,124 @@ Search language features by keyword across all versions.
 }
 ```
 
+#### Flavors Tools (Optional)
+
+These tools are only available when `mcp.features.flavors.enabled=true` (default).
+
+##### 24. searchFlavors
+Search company guidelines, patterns, and configurations with full-text search.
+
+**Parameters**:
+- `query` (required): Search term (e.g., 'hexagonal', 'GDPR', 'microservices')
+- `category` (optional): Filter by category ('ARCHITECTURE', 'COMPLIANCE', 'AGENTS', 'INITIALIZATION', 'GENERAL')
+- `limit` (optional): Maximum results to return (default: 10)
+
+**Example**:
+```json
+{
+  "query": "hexagonal architecture",
+  "category": "ARCHITECTURE",
+  "limit": 5
+}
+```
+
+##### 25. getFlavorByName
+Get complete flavor content by unique name.
+
+**Parameters**:
+- `uniqueName` (required): The unique identifier of the flavor (e.g., 'hexagonal-architecture')
+
+**Example**:
+```json
+{
+  "uniqueName": "hexagonal-architecture"
+}
+```
+
+**Returns**: Complete flavor with metadata, content, tags, and related flavors.
+
+##### 26. getFlavorsByCategory
+List all flavors in a specific category.
+
+**Parameters**:
+- `category` (required): Category name ('ARCHITECTURE', 'COMPLIANCE', 'AGENTS', 'INITIALIZATION', 'GENERAL')
+- `activeOnly` (optional): Only return active flavors (default: true)
+
+**Example**:
+```json
+{
+  "category": "ARCHITECTURE",
+  "activeOnly": true
+}
+```
+
+##### 27. getArchitecturePatterns
+Get architecture patterns for specific technologies or approaches.
+
+**Parameters**:
+- `technology` (optional): Filter by technology (e.g., 'spring', 'microservices', 'event-driven')
+- `pattern` (optional): Filter by pattern name (e.g., 'hexagonal', 'clean', 'layered')
+
+**Example**:
+```json
+{
+  "technology": "spring",
+  "pattern": "hexagonal"
+}
+```
+
+##### 28. getComplianceRules
+Get compliance rules by regulatory framework.
+
+**Parameters**:
+- `framework` (required): Compliance framework ('GDPR', 'SOC2', 'HIPAA', 'PCI-DSS', 'ISO27001')
+- `domain` (optional): Specific domain (e.g., 'data-retention', 'access-control')
+
+**Example**:
+```json
+{
+  "framework": "GDPR",
+  "domain": "data-retention"
+}
+```
+
+##### 29. getAgentConfiguration
+Get AI agent configuration for specific use cases.
+
+**Parameters**:
+- `useCase` (required): Use case type (e.g., 'code-review', 'documentation', 'testing')
+- `language` (optional): Programming language context (e.g., 'java', 'kotlin')
+
+**Example**:
+```json
+{
+  "useCase": "code-review",
+  "language": "java"
+}
+```
+
+##### 30. getProjectInitialization
+Get project initialization templates and setup guides.
+
+**Parameters**:
+- `projectType` (required): Type of project (e.g., 'spring-boot', 'microservice', 'library')
+- `features` (optional): List of features to include (e.g., ['security', 'database', 'messaging'])
+
+**Example**:
+```json
+{
+  "projectType": "spring-boot",
+  "features": ["security", "database"]
+}
+```
+
+##### 31. listFlavorCategories
+List all available categories with counts and descriptions.
+
+**No parameters required**.
+
+**Returns**: List of categories with flavor counts and descriptions.
+
 ## Configuration
 
 ### Environment Variables
@@ -1089,6 +1240,56 @@ export LANGUAGE_EVOLUTION_ENABLED=false
 - Java: [OpenJDK JEPs](https://openjdk.org/jeps) (GPL-2.0)
 - Kotlin: [Kotlin KEEP](https://github.com/Kotlin/KEEP) (Apache-2.0)
 
+### Flavors - Company Guidelines & Patterns (Optional Feature)
+
+The Flavors feature provides a flexible system for managing company-specific guidelines, architecture patterns, compliance rules, AI agent configurations, and project initialization templates. This is an **optional feature** that can be enabled or disabled via configuration.
+
+**Configuration**:
+
+```yaml
+# application.yml
+mcp:
+  features:
+    flavors:
+      enabled: true  # Set to false to disable (default: true)
+```
+
+Or via environment variable:
+```bash
+export FLAVORS_ENABLED=false
+```
+
+**Features**:
+- **5 Categories**: Architecture, Compliance, Agents, Initialization, General
+- **Markdown Content**: Rich content with full-text search using PostgreSQL tsvector
+- **Import/Export**: Share flavors between teams via markdown files
+- **Create from Scratch**: Build flavors directly in the UI editor
+- **Category Filtering**: Quick access to flavors by category
+- **Dashboard Integration**: Statistics showing flavor counts by category
+- **8 MCP Tools**: AI assistants can query flavor data for context-aware assistance
+
+**Categories Explained**:
+- **Architecture**: Design patterns and architectural guidelines (hexagonal, microservices, event-driven)
+- **Compliance**: Regulatory requirements and security standards (GDPR, SOC2, HIPAA, PCI-DSS)
+- **Agents**: AI agent configurations and prompts for specific tasks
+- **Initialization**: Project setup templates and bootstrapping guides
+- **General**: Miscellaneous guidelines, coding standards, and best practices
+
+**How It Works**:
+1. **Navigate to Flavors page**: View all company guidelines and patterns
+2. **Create or Import**: Add new flavors from scratch or import markdown files
+3. **Organize by Category**: Assign flavors to appropriate categories
+4. **Search and Filter**: Find relevant guidelines using full-text search
+5. **Export for Sharing**: Export flavors as markdown for team distribution
+6. **AI Integration**: MCP tools allow AI assistants to access flavor data
+
+**Use Cases**:
+- **Onboarding**: New team members access company coding standards and patterns
+- **Architecture Reviews**: Reference approved architecture patterns during design
+- **Compliance Checks**: AI assistants can verify code against compliance rules
+- **Project Setup**: Consistent project initialization across teams
+- **AI-Assisted Development**: Claude Code uses flavors for company-specific context
+
 ### Scheduler Configuration
 
 The built-in scheduler allows you to automate documentation synchronization on a configurable schedule.
@@ -1197,7 +1398,7 @@ lsof -ti :8080 | xargs kill -9
 - [x] Spring Security with API Key authentication
 - [x] Thymeleaf UI with Bootstrap 5
 - [x] MCP Server with Spring AI (SSE-based)
-- [x] 23 MCP tools implemented with typed DTOs (10 documentation + 7 migration + 6 language)
+- [x] 31 MCP tools implemented with typed DTOs (10 documentation + 7 migration + 6 language + 8 flavors)
 - [x] Full-text search with PostgreSQL
 - [x] Documentation sync services
 - [x] Version detection and tracking
@@ -1210,6 +1411,8 @@ lsof -ti :8080 | xargs kill -9
 - [x] Scheduler configuration for automated syncs
 - [x] OpenRewrite migration recipes (optional feature)
 - [x] Language Evolution tracking for Java/Kotlin (optional feature)
+- [x] Flavors - Company guidelines, architecture patterns, and compliance rules (optional feature)
+- [x] Migration guides between versions
 
 ### In Progress 🚧
 - [ ] Comprehensive documentation coverage for all Spring projects
@@ -1221,7 +1424,6 @@ lsof -ti :8080 | xargs kill -9
 ### Planned 📋
 - [ ] Semantic search using embeddings
 - [ ] Version comparison and diff
-- [ ] Migration guides between versions
 - [ ] Export features (PDF, Markdown)
 - [ ] Analytics and usage tracking
 - [ ] Multi-language documentation support

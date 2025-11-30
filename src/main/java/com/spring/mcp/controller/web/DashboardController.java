@@ -1,10 +1,13 @@
 package com.spring.mcp.controller.web;
 
+import com.spring.mcp.config.FlavorsFeatureConfig;
 import com.spring.mcp.config.LanguageEvolutionFeatureConfig;
 import com.spring.mcp.config.OpenRewriteFeatureConfig;
+import com.spring.mcp.model.dto.flavor.CategoryStatsDto;
 import com.spring.mcp.model.enums.FeatureStatus;
 import com.spring.mcp.model.enums.LanguageType;
 import com.spring.mcp.repository.*;
+import com.spring.mcp.service.FlavorService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +53,8 @@ public class DashboardController {
     private final LanguageEvolutionFeatureConfig languageEvolutionFeatureConfig;
     private final LanguageVersionRepository languageVersionRepository;
     private final LanguageFeatureRepository languageFeatureRepository;
+    private final FlavorsFeatureConfig flavorsFeatureConfig;
+    private final FlavorService flavorService;
 
     /**
      * Display the dashboard page with statistics.
@@ -163,6 +168,21 @@ public class DashboardController {
                 log.debug("Language stats - Java: {}, Kotlin: {}, New: {}, Deprecated: {}, Removed: {}, Total: {}",
                     javaVersionCount, kotlinVersionCount, newFeaturesCount, deprecatedFeaturesCount,
                     removedFeaturesCount, totalFeaturesCount);
+            }
+
+            // Flavors Statistics (conditional on feature flag)
+            model.addAttribute("flavorsEnabled", flavorsFeatureConfig.isEnabled());
+            if (flavorsFeatureConfig.isEnabled()) {
+                CategoryStatsDto flavorStats = flavorService.getStatistics();
+                model.addAttribute("flavorStats", flavorStats);
+
+                log.debug("Flavor stats - Active: {}, Architecture: {}, Compliance: {}, Agents: {}, Init: {}, General: {}",
+                    flavorStats.getTotalActive(),
+                    flavorStats.getArchitectureCount(),
+                    flavorStats.getComplianceCount(),
+                    flavorStats.getAgentsCount(),
+                    flavorStats.getInitializationCount(),
+                    flavorStats.getGeneralCount());
             }
 
             // Set active page for sidebar navigation

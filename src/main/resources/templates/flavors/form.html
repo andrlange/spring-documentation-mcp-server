@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title th:text="${isNew ? 'New Flavor' : 'Edit Flavor'} + ' - Spring MCP Server'">Flavor - Spring MCP Server</title>
+    <!-- EasyMDE CSS (local) -->
+    <link th:href="@{/vendor/easymde/easymde.min.css}" rel="stylesheet">
+    <th:block layout:fragment="styles">
+    <link th:href="@{/css/flavors-editor-dark.css}" rel="stylesheet">
+    </th:block>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="bi bi-palette" style="color: #a78bfa;"></i>
+            <span th:text="${isNew ? 'New Flavor' : 'Edit Flavor'}">Flavor</span>
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a th:href="@{/flavors}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span th:text="${errorMessage}">Error message</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Form -->
+    <form th:with="formAction=${isNew} ? '/flavors' : '/flavors/' + ${flavor.id}"
+          th:action="@{${formAction}}"
+          method="post" id="flavorForm" class="needs-validation" novalidate>
+
+        <div class="row">
+            <!-- Left Column - Basic Info -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-dark border-secondary">
+                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Basic Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Unique Name -->
+                        <div class="mb-3">
+                            <label for="uniqueName" class="form-label fw-semibold">
+                                Unique Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="uniqueName" name="uniqueName"
+                                   th:value="${flavor.uniqueName}"
+                                   pattern="[a-z0-9-]+"
+                                   placeholder="hexagonal-spring-boot"
+                                   required>
+                            <div class="form-text">Lowercase letters, numbers, and hyphens only.</div>
+                            <div id="uniqueNameFeedback" class="invalid-feedback">
+                                Please enter a valid unique name.
+                            </div>
+                        </div>
+
+                        <!-- Display Name -->
+                        <div class="mb-3">
+                            <label for="displayName" class="form-label fw-semibold">
+                                Display Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="displayName" name="displayName"
+                                   th:value="${flavor.displayName}"
+                                   placeholder="Hexagonal Architecture for Spring Boot"
+                                   required>
+                            <div class="invalid-feedback">Please enter a display name.</div>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="mb-3">
+                            <label for="category" class="form-label fw-semibold">
+                                Category <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="">Select category...</option>
+                                <option th:each="cat : ${categories}"
+                                        th:value="${cat.name()}"
+                                        th:text="${cat.displayName}"
+                                        th:selected="${flavor.category == cat}">
+                                </option>
+                            </select>
+                            <div class="invalid-feedback">Please select a category.</div>
+                        </div>
+
+                        <!-- Pattern Name -->
+                        <div class="mb-3">
+                            <label for="patternName" class="form-label fw-semibold">
+                                Pattern Name
+                            </label>
+                            <input type="text" class="form-control" id="patternName" name="patternName"
+                                   th:value="${flavor.patternName}"
+                                   placeholder="Hexagonal Architecture">
+                            <div class="form-text">Optional. The architectural or design pattern this implements.</div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label fw-semibold">
+                                Description
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="3"
+                                      placeholder="Brief description of this flavor..."
+                                      th:text="${flavor.description}"></textarea>
+                        </div>
+
+                        <!-- Tags -->
+                        <div class="mb-3">
+                            <label for="tagsInput" class="form-label fw-semibold">
+                                Tags
+                            </label>
+                            <input type="text" class="form-control" id="tagsInput" name="tagsInput"
+                                   th:value="${tagsInput != null ? tagsInput : flavor.tagsString}"
+                                   placeholder="spring-boot, kafka, jpa">
+                            <div class="form-text">Comma-separated list of tags/slugs.</div>
+                        </div>
+
+                        <!-- Active Status -->
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       id="isActive" name="isActive" value="true"
+                                       th:checked="${flavor.isActive}">
+                                <label class="form-check-label" for="isActive">
+                                    <span class="fw-semibold">Active</span>
+                                    <br>
+                                    <small class="text-muted">
+                                        When active, this flavor will be available to MCP tools.
+                                    </small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Content Editor -->
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-markdown me-2"></i>Content (Markdown)</h5>
+                        <small class="text-muted">Use markdown formatting for rich content</small>
+                    </div>
+                    <div class="card-body p-0">
+                        <textarea id="contentEditor" name="content" th:text="${flavor.content}"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="row mt-4 mb-5">
+            <div class="col-12 d-flex justify-content-end gap-2">
+                <a th:href="@{/flavors}" class="btn btn-secondary">
+                    <i class="bi bi-x-lg me-1"></i>Cancel
+                </a>
+                <button type="submit" class="btn btn-spring-green">
+                    <i class="bi bi-check-lg me-1"></i>
+                    <span th:text="${isNew ? 'Create Flavor' : 'Save Changes'}">Save</span>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div layout:fragment="scripts">
+<!-- EasyMDE JavaScript (local) -->
+<script th:src="@{/vendor/easymde/easymde.min.js}"></script>
+<script th:inline="javascript">
+document.addEventListener('DOMContentLoaded', function() {
+    const flavorId = /*[[${flavor.id}]]*/ null;
+    const initialContent = /*[[${flavor.content}]]*/ '';
+
+    // Initialize EasyMDE
+    const easyMDE = new EasyMDE({
+        element: document.getElementById('contentEditor'),
+        initialValue: initialContent || '',
+        spellChecker: true,
+        autosave: {
+            enabled: true,
+            uniqueId: 'flavor-editor-' + (flavorId || 'new'),
+            delay: 5000,
+            submit_delay: 5000,
+            timeFormat: {
+                locale: 'en-US',
+                format: {
+                    year: 'numeric',
+                    month: 'short',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }
+            }
+        },
+        minHeight: '450px',
+        maxHeight: '600px',
+        placeholder: 'Write your flavor guidelines here using Markdown...\n\n# Title\n\n## Overview\n...',
+
+        toolbar: [
+            'bold', 'italic', 'heading', '|',
+            'code', 'quote', 'unordered-list', 'ordered-list', '|',
+            'link', 'image', 'table', 'horizontal-rule', '|',
+            'preview', 'side-by-side', 'fullscreen', '|',
+            {
+                name: 'json-block',
+                action: function(editor) {
+                    const cm = editor.codemirror;
+                    const output = '\n```json\n{\n  "key": "value"\n}\n```\n';
+                    cm.replaceSelection(output);
+                },
+                className: 'fa fa-code',
+                title: 'Insert JSON Block'
+            },
+            {
+                name: 'java-block',
+                action: function(editor) {
+                    const cm = editor.codemirror;
+                    const output = '\n```java\npublic class Example {\n    // Your code here\n}\n```\n';
+                    cm.replaceSelection(output);
+                },
+                className: 'fa fa-coffee',
+                title: 'Insert Java Block'
+            },
+            '|',
+            'guide'
+        ],
+
+        shortcuts: {
+            'toggleBold': 'Cmd-B',
+            'toggleItalic': 'Cmd-I',
+            'drawLink': 'Cmd-K',
+            'togglePreview': 'Cmd-P',
+            'toggleSideBySide': 'F9',
+            'toggleFullScreen': 'F11'
+        },
+
+        renderingConfig: {
+            codeSyntaxHighlighting: true,
+            markedOptions: {
+                breaks: true,
+                gfm: true
+            }
+        },
+
+        previewClass: ['editor-preview', 'markdown-body', 'dark-theme'],
+        status: ['autosave', 'lines', 'words', 'cursor']
+    });
+
+    // Auto-generate unique name from display name
+    const displayNameInput = document.getElementById('displayName');
+    const uniqueNameInput = document.getElementById('uniqueName');
+    const isNew = /*[[${isNew}]]*/ false;
+
+    if (isNew && displayNameInput && uniqueNameInput) {
+        displayNameInput.addEventListener('input', function() {
+            if (!uniqueNameInput.dataset.manual) {
+                const generated = this.value.toLowerCase()
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .replace(/^-|-$/g, '')
+                    .substring(0, 50);
+                uniqueNameInput.value = generated;
+            }
+        });
+
+        uniqueNameInput.addEventListener('input', function() {
+            this.dataset.manual = 'true';
+        });
+    }
+
+    // Validate unique name availability
+    let nameCheckTimeout;
+    uniqueNameInput.addEventListener('input', function() {
+        clearTimeout(nameCheckTimeout);
+        const name = this.value;
+        const excludeId = flavorId || '';
+
+        if (name.length >= 3) {
+            nameCheckTimeout = setTimeout(() => {
+                fetch(`/flavors/check-name?name=${encodeURIComponent(name)}&excludeId=${excludeId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.available) {
+                            uniqueNameInput.classList.remove('is-invalid');
+                            uniqueNameInput.classList.add('is-valid');
+                            document.getElementById('uniqueNameFeedback').textContent = '';
+                        } else {
+                            uniqueNameInput.classList.remove('is-valid');
+                            uniqueNameInput.classList.add('is-invalid');
+                            document.getElementById('uniqueNameFeedback').textContent = 'This name is already taken.';
+                        }
+                    });
+            }, 500);
+        }
+    });
+
+    // Form validation
+    document.getElementById('flavorForm').addEventListener('submit', function(e) {
+        if (!this.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        this.classList.add('was-validated');
+    });
+});
+</script>
+</div>
+</body>
+</html>

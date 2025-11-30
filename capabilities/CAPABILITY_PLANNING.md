@@ -1,18 +1,20 @@
 # Spring MCP Server - Capability Analysis & Planning
 
-> **Analysis Date**: 2025-11-28
-> **Version**: 1.1.0
+> **Analysis Date**: 2025-11-30
+> **Version**: 1.2.0
 > **Purpose**: Document Spring MCP Server capabilities for backend and fullstack development with Spring Boot 3.x/4.x
 
 ---
 
 ## Executive Summary
 
-The Spring MCP Server provides **17 specialized tools** for accessing Spring ecosystem documentation and migration knowledge, covering **55 Spring projects** with comprehensive version management for both **Spring Boot 3.x** (production) and **Spring Boot 4.x** (latest GA). This server is ideal for AI-assisted Spring Boot development with Java and Kotlin.
+The Spring MCP Server provides **23+ specialized tools** for accessing Spring ecosystem documentation, migration knowledge, language evolution tracking, and organizational context, covering **55 Spring projects** with comprehensive version management for both **Spring Boot 3.x** (production) and **Spring Boot 4.x** (latest GA). This server is ideal for AI-assisted Spring Boot development with Java and Kotlin.
 
 **Tool Categories**:
 - **Documentation Tools (10)**: Search, browse, and retrieve Spring documentation
 - **Migration Tools (7)**: OpenRewrite-inspired migration knowledge for version upgrades (optional)
+- **Language Evolution Tools (6)**: Java and Kotlin version features and patterns (optional)
+- **Flavors Tools (8+)**: Company guidelines, architecture patterns, compliance rules (planned)
 
 ---
 
@@ -481,6 +483,74 @@ When disabled, only 10 documentation tools are available.
 | Version Management | 5 | `listSpringBootVersions`, `getSpringVersions`, `getLatestSpringBootVersion` |
 | Documentation | 3 | `searchSpringDocs`, `getDocumentationByVersion`, `getCodeExamples` |
 | Migration (Optional) | 7 | `getSpringMigrationGuide`, `getBreakingChanges`, `searchMigrationKnowledge` |
+| Language Evolution (Optional) | 6 | `getLanguageFeatures`, `getModernPatterns`, `getLanguageVersionDiff` |
+| Flavors (Planned) | 8+ | `searchFlavors`, `getFlavorByName`, `getArchitecturePatterns` |
+
+---
+
+## 13. Planned Feature: Flavors (Company Guidelines Storage)
+
+> **Status**: PLANNED | **Evaluation Document**: [FLAVORS_EVALUATION.md](./FLAVORS_EVALUATION.md)
+
+### 13.1 Overview
+
+The Flavors feature will provide a markdown-based storage system for company-specific guidelines, architecture patterns, compliance rules, and AI agent configurations. This addresses a fundamental limitation: LLMs operate without knowledge of organizational context.
+
+### 13.2 Flavor Categories
+
+| Category | Purpose | Example Content |
+|----------|---------|-----------------|
+| **Architecture** | Structural patterns and design decisions | Hexagonal architecture, DDD patterns |
+| **Compliance** | Security, audit, regulatory requirements | GDPR data handling, SOC2 controls |
+| **Agents/Subagent** | AI assistant configurations | Claude Code setup, custom commands |
+| **Initialization** | Project scaffolding templates | Folder structures, CI/CD configs |
+| **General** | Broad guidelines | Naming conventions, best practices |
+
+### 13.3 Planned MCP Tools
+
+| Tool | Purpose | Key Parameters |
+|------|---------|----------------|
+| `searchFlavors` | Search company guidelines | `query`, `category`, `tags` |
+| `getFlavorByName` | Get complete flavor content | `uniqueName` |
+| `getFlavorsByCategory` | List flavors in category | `category` |
+| `getArchitecturePatterns` | Get architecture by technology | `slugs` (e.g., ["spring-boot", "kafka"]) |
+| `getComplianceRules` | Get compliance by rule names | `rules` (e.g., ["GDPR", "SOC2"]) |
+| `getAgentConfiguration` | Get agent config for use case | `useCase` |
+| `getProjectInitialization` | Get init template | `useCase` |
+| `listFlavorCategories` | List categories with counts | None |
+
+### 13.4 Key Features
+
+- **Markdown editor** with WYSIWYG preview (EasyMDE)
+- **Import existing markdown** files
+- **Category-specific metadata** (slugs, rules, use cases)
+- **Activate/deactivate** flavors for MCP visibility
+- **Full-text search** across all content
+- **Dark mode UI** aligned with Spring.io design
+
+### 13.5 Expected Impact
+
+| Scenario | Without Flavors | With Flavors | Improvement |
+|----------|----------------|--------------|-------------|
+| Apply architecture standards | 5-15 min explanation | Instant lookup | **60-75%** |
+| Follow compliance rules | 2-5 iterations | First attempt | **65-80%** |
+| Set up AI tooling | 15-30 min | < 5 min | **70-85%** |
+| Apply coding standards | 1-3 iterations | First attempt | **55-70%** |
+
+### 13.6 Configuration
+
+```yaml
+mcp:
+  features:
+    flavors:
+      enabled: true
+      categories:
+        - ARCHITECTURE
+        - COMPLIANCE
+        - AGENTS
+        - INITIALIZATION
+        - GENERAL
+```
 
 ---
 
@@ -517,5 +587,5 @@ When disabled, only 10 documentation tools are available.
 ---
 
 *Document generated from live MCP server analysis*
-*Last updated: 2025-11-28*
-*Server version: 1.1.0 with 17 MCP tools (10 documentation + 7 migration)*
+*Last updated: 2025-11-30*
+*Server version: 1.2.0 with 23 MCP tools (10 documentation + 7 migration + 6 language evolution) + 8 planned Flavors tools*

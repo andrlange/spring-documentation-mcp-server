@@ -250,6 +250,25 @@ a:hover {
     color: var(--spring-white);
 }
 
+.btn-spring-green {
+    background-color: var(--spring-green);
+    color: #ffffff;
+    border: none;
+}
+
+.btn-spring-green:hover {
+    background-color: var(--spring-green-dark);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-spring-green:active {
+    background-color: var(--spring-green-dark);
+    color: #ffffff;
+    transform: translateY(0);
+}
+
 .btn-sm {
     padding: 0.25rem 0.75rem;
     font-size: 0.875rem;

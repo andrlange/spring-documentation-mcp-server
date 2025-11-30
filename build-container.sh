@@ -5,7 +5,7 @@
 set -e
 
 # Version Configuration
-APP_VERSION="1.2.0"
+APP_VERSION="1.3.0"
 JAVA_VERSION="25"
 IMAGE_NAME="spring-mcp-server"
 REGISTRY="${DOCKER_REGISTRY:-}"
