@@ -1,0 +1,407 @@
+/**
+ * EasyMDE Dark Mode Theme for Spring MCP Server Flavors
+ * Aligned with spring.io dark theme design
+ *
+ * @author Spring MCP Server
+ * @version 1.2.0
+ * @since 2025-11-30
+ */
+
+/* Editor Container */
+.EasyMDEContainer {
+    background-color: #1a1a2e;
+}
+
+/* CodeMirror Editor Area */
+.EasyMDEContainer .CodeMirror {
+    background-color: #16213e;
+    color: #e4e4e7;
+    border: 1px solid #374151;
+    border-radius: 0 0 0.375rem 0.375rem;
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.EasyMDEContainer .CodeMirror-cursor {
+    border-left-color: #6db33f; /* Spring green */
+    border-left-width: 2px;
+}
+
+.EasyMDEContainer .CodeMirror-selected {
+    background-color: rgba(109, 179, 63, 0.2);
+}
+
+.EasyMDEContainer .CodeMirror-focused .CodeMirror-selected {
+    background-color: rgba(109, 179, 63, 0.3);
+}
+
+.EasyMDEContainer .CodeMirror-line::selection,
+.EasyMDEContainer .CodeMirror-line > span::selection,
+.EasyMDEContainer .CodeMirror-line > span > span::selection {
+    background-color: rgba(109, 179, 63, 0.3);
+}
+
+/* Gutters */
+.EasyMDEContainer .CodeMirror-gutters {
+    background-color: #1f2937;
+    border-right: 1px solid #374151;
+}
+
+.EasyMDEContainer .CodeMirror-linenumber {
+    color: #6b7280;
+}
+
+/* Toolbar */
+.EasyMDEContainer .editor-toolbar {
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-bottom: none;
+    border-radius: 0.375rem 0.375rem 0 0;
+    padding: 0.5rem;
+}
+
+.EasyMDEContainer .editor-toolbar button {
+    color: #9ca3af !important;
+    background: transparent;
+    border: none;
+    border-radius: 0.25rem;
+    padding: 0.35rem 0.5rem;
+    margin: 0 1px;
+    transition: all 0.15s ease;
+}
+
+.EasyMDEContainer .editor-toolbar button:hover {
+    background-color: #374151;
+    color: #fff !important;
+}
+
+.EasyMDEContainer .editor-toolbar button.active {
+    background-color: #6db33f;
+    color: #fff !important;
+}
+
+.EasyMDEContainer .editor-toolbar button:disabled {
+    color: #4b5563 !important;
+    cursor: not-allowed;
+}
+
+.EasyMDEContainer .editor-toolbar i.separator {
+    border-left-color: #374151;
+    border-right-color: #374151;
+    margin: 0 6px;
+}
+
+/* Preview Pane */
+.EasyMDEContainer .editor-preview {
+    background-color: #1f2937;
+    color: #e4e4e7;
+    padding: 1.5rem;
+}
+
+.EasyMDEContainer .editor-preview-side {
+    background-color: #1f2937;
+    color: #e4e4e7;
+    border: 1px solid #374151;
+    border-left: none;
+    padding: 1.5rem;
+}
+
+/* Preview typography */
+.EasyMDEContainer .editor-preview h1,
+.EasyMDEContainer .editor-preview-side h1 {
+    color: #60a5fa;
+    border-bottom: 1px solid #374151;
+    padding-bottom: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.EasyMDEContainer .editor-preview h2,
+.EasyMDEContainer .editor-preview-side h2 {
+    color: #a78bfa;
+    margin-top: 1.25rem;
+}
+
+.EasyMDEContainer .editor-preview h3,
+.EasyMDEContainer .editor-preview-side h3 {
+    color: #34d399;
+    margin-top: 1rem;
+}
+
+.EasyMDEContainer .editor-preview h4,
+.EasyMDEContainer .editor-preview-side h4,
+.EasyMDEContainer .editor-preview h5,
+.EasyMDEContainer .editor-preview-side h5,
+.EasyMDEContainer .editor-preview h6,
+.EasyMDEContainer .editor-preview-side h6 {
+    color: #fbbf24;
+}
+
+.EasyMDEContainer .editor-preview a,
+.EasyMDEContainer .editor-preview-side a {
+    color: #6db33f;
+    text-decoration: none;
+}
+
+.EasyMDEContainer .editor-preview a:hover,
+.EasyMDEContainer .editor-preview-side a:hover {
+    color: #34d399;
+    text-decoration: underline;
+}
+
+/* Code blocks in preview */
+.EasyMDEContainer .editor-preview pre,
+.EasyMDEContainer .editor-preview-side pre {
+    background-color: #111827;
+    border: 1px solid #374151;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+.EasyMDEContainer .editor-preview code,
+.EasyMDEContainer .editor-preview-side code {
+    color: #6db33f;
+    background-color: rgba(109, 179, 63, 0.1);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.875em;
+}
+
+.EasyMDEContainer .editor-preview pre code,
+.EasyMDEContainer .editor-preview-side pre code {
+    background-color: transparent;
+    padding: 0;
+    color: #e4e4e7;
+}
+
+/* Blockquotes */
+.EasyMDEContainer .editor-preview blockquote,
+.EasyMDEContainer .editor-preview-side blockquote {
+    border-left: 4px solid #6db33f;
+    padding-left: 1rem;
+    margin-left: 0;
+    color: #9ca3af;
+    background-color: rgba(109, 179, 63, 0.05);
+    padding: 0.5rem 1rem;
+    border-radius: 0 0.25rem 0.25rem 0;
+}
+
+/* Tables */
+.EasyMDEContainer .editor-preview table,
+.EasyMDEContainer .editor-preview-side table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+}
+
+.EasyMDEContainer .editor-preview th,
+.EasyMDEContainer .editor-preview td,
+.EasyMDEContainer .editor-preview-side th,
+.EasyMDEContainer .editor-preview-side td {
+    border: 1px solid #374151;
+    padding: 0.5rem 0.75rem;
+}
+
+.EasyMDEContainer .editor-preview th,
+.EasyMDEContainer .editor-preview-side th {
+    background-color: #1f2937;
+    color: #6db33f;
+}
+
+.EasyMDEContainer .editor-preview tr:nth-child(even),
+.EasyMDEContainer .editor-preview-side tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Lists */
+.EasyMDEContainer .editor-preview ul,
+.EasyMDEContainer .editor-preview ol,
+.EasyMDEContainer .editor-preview-side ul,
+.EasyMDEContainer .editor-preview-side ol {
+    padding-left: 1.5rem;
+}
+
+.EasyMDEContainer .editor-preview li,
+.EasyMDEContainer .editor-preview-side li {
+    margin: 0.25rem 0;
+}
+
+/* Horizontal rule */
+.EasyMDEContainer .editor-preview hr,
+.EasyMDEContainer .editor-preview-side hr {
+    border: none;
+    border-top: 1px solid #374151;
+    margin: 1.5rem 0;
+}
+
+/* Status bar */
+.EasyMDEContainer .editor-statusbar {
+    background-color: #1f2937;
+    color: #9ca3af;
+    border: 1px solid #374151;
+    border-top: none;
+    border-radius: 0 0 0.375rem 0.375rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+}
+
+.EasyMDEContainer .editor-statusbar span {
+    color: #9ca3af;
+}
+
+.EasyMDEContainer .editor-statusbar .autosave {
+    color: #6db33f;
+}
+
+/* Syntax highlighting colors (CodeMirror) */
+.cm-s-easymde .cm-header {
+    color: #60a5fa;
+    font-weight: bold;
+}
+
+.cm-s-easymde .cm-header-1 {
+    color: #60a5fa;
+    font-size: 1.5em;
+}
+
+.cm-s-easymde .cm-header-2 {
+    color: #a78bfa;
+    font-size: 1.25em;
+}
+
+.cm-s-easymde .cm-header-3 {
+    color: #34d399;
+    font-size: 1.1em;
+}
+
+.cm-s-easymde .cm-quote {
+    color: #a78bfa;
+    font-style: italic;
+}
+
+.cm-s-easymde .cm-link {
+    color: #6db33f;
+    text-decoration: none;
+}
+
+.cm-s-easymde .cm-url {
+    color: #6db33f;
+    opacity: 0.8;
+}
+
+.cm-s-easymde .cm-strong {
+    color: #f472b6;
+    font-weight: bold;
+}
+
+.cm-s-easymde .cm-em {
+    color: #fbbf24;
+    font-style: italic;
+}
+
+.cm-s-easymde .cm-comment {
+    color: #6b7280;
+}
+
+.cm-s-easymde .cm-keyword {
+    color: #f472b6;
+}
+
+.cm-s-easymde .cm-atom {
+    color: #a78bfa;
+}
+
+.cm-s-easymde .cm-number {
+    color: #34d399;
+}
+
+.cm-s-easymde .cm-string {
+    color: #6db33f;
+}
+
+.cm-s-easymde .cm-string-2 {
+    color: #fbbf24;
+}
+
+.cm-s-easymde .cm-variable {
+    color: #e4e4e7;
+}
+
+.cm-s-easymde .cm-variable-2 {
+    color: #60a5fa;
+}
+
+.cm-s-easymde .cm-tag {
+    color: #f472b6;
+}
+
+.cm-s-easymde .cm-attribute {
+    color: #fbbf24;
+}
+
+.cm-s-easymde .cm-formatting {
+    color: #6b7280;
+}
+
+.cm-s-easymde .cm-formatting-code {
+    color: #6db33f;
+}
+
+.cm-s-easymde .cm-formatting-code-block {
+    color: #6db33f;
+}
+
+/* Fullscreen mode */
+.EasyMDEContainer.fullscreen {
+    background-color: #1a1a2e;
+}
+
+.EasyMDEContainer .CodeMirror-fullscreen {
+    background-color: #16213e;
+}
+
+.editor-toolbar.fullscreen {
+    background-color: #1f2937;
+}
+
+.editor-preview-side.fullscreen {
+    background-color: #1f2937;
+}
+
+/* Placeholder */
+.EasyMDEContainer .CodeMirror-placeholder {
+    color: #6b7280;
+    opacity: 0.7;
+}
+
+/* Scrollbars */
+.EasyMDEContainer .CodeMirror-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #374151 #1f2937;
+}
+
+.EasyMDEContainer .CodeMirror-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.EasyMDEContainer .CodeMirror-scroll::-webkit-scrollbar-track {
+    background: #1f2937;
+}
+
+.EasyMDEContainer .CodeMirror-scroll::-webkit-scrollbar-thumb {
+    background-color: #374151;
+    border-radius: 4px;
+}
+
+.EasyMDEContainer .CodeMirror-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: #4b5563;
+}
+
+/* Focus states */
+.EasyMDEContainer .CodeMirror-focused {
+    border-color: #6db33f;
+    box-shadow: 0 0 0 2px rgba(109, 179, 63, 0.2);
+}

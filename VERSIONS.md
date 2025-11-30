@@ -6,7 +6,7 @@ This document tracks the version configuration across all project files to ensur
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Application** | 1.2.0 | Spring MCP Server |
+| **Application** | 1.3.0 | Spring MCP Server |
 | **Java (JDK)** | 25 | LTS version |
 | **Spring Boot** | 3.5.8 | Latest stable |
 | **Spring AI** | 1.1.0 | MCP Server support |
@@ -17,7 +17,7 @@ This document tracks the version configuration across all project files to ensur
 
 ### build.gradle
 ```groovy
-version = '1.2.0'
+version = '1.3.0'
 
 java {
     toolchain {
@@ -49,7 +49,7 @@ services:
   postgres:
     image: postgres:18-alpine
   spring-mcp-server:
-    image: spring-mcp-server:1.2.0
+    image: spring-mcp-server:1.3.0
 ```
 
 ### application.yml
@@ -58,7 +58,7 @@ services:
 info:
   app:
     name: Spring MCP Server
-    version: 1.2.0
+    version: 1.3.0
   spring-boot:
     version: 3.5.8
 
@@ -66,12 +66,12 @@ spring:
   ai:
     mcp:
       server:
-        version: "1.2.0"
+        version: "1.3.0"
 ```
 
 ### build-container.sh
 ```bash
-APP_VERSION="1.2.0"
+APP_VERSION="1.3.0"
 JAVA_VERSION="25"
 ```
 
@@ -102,7 +102,7 @@ When updating versions, ensure all files listed above are updated consistently:
 
 ## MCP Tools Count
 
-Current: **23 tools** (10 documentation + 7 migration + 6 language evolution)
+Current: **31 tools** (10 documentation + 7 migration + 6 language evolution + 8 flavors)
 
 Update these locations when adding/removing tools:
 - `application.yml` - `spring.ai.mcp.server.instructions`
@@ -110,6 +110,13 @@ Update these locations when adding/removing tools:
 - `.claude/memory/project-memory.md` - MCP Tools count
 
 ## Changelog
+
+### v1.3.0 (2025-11-30)
+- Added Flavors feature (8 new MCP tools) - Company guidelines, architecture patterns, compliance rules, agent configurations, and initialization templates
+- Fixed login page CSS loading issue (added /vendor/** to security permitAll)
+- Fixed HTTP Basic Auth modal popup on login page
+- Added Flavors section to Dashboard with category statistics
+- Total MCP tools: 31
 
 ### v1.2.0 (2025-11-29)
 - Added Language Evolution feature (6 new MCP tools)

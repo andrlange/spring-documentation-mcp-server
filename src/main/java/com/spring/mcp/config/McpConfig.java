@@ -1,5 +1,6 @@
 package com.spring.mcp.config;
 
+import com.spring.mcp.service.tools.FlavorTools;
 import com.spring.mcp.service.tools.LanguageEvolutionTools;
 import com.spring.mcp.service.tools.MigrationTools;
 import com.spring.mcp.service.tools.SpringDocumentationTools;
@@ -37,17 +38,20 @@ public class McpConfig {
      * - SpringDocumentationTools: 10 documentation tools (always available)
      * - MigrationTools: 7 OpenRewrite migration tools (optional, when enabled)
      * - LanguageEvolutionTools: 6 language evolution tools (optional, when enabled)
+     * - FlavorTools: 8 flavor/guidelines tools (optional, when enabled)
      *
      * @param springDocumentationTools the Spring Documentation tools service
      * @param migrationTools optional Migration tools service (when OpenRewrite feature is enabled)
      * @param languageEvolutionTools optional Language Evolution tools (when feature is enabled)
+     * @param flavorTools optional Flavor tools (when Flavors feature is enabled)
      * @return ToolCallbackProvider configured with all available tools
      */
     @Bean
     public ToolCallbackProvider toolCallbackProvider(
             SpringDocumentationTools springDocumentationTools,
             Optional<MigrationTools> migrationTools,
-            Optional<LanguageEvolutionTools> languageEvolutionTools) {
+            Optional<LanguageEvolutionTools> languageEvolutionTools,
+            Optional<FlavorTools> flavorTools) {
 
         List<Object> toolObjects = new ArrayList<>();
         toolObjects.add(springDocumentationTools);
@@ -57,6 +61,9 @@ public class McpConfig {
 
         // Add language evolution tools if feature is enabled
         languageEvolutionTools.ifPresent(toolObjects::add);
+
+        // Add flavor tools if Flavors feature is enabled
+        flavorTools.ifPresent(toolObjects::add);
 
         return MethodToolCallbackProvider.builder()
             .toolObjects(toolObjects.toArray())

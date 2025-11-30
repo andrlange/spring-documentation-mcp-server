@@ -1,0 +1,78 @@
+package com.spring.mcp.model.dto.flavor;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.spring.mcp.model.enums.FlavorCategory;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Full DTO for Flavor entity with all fields.
+ *
+ * @author Spring MCP Server
+ * @version 1.2.0
+ * @since 2025-11-30
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class FlavorDto {
+    private Long id;
+    private String uniqueName;
+    private String displayName;
+    private FlavorCategory category;
+    private String patternName;
+    private String content;
+    private String description;
+    private String contentHash;
+    private List<String> tags;
+    private Map<String, Object> metadata;
+    private Boolean isActive;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String createdBy;
+    private String updatedBy;
+
+    /**
+     * Get category display name for UI.
+     */
+    public String getCategoryDisplayName() {
+        return category != null ? category.getDisplayName() : null;
+    }
+
+    /**
+     * Get category icon class for UI.
+     */
+    public String getCategoryIconClass() {
+        return category != null ? category.getIconClass() : null;
+    }
+
+    /**
+     * Get category color class for UI.
+     */
+    public String getCategoryColorClass() {
+        return category != null ? category.getColorClass() : null;
+    }
+
+    /**
+     * Get tags as comma-separated string.
+     */
+    public String getTagsString() {
+        return tags != null ? String.join(", ", tags) : "";
+    }
+
+    /**
+     * Get content preview (first 200 chars).
+     */
+    public String getContentPreview() {
+        if (content == null) return "";
+        return content.length() > 200 ? content.substring(0, 200) + "..." : content;
+    }
+}

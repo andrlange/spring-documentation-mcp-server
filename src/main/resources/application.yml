@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring MCP Server
-    version: 1.2.0
+    version: 1.3.0
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.8
@@ -68,11 +68,11 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.2.0"
+        version: "1.3.0"
         instructions: |
           Spring Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 
-          Total: 23 tools available (10 documentation + 7 migration + 6 language evolution)
+          Total: 31 tools available (10 documentation + 7 migration + 6 language evolution + 8 flavors)
 
           Documentation Tools (10):
           1. searchSpringDocs: Search across all Spring documentation
@@ -102,6 +102,16 @@ spring:
           21. getLanguageVersionDiff: Compare features between two versions
           22. getSpringBootLanguageRequirements: Get language requirements for Spring Boot
           23. searchLanguageFeatures: Search language features by keyword
+
+          Flavors Tools (8) - Company guidelines and patterns:
+          24. searchFlavors: Search company guidelines, patterns, and configurations
+          25. getFlavorByName: Get complete flavor content by unique name
+          26. getFlavorsByCategory: List flavors in a category (ARCHITECTURE, COMPLIANCE, AGENTS, INITIALIZATION, GENERAL)
+          27. getArchitecturePatterns: Get architecture patterns for specific technologies
+          28. getComplianceRules: Get compliance rules by framework (GDPR, SOC2, etc.)
+          29. getAgentConfiguration: Get AI agent configuration for use case
+          30. getProjectInitialization: Get project initialization template
+          31. listFlavorCategories: List categories with counts
 
           SSE endpoint: /mcp/spring/sse
           Message endpoint: /mcp/spring/messages
@@ -233,6 +243,26 @@ mcp:
           name: "Kotlin"
           license: "Apache-2.0"
           repository: "https://github.com/JetBrains/kotlin"
+
+    # Flavors Feature Configuration
+    flavors:
+      enabled: ${FLAVORS_ENABLED:true}
+      categories:
+        - ARCHITECTURE
+        - COMPLIANCE
+        - AGENTS
+        - INITIALIZATION
+        - GENERAL
+      search:
+        default-limit: 10
+        max-limit: 50
+        full-text-search: true
+      editor:
+        autosave: true
+        autosave-delay: 5000
+        spell-checker: true
+        min-height: "400px"
+        max-height: "600px"
 
 # Actuator for health checks and monitoring
 management:

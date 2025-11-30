@@ -15,8 +15,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import javax.sql.DataSource;
 
-import static org.springframework.security.config.Customizer.withDefaults;
-
 /**
  * Spring Security configuration for the application
  * Uses JdbcUserDetailsManager for JDBC-based authentication (modern approach)
@@ -38,8 +36,8 @@ public class SecurityConfig {
             .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
             .authorizeHttpRequests(auth -> auth
-                // Public resources
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                // Public resources (including vendor assets for login page)
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/vendor/**", "/favicon.ico").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
 
                 // Spring AI MCP SSE endpoints - permitAll but protected by ApiKeyAuthenticationFilter
@@ -72,7 +70,8 @@ public class SecurityConfig {
                 .deleteCookies("JSESSIONID")
                 .permitAll()
             )
-            .httpBasic(withDefaults()) // Keep Basic Auth for backward compatibility
+            // Disable HTTP Basic Auth - use form login for web UI and API keys for MCP endpoints
+            .httpBasic(basic -> basic.disable())
             .csrf(csrf -> csrf
                 // Disable CSRF for MCP endpoints as they use API key authentication
                 .ignoringRequestMatchers("/mcp/**", "/sse", "/message", "/mcp/spring/sse", "/mcp/spring/messages",

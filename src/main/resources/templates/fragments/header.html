@@ -26,6 +26,9 @@
         <div class="navbar-nav">
             <div class="nav-item text-nowrap px-3" sec:authorize="isAuthenticated()">
                 <span class="navbar-text me-3" sec:authentication="name">User</span>
+                <button type="button" class="btn btn-sm btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                    <i class="bi bi-key"></i> Change Password
+                </button>
                 <form th:action="@{/logout}" method="post" class="d-inline">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <button type="submit" class="btn btn-sm btn-outline-light">Logout</button>

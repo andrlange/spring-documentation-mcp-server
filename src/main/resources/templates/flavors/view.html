@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title th:text="${flavor.displayName} + ' - Spring MCP Server'">Flavor - Spring MCP Server</title>
+    <style>
+        .markdown-content {
+            background-color: #1f2937;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+        .markdown-content h1 { color: #60a5fa; margin-top: 1rem; }
+        .markdown-content h2 { color: #a78bfa; margin-top: 1rem; }
+        .markdown-content h3 { color: #34d399; margin-top: 0.75rem; }
+        .markdown-content code {
+            background-color: #374151;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            color: #6db33f;
+        }
+        .markdown-content pre {
+            background-color: #111827;
+            border: 1px solid #374151;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .markdown-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .markdown-content blockquote {
+            border-left: 4px solid #6db33f;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #9ca3af;
+        }
+        .markdown-content ul, .markdown-content ol {
+            padding-left: 1.5rem;
+        }
+        .markdown-content a {
+            color: #6db33f;
+        }
+        .markdown-content a:hover {
+            color: #34d399;
+        }
+        .tag-badge {
+            font-size: 0.8rem;
+            padding: 0.35rem 0.65rem;
+            background-color: rgba(109, 179, 63, 0.2);
+            color: #6db33f;
+            border-radius: 0.25rem;
+            margin-right: 0.35rem;
+            margin-bottom: 0.35rem;
+            display: inline-block;
+        }
+        .category-badge-purple { background-color: rgba(167, 139, 250, 0.2); color: #a78bfa; }
+        .category-badge-pink { background-color: rgba(244, 114, 182, 0.2); color: #f472b6; }
+        .category-badge-cyan { background-color: rgba(34, 211, 216, 0.2); color: #22d3d8; }
+        .category-badge-green { background-color: rgba(109, 179, 63, 0.2); color: #6db33f; }
+        .category-badge-amber { background-color: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a th:href="@{/flavors}" class="text-decoration-none">Flavors</a></li>
+                    <li class="breadcrumb-item active" th:text="${flavor.displayName}">Flavor Name</li>
+                </ol>
+            </nav>
+            <h1 class="h2">
+                <i th:class="${flavor.categoryIconClass}" th:style="'color: var(--' + flavor.categoryColorClass + '-color, #a78bfa);'"></i>
+                <span th:text="${flavor.displayName}">Flavor Name</span>
+            </h1>
+        </div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a th:href="@{/flavors}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+                <a th:href="@{/flavors/{id}/edit(id=${flavor.id})}" class="btn btn-sm btn-outline-light" sec:authorize="hasRole('ADMIN')">
+                    <i class="bi bi-pencil"></i> Edit
+                </a>
+                <a th:href="@{/flavors/{id}/export(id=${flavor.id})}" class="btn btn-sm btn-outline-light">
+                    <i class="bi bi-download"></i> Export
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Sidebar - Metadata -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-dark border-secondary">
+                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Details</h6>
+                </div>
+                <div class="card-body">
+                    <!-- Status -->
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Status</small>
+                        <span th:if="${flavor.isActive}" class="badge bg-success">
+                            <i class="bi bi-check-circle"></i> Active
+                        </span>
+                        <span th:unless="${flavor.isActive}" class="badge bg-secondary">
+                            <i class="bi bi-pause-circle"></i> Inactive
+                        </span>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Category</small>
+                        <span th:class="'badge category-badge-' + ${flavor.categoryColorClass}">
+                            <i th:class="${flavor.categoryIconClass} + ' me-1'"></i>
+                            <span th:text="${flavor.categoryDisplayName}">Category</span>
+                        </span>
+                    </div>
+
+                    <!-- Unique Name -->
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Unique Name</small>
+                        <code th:text="${flavor.uniqueName}">unique-name</code>
+                    </div>
+
+                    <!-- Pattern Name -->
+                    <div class="mb-3" th:if="${flavor.patternName}">
+                        <small class="text-muted d-block mb-1">Pattern</small>
+                        <span th:text="${flavor.patternName}">Pattern Name</span>
+                    </div>
+
+                    <!-- Tags -->
+                    <div class="mb-3" th:if="${flavor.tags != null and !flavor.tags.isEmpty()}">
+                        <small class="text-muted d-block mb-2">Tags</small>
+                        <div>
+                            <span th:each="tag : ${flavor.tags}" class="tag-badge" th:text="${tag}">tag</span>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3" th:if="${flavor.description}">
+                        <small class="text-muted d-block mb-1">Description</small>
+                        <p class="mb-0 small" th:text="${flavor.description}">Description text</p>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <!-- Timestamps -->
+                    <div class="mb-2">
+                        <small class="text-muted d-block mb-1">Created</small>
+                        <small th:if="${flavor.createdAt}"
+                               th:text="${#temporals.format(flavor.createdAt, 'yyyy-MM-dd HH:mm')}">
+                            2024-01-01
+                        </small>
+                        <span th:if="${flavor.createdBy}" class="text-muted">
+                            by <span th:text="${flavor.createdBy}">user</span>
+                        </span>
+                    </div>
+
+                    <div class="mb-0">
+                        <small class="text-muted d-block mb-1">Last Updated</small>
+                        <small th:if="${flavor.updatedAt}"
+                               th:text="${#temporals.format(flavor.updatedAt, 'yyyy-MM-dd HH:mm')}">
+                            2024-01-01
+                        </small>
+                        <span th:if="${flavor.updatedBy}" class="text-muted">
+                            by <span th:text="${flavor.updatedBy}">user</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MCP Tool Usage -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-dark border-secondary">
+                    <h6 class="mb-0"><i class="bi bi-terminal me-2"></i>MCP Usage</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-2">Use this command to fetch this flavor via MCP:</p>
+                    <code class="d-block p-2 bg-dark rounded small" th:text="'getFlavorByName(&quot;' + ${flavor.uniqueName} + '&quot;)'">
+                        getFlavorByName("unique-name")
+                    </code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-markdown me-2"></i>Content</h5>
+                    <button type="button" class="btn btn-sm btn-outline-light" onclick="copyContent()">
+                        <i class="bi bi-clipboard"></i> Copy
+                    </button>
+                </div>
+                <div class="card-body markdown-content" id="markdownContent">
+                    <!-- Rendered markdown content will be inserted here by JavaScript -->
+                    <div id="renderedContent"></div>
+                    <!-- Raw content for copying -->
+                    <pre id="rawContent" style="display:none;" th:text="${flavor.content}"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div layout:fragment="scripts">
+<!-- Marked.js for markdown rendering (local) -->
+<script th:src="@{/vendor/marked/marked.min.js}"></script>
+<!-- Highlight.js for code highlighting (local) -->
+<link th:href="@{/vendor/highlightjs/github-dark.min.css}" rel="stylesheet">
+<script th:src="@{/vendor/highlightjs/highlight.min.js}"></script>
+<script th:inline="javascript">
+document.addEventListener('DOMContentLoaded', function() {
+    const rawContent = document.getElementById('rawContent').textContent;
+
+    // Configure marked with highlight.js
+    marked.setOptions({
+        breaks: true,
+        gfm: true,
+        highlight: function(code, lang) {
+            if (lang && hljs.getLanguage(lang)) {
+                return hljs.highlight(code, { language: lang }).value;
+            }
+            return hljs.highlightAuto(code).value;
+        }
+    });
+
+    // Render markdown
+    document.getElementById('renderedContent').innerHTML = marked.parse(rawContent);
+
+    // Apply highlight.js to any remaining code blocks
+    document.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightBlock(block);
+    });
+});
+
+function copyContent() {
+    const rawContent = document.getElementById('rawContent').textContent;
+    navigator.clipboard.writeText(rawContent).then(() => {
+        // Show feedback
+        const btn = event.target.closest('button');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-light');
+
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-light');
+        }, 2000);
+    });
+}
+</script>
+</div>
+</body>
+</html>
