@@ -207,6 +207,40 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- GitHub Documentation Section -->
+                                    <div class="card border-0 shadow-sm m-2 mt-0 github-docs-section" th:data-doc-id="${doc.id}">
+                                        <div class="card-header bg-dark text-white d-flex align-items-center justify-content-between"
+                                             style="cursor: pointer;"
+                                             onclick="toggleGitHubDocs(this)">
+                                            <h6 class="mb-0">
+                                                <i class="bi bi-github me-2"></i>
+                                                GitHub Documentation
+                                                <span class="github-docs-count badge bg-light text-dark ms-2">Loading...</span>
+                                            </h6>
+                                            <i class="bi bi-chevron-down github-docs-chevron"></i>
+                                        </div>
+                                        <div class="github-docs-body collapse">
+                                            <!-- Loading Spinner -->
+                                            <div class="github-docs-loading text-center py-4">
+                                                <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <span class="text-muted ms-2">Loading GitHub documentation...</span>
+                                            </div>
+
+                                            <!-- GitHub Docs List -->
+                                            <div class="github-docs-list list-group list-group-flush d-none">
+                                                <!-- Items will be loaded via JavaScript -->
+                                            </div>
+
+                                            <!-- No GitHub Docs Message -->
+                                            <div class="github-docs-empty text-center py-3 d-none">
+                                                <i class="bi bi-inbox text-muted"></i>
+                                                <span class="text-muted ms-2">No GitHub documentation available for this version.</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         </th:block>

@@ -83,6 +83,7 @@
                             <li>Phase 5: Sync documentation content (Markdown conversion)</li>
                             <li>Phase 6: Sync code examples (Samples from spring.io)</li>
                             <li th:if="${openRewriteEnabled}">Phase 7: Migration Recipes (OpenRewrite knowledge)</li>
+                            <li>Phase 8: GitHub Documentation (Antora/AsciiDoc from GitHub)</li>
                         </ol>
                     </div>
 
@@ -117,7 +118,7 @@
                     <!-- Progress Bar -->
                     <div class="mb-4">
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-white-50" id="sync-phase-text">Phase 0/7: Initializing...</span>
+                            <span class="text-white-50" id="sync-phase-text">Phase 0/9: Initializing...</span>
                             <span class="text-white-50" id="sync-percent-text">0%</span>
                         </div>
                         <div class="progress" style="height: 30px; background-color: rgba(255, 255, 255, 0.1);">
@@ -176,6 +177,12 @@
                             <div class="phase-indicator" data-phase="7">
                                 <i class="bi bi-arrow-repeat text-secondary" style="color: #f97316 !important;"></i>
                                 <small class="d-block text-white-50">Migration Recipes</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="phase-indicator" data-phase="8">
+                                <i class="bi bi-github text-secondary"></i>
+                                <small class="d-block text-white-50">GitHub Docs</small>
                             </div>
                         </div>
                     </div>
@@ -492,6 +499,42 @@
             </div>
         </div>
 
+        <!-- Phase 8: GitHub Documentation -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm" style="border-color: #6366f1;">
+                <div class="card-header text-white" style="background-color: #6366f1;">
+                    <h6 class="card-title mb-0">
+                        <span class="badge bg-white me-2" style="color: #6366f1;">8</span>
+                        <i class="bi bi-github"></i>
+                        GitHub Documentation
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text small">
+                        Fetch Antora/AsciiDoc documentation from Spring GitHub repositories (spring-boot, spring-security, etc.).
+                    </p>
+                    <form method="post" th:action="@{/sync/github-docs}" class="mb-0 sync-form">
+                        <button type="submit" class="btn btn-sm w-100 sync-btn" style="background-color: #6366f1; border-color: #6366f1; color: white;">
+                            <span class="btn-text">
+                                <i class="bi bi-arrow-repeat"></i>
+                                Sync
+                            </span>
+                            <span class="btn-spinner d-none">
+                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                Syncing...
+                            </span>
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer bg-light">
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i>
+                        ~60-120 seconds
+                    </small>
+                </div>
+            </div>
+        </div>
+
         <!-- Languages Evolution (Java/Kotlin) - Conditional -->
         <div class="col-md-6 col-lg-4" th:if="${languageEvolutionEnabled}">
             <div class="card h-100 shadow-sm" style="border-color: #8b5cf6;">
@@ -529,6 +572,7 @@
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- Sync Guide -->
@@ -709,7 +753,7 @@
                 progressBar.style.width = '0%';
                 progressBar.setAttribute('aria-valuenow', 0);
                 progressLabel.textContent = 'Starting...';
-                phaseText.textContent = 'Phase 0/7: Initializing...';
+                phaseText.textContent = 'Phase 0/9: Initializing...';
                 percentText.textContent = '0%';
                 statusMessage.style.display = 'none';
                 errorMessage.style.display = 'none';

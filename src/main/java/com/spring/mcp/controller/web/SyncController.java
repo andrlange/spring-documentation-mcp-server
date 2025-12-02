@@ -8,6 +8,7 @@ import com.spring.mcp.service.sync.CodeExamplesSyncService;
 import com.spring.mcp.service.sync.ComprehensiveSyncService;
 import com.spring.mcp.service.sync.ProjectSyncService;
 import com.spring.mcp.service.sync.RecipeSyncService;
+import com.spring.mcp.service.sync.SpringBootVersionSyncService;
 import com.spring.mcp.service.sync.SpringGenerationsSyncService;
 import com.spring.mcp.service.sync.SyncProgressTracker;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,7 @@ public class SyncController {
     private final ComprehensiveSyncService comprehensiveSyncService;
     private final CodeExamplesSyncService codeExamplesSyncService;
     private final SyncProgressTracker progressTracker;
+    private final SpringBootVersionSyncService springBootVersionSyncService;
 
     // Additional services for individual phase syncs
     private final com.spring.mcp.service.sync.SpringProjectPageCrawlerService crawlerService;
@@ -58,6 +60,12 @@ public class SyncController {
     private final LanguageEvolutionFeatureConfig languageEvolutionFeatureConfig;
     private final Optional<LanguageSchedulerService> languageSchedulerService;
 
+    // GitHub Documentation sync
+    private final com.spring.mcp.service.github.GitHubDocumentationSyncService gitHubDocumentationSyncService;
+
+    // Spring Guides sync (for code examples and language fix)
+    private final com.spring.mcp.service.sync.SpringGuideFetchService springGuideFetchService;
+
     /**
      * Show sync page with options.
      *
@@ -69,6 +77,8 @@ public class SyncController {
         log.debug("Showing sync page");
         model.addAttribute("activePage", "sync");
         model.addAttribute("pageTitle", "Synchronize Projects & Versions");
+        model.addAttribute("openRewriteEnabled", openRewriteFeatureConfig.isEnabled());
+        model.addAttribute("languageEvolutionEnabled", languageEvolutionFeatureConfig.isEnabled());
         return "sync/index";
     }
 
@@ -80,26 +90,28 @@ public class SyncController {
      */
     @PostMapping("/spring-boot")
     public String syncSpringBoot(RedirectAttributes redirectAttributes) {
-        log.info("Manual Spring Boot sync triggered");
+        log.info("Manual Spring Boot versions sync triggered (Phase 0)");
 
         try {
-            ProjectSyncService.SyncResult result = projectSyncService.syncSpringBoot();
+            // Use SpringBootVersionSyncService for Phase 0 (populates spring_boot_versions table)
+            SpringBootVersionSyncService.SyncResult result = springBootVersionSyncService.syncSpringBootVersions();
 
             if (result.isSuccess()) {
                 String message = String.format(
-                    "Spring Boot sync completed successfully! Created %d versions (errors: %d)",
+                    "Spring Boot versions sync completed! Created %d, Updated %d (errors: %d)",
                     result.getVersionsCreated(),
+                    result.getVersionsUpdated(),
                     result.getErrorsEncountered()
                 );
                 redirectAttributes.addFlashAttribute("success", message);
                 log.info(message);
             } else {
-                String errorMsg = "Spring Boot sync failed: " + result.getErrorMessage();
+                String errorMsg = "Spring Boot versions sync failed: " + result.getErrorMessage();
                 redirectAttributes.addFlashAttribute("error", errorMsg);
                 log.error(errorMsg);
             }
         } catch (Exception e) {
-            String errorMsg = "Error during Spring Boot sync: " + e.getMessage();
+            String errorMsg = "Error during Spring Boot versions sync: " + e.getMessage();
             redirectAttributes.addFlashAttribute("error", errorMsg);
             log.error(errorMsg, e);
         }
@@ -424,6 +436,75 @@ public class SyncController {
 
         } catch (Exception e) {
             String errorMsg = "Error during languages sync: " + e.getMessage();
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+            log.error(errorMsg, e);
+        }
+
+        return "redirect:/sync";
+    }
+
+    /**
+     * Trigger manual sync of GitHub documentation (Antora/AsciiDoc files from GitHub repositories).
+     *
+     * @param redirectAttributes for flash messages
+     * @return redirect to sync page
+     */
+    @PostMapping("/github-docs")
+    public String syncGitHubDocs(RedirectAttributes redirectAttributes) {
+        log.info("Manual GitHub documentation sync triggered");
+
+        try {
+            com.spring.mcp.service.github.GitHubDocumentationSyncService.GitHubSyncResult result =
+                gitHubDocumentationSyncService.syncAll();
+
+            if (result.isSuccess()) {
+                String message = String.format(
+                    "GitHub documentation sync completed successfully! Synced %d projects, %d files, %d examples (errors: %d)",
+                    result.getProjectsSynced(),
+                    result.getTotalDocumentationFiles(),
+                    result.getTotalCodeExamples(),
+                    result.getTotalErrors()
+                );
+                redirectAttributes.addFlashAttribute("success", message);
+                log.info(message);
+            } else {
+                String errorMsg = "GitHub documentation sync completed with errors: " + result.getErrorMessage();
+                redirectAttributes.addFlashAttribute("error", errorMsg);
+                log.error(errorMsg);
+            }
+
+        } catch (Exception e) {
+            String errorMsg = "Error during GitHub documentation sync: " + e.getMessage();
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+            log.error(errorMsg, e);
+        }
+
+        return "redirect:/sync";
+    }
+
+    /**
+     * Fix language tags for existing code examples.
+     * Re-detects language based on code content analysis.
+     *
+     * @param redirectAttributes for flash messages
+     * @return redirect to sync page
+     */
+    @PostMapping("/fix-language-tags")
+    public String fixLanguageTags(RedirectAttributes redirectAttributes) {
+        log.info("Manual language tag fix triggered");
+
+        try {
+            int updatedCount = springGuideFetchService.fixLanguageTags();
+
+            String message = String.format(
+                "Language tag fix completed! Updated %d code examples with correct language detection",
+                updatedCount
+            );
+            redirectAttributes.addFlashAttribute("success", message);
+            log.info(message);
+
+        } catch (Exception e) {
+            String errorMsg = "Error during language tag fix: " + e.getMessage();
             redirectAttributes.addFlashAttribute("error", errorMsg);
             log.error(errorMsg, e);
         }

@@ -610,6 +610,123 @@ a:hover {
 }
 
 /* ============================================
+   List Groups (Dark Theme)
+   ============================================ */
+.list-group-item {
+    background-color: var(--spring-card-bg);
+    border-color: var(--spring-border-dark);
+    color: var(--text-primary);
+}
+
+.list-group-item-action:hover,
+.list-group-item-action:focus {
+    background-color: var(--spring-hover-bg);
+    color: var(--text-primary);
+}
+
+.list-group-flush > .list-group-item {
+    border-left: 0;
+    border-right: 0;
+}
+
+/* GitHub Documentation Items */
+.github-doc-item {
+    background-color: var(--spring-card-bg) !important;
+    border-color: var(--spring-border-dark) !important;
+    color: var(--text-primary) !important;
+}
+
+.github-doc-item:hover {
+    background-color: var(--spring-hover-bg) !important;
+}
+
+.github-doc-item h6 {
+    color: var(--text-primary);
+}
+
+.github-doc-item .btn-link {
+    color: var(--text-secondary);
+}
+
+.github-doc-item .btn-link:hover {
+    color: var(--spring-green);
+}
+
+.github-doc-markdown {
+    background-color: var(--spring-nav-bg) !important;
+    border: 1px solid var(--spring-border-dark);
+    color: var(--text-primary);
+}
+
+/* Markdown body styling for dark theme */
+.github-doc-markdown.markdown-body {
+    background-color: var(--spring-nav-bg) !important;
+    color: var(--text-primary);
+}
+
+.github-doc-markdown.markdown-body h1,
+.github-doc-markdown.markdown-body h2,
+.github-doc-markdown.markdown-body h3,
+.github-doc-markdown.markdown-body h4,
+.github-doc-markdown.markdown-body h5,
+.github-doc-markdown.markdown-body h6 {
+    color: var(--text-primary);
+    border-bottom-color: var(--spring-border-dark);
+}
+
+.github-doc-markdown.markdown-body p,
+.github-doc-markdown.markdown-body li {
+    color: var(--text-secondary);
+}
+
+.github-doc-markdown.markdown-body code {
+    background-color: var(--spring-bg-dark);
+    color: var(--spring-green-light);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+}
+
+.github-doc-markdown.markdown-body pre {
+    background-color: var(--spring-bg-dark);
+    border: 1px solid var(--spring-border-dark);
+}
+
+.github-doc-markdown.markdown-body pre code {
+    background-color: transparent;
+}
+
+.github-doc-markdown.markdown-body a {
+    color: var(--spring-green);
+}
+
+.github-doc-markdown.markdown-body a:hover {
+    color: var(--spring-green-light);
+}
+
+.github-doc-markdown.markdown-body blockquote {
+    border-left-color: var(--spring-green);
+    color: var(--text-secondary);
+}
+
+.github-doc-markdown.markdown-body table th,
+.github-doc-markdown.markdown-body table td {
+    border-color: var(--spring-border-dark);
+}
+
+.github-doc-markdown.markdown-body table tr {
+    background-color: var(--spring-card-bg);
+    border-color: var(--spring-border-dark);
+}
+
+.github-doc-markdown.markdown-body table tr:nth-child(2n) {
+    background-color: var(--spring-nav-bg);
+}
+
+.github-doc-markdown.markdown-body hr {
+    border-color: var(--spring-border-dark);
+}
+
+/* ============================================
    Utility Classes
    ============================================ */
 .text-spring-green {

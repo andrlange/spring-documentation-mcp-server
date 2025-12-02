@@ -7,8 +7,9 @@ A comprehensive Spring Boot application that serves as a Model Context Protocol 
 This MCP server enables AI assistants (like Claude) to search, browse, and retrieve Spring Framework documentation, code examples, and API references. It includes:
 
 - **MCP Server**: SSE-based protocol implementation using Spring AI
-- **Documentation Sync**: Automated synchronization from spring.io
-- **Full-Text Search**: PostgreSQL-powered search across all Spring documentation
+- **Documentation Sync**: Automated synchronization from spring.io and GitHub spring-projects repositories
+- **GitHub Source Docs**: Direct AsciiDoc documentation fetching from Spring project repositories with version-aware paths
+- **Full-Text Search**: PostgreSQL-powered search across all Spring documentation (spring.io + GitHub sources)
 - **Web Management UI**: Thymeleaf-based interface for managing projects, versions, and documentation
 - **Code Examples**: Searchable repository of Spring code snippets
 - **Migration Recipes**: OpenRewrite-based migration knowledge for Spring Boot version upgrades with breaking changes and transformations
@@ -16,6 +17,25 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - **Flavors**: Company-specific guidelines, architecture patterns, compliance rules, AI agent configurations, and project initialization templates
 
 ## Changelog
+
+### v1.3.1 (2025-12-01)
+- **GitHub Documentation Scanner**: New documentation and code example scanner using GitHub sources from spring-projects organization
+    - Fetches AsciiDoc documentation directly from Spring project repositories
+    - Supports version-specific documentation paths with automatic tag resolution
+    - Configurable documentation paths per project with version threshold overrides
+    - Processes `.adoc` files with full AsciiDoc-to-HTML conversion
+- **Extended Documentation Page**: Cascaded documentation view combining spring.io docs and GitHub source docs
+    - Two-tier documentation structure: spring.io reference links + GitHub source documentation
+    - Expandable content sections with rendered AsciiDoc/Markdown
+    - Full-text search across both documentation sources
+    - Version-aware documentation browsing
+- **Extended Code Examples Page**: Enhanced with topic grouping and improved code viewing
+    - Topic/category grouping for better organization
+    - Syntax highlighting with highlight.js (Atom One Dark theme)
+    - Code view modal with copy-to-clipboard functionality
+    - Preserved line breaks and formatting in code snippets
+- **UI Enhancements**: Added Kotlin "K" gradient icon in Dashboard Language Evolution section
+- **UI Enhancements**: Added Java coffee cup icon and Kotlin "K" icon on Languages page statistics cards
 
 ### v1.3.0 (2025-11-30)
 - **Flavors Feature**: New optional feature for managing company-specific guidelines and configurations
@@ -211,8 +231,8 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - **Dashboard** - Overview statistics and recent updates
 - **Projects** - Manage Spring projects (Spring Boot, Framework, Data, Security, Cloud, etc.)
 - **Versions** - Version management with latest/default marking
-- **Documentation** - Browse and search documentation links with full-text search
-- **Code Examples** - Code snippet library with tagging
+- **Documentation** - Cascaded view of spring.io docs and GitHub source documentation with expandable content
+- **Code Examples** - Code snippet library with topic grouping, syntax highlighting, and copy-to-clipboard
 - **Migration Recipes** - OpenRewrite-inspired migration knowledge browser (optional feature)
 - **Languages** - Java/Kotlin version tracking with features, deprecations, and code patterns (optional feature)
 - **Flavors** - Company guidelines, architecture patterns, compliance rules, and agent configurations (optional feature)
@@ -223,7 +243,8 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 #### Documentation Sync Services
 - Automated sync from spring.io/projects
-- Version detection and tracking
+- **GitHub Documentation Sync**: Direct AsciiDoc fetching from spring-projects repositories
+- Version detection and tracking with tag resolution
 - Spring Boot version synchronization
 - Project relationship mapping
 - Spring Generations support
@@ -291,7 +312,7 @@ docker-compose ps
 
 ### 4. Run the Application
 ```bash
-java -jar build/libs/spring-mcp-server-1.3.0.jar
+java -jar build/libs/spring-mcp-server-1.3.1.jar
 ```
 
 Or using Gradle:
@@ -1009,6 +1030,7 @@ mcp:
 - **HTML Parsing**: JSoup 1.21.2
 - **JavaScript Support**: HtmlUnit 4.18.0
 - **HTML to Markdown**: Flexmark 0.64.8
+- **AsciiDoc Processing**: AsciidoctorJ 3.0.0 (for GitHub source documentation)
 - **HTTP Client**: Spring WebFlux WebClient
 
 ### Security & Monitoring
@@ -1106,17 +1128,25 @@ Migrations are applied automatically on startup. Manual migration:
 
 ### Documentation Synchronization
 
-The system can automatically sync documentation from spring.io:
+The system can automatically sync documentation from multiple sources:
 
+**Spring.io Sync**:
 1. **Project Discovery**: Crawls spring.io/projects to discover projects
 2. **Version Detection**: Detects available versions for each project
 3. **Documentation Fetching**: Downloads and parses documentation HTML
 4. **Content Conversion**: Converts HTML to searchable Markdown
 5. **Indexing**: Builds PostgreSQL full-text search index
-6. **Scheduling**: Runs daily updates (configurable)
 
-Trigger manual sync via Web UI:
-- Settings page → "Sync Documentation" button
+**GitHub Source Documentation Sync** (New in v1.3.1):
+1. **Repository Access**: Fetches documentation directly from spring-projects GitHub repositories
+2. **Version-Aware Paths**: Configurable documentation paths per project with version threshold overrides
+3. **Tag Resolution**: Automatic resolution of version tags (with configurable tag prefixes)
+4. **AsciiDoc Processing**: Full AsciiDoc-to-HTML conversion using AsciidoctorJ
+5. **Cascaded View**: Documentation displayed in two tiers: spring.io reference + GitHub source docs
+
+**Scheduling**:
+- Runs daily updates (configurable cron)
+- Settings page → "Sync Documentation" button for manual trigger
 - Or use REST API: `POST /api/sync/comprehensive`
 
 ### Full-Text Search
@@ -1133,7 +1163,10 @@ Search features:
 The Code Examples feature provides a searchable repository of Spring code snippets that can be accessed both through the MCP server and the web UI.
 
 **Features**:
-- **Rich Code Snippets**: Store complete code examples with syntax highlighting
+- **Rich Code Snippets**: Store complete code examples with syntax highlighting (highlight.js with Atom One Dark theme)
+- **Topic Grouping**: Examples organized by category/topic for easy browsing
+- **Code View Modal**: Click-to-view modal with copy-to-clipboard functionality
+- **Preserved Formatting**: Line breaks and indentation preserved for proper code display
 - **Title & Description**: Each example has a descriptive title and detailed explanation
 - **Language Support**: Tag examples with programming language (Java, Kotlin, Groovy, XML, YAML, etc.)
 - **Category Organization**: Organize examples into logical categories (Configuration, REST API, Data Access, Security, etc.)
@@ -1413,11 +1446,13 @@ lsof -ti :8080 | xargs kill -9
 - [x] Language Evolution tracking for Java/Kotlin (optional feature)
 - [x] Flavors - Company guidelines, architecture patterns, and compliance rules (optional feature)
 - [x] Migration guides between versions
+- [x] Comprehensive documentation coverage for all Spring projects
+- [x] Enhanced search with highlighting and snippets
+- [x] More code examples across Spring ecosystem
+- [x] GitHub integration for code samples
 
 ### In Progress 🚧
-- [ ] Comprehensive documentation coverage for all Spring projects
-- [ ] Enhanced search with highlighting and snippets
-- [ ] More code examples across Spring ecosystem
+
 - [ ] Performance optimization for large result sets
 - [ ] Migration of Manual Tool registration to @McpTool
 
@@ -1430,7 +1465,6 @@ lsof -ti :8080 | xargs kill -9
 - [ ] Offline mode
 - [ ] Air-Gapped Replication Mode for cascaded setups
 - [ ] Additional MCP resources (prompts, completions)
-- [ ] GitHub integration for code samples
 - [ ] Spring Initializr integration
 
 ## Contributing

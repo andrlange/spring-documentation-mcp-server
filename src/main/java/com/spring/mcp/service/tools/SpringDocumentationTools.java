@@ -16,6 +16,7 @@ import com.spring.mcp.repository.SpringProjectRepository;
 import com.spring.mcp.service.SettingsService;
 import com.spring.mcp.service.documentation.DocumentationService;
 import com.spring.mcp.service.documentation.DocumentationServiceImpl;
+import com.spring.mcp.service.mcp.McpVersionResolverService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
@@ -45,6 +46,7 @@ public class SpringDocumentationTools {
     private final SpringBootVersionRepository springBootVersionRepository;
     private final SpringBootCompatibilityRepository compatibilityRepository;
     private final SettingsService settingsService;
+    private final McpVersionResolverService versionResolver;
 
     /**
      * Search Spring documentation with full-text search
@@ -184,11 +186,17 @@ public class SpringDocumentationTools {
         SpringProject springProject = projectRepository.findBySlug(project)
             .orElseThrow(() -> new IllegalArgumentException("Project not found: " + project));
 
-        ProjectVersion projectVersion = versionRepository.findByProjectAndVersion(springProject, version)
+        // Use version resolver to handle naming inconsistencies (e.g., 4.0.0 vs 4.0.0.RELEASE)
+        ProjectVersion projectVersion = versionResolver.resolveVersion(springProject, version)
             .orElseThrow(() -> new IllegalArgumentException(
                 "Version " + version + " not found for project " + project));
 
-        List<DocumentationDto> docs = documentationService.getByVersion(projectVersion.getId());
+        // Aggregate docs from all related version records
+        List<ProjectVersion> relatedVersions = versionResolver.findRelatedVersions(springProject, version);
+        List<DocumentationDto> docs = relatedVersions.stream()
+            .flatMap(pv -> documentationService.getByVersion(pv.getId()).stream())
+            .distinct()
+            .collect(Collectors.toList());
         long executionTimeMs = Duration.between(startTime, Instant.now()).toMillis();
 
         Map<String, List<DocumentationByVersionResponse.DocumentationItem>> groupedDocs = docs.stream()
@@ -240,14 +248,12 @@ public class SpringDocumentationTools {
             SpringProject springProject = projectRepository.findBySlug(project)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found: " + project));
 
-            ProjectVersion projectVersion = versionRepository.findByProjectAndVersion(springProject, version)
-                .orElseThrow(() -> new IllegalArgumentException(
-                    "Version " + version + " not found for project " + project));
-
+            // Use version resolver to aggregate examples from related versions
+            // This handles cases where docs are under "4.0.0" but examples under "4.0.0.RELEASE"
             if (language != null && !language.isBlank()) {
-                examples = codeExampleRepository.findByVersionAndLanguage(projectVersion, language);
+                examples = versionResolver.getCodeExamplesAggregated(springProject, version, language);
             } else {
-                examples = codeExampleRepository.findByVersion(projectVersion);
+                examples = versionResolver.getCodeExamplesAggregated(springProject, version);
             }
         } else if (query != null && !query.isBlank()) {
             examples = codeExampleRepository.searchByTitle(query);

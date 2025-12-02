@@ -12,8 +12,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.sql.DataSource;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Spring Security configuration for the application
@@ -31,6 +36,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            // Enable CORS with custom configuration
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
             // Add API Key authentication filter before UsernamePasswordAuthenticationFilter
             // This filter processes /mcp/**, /sse, and /message endpoints
             .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -117,5 +125,52 @@ public class SecurityConfig {
         // Optional: Custom queries for groups (not used in this project)
         // manager.setGroupAuthoritiesByUsernameQuery(...);
         return manager;
+    }
+
+    /**
+     * CORS configuration for MCP endpoints
+     * Allows cross-origin requests from MCP clients (like Claude Code)
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // Allow all origins for MCP endpoints (MCP clients can be from any origin)
+        configuration.setAllowedOriginPatterns(List.of("*"));
+
+        // Allow all standard HTTP methods
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+
+        // Allow necessary headers including API key headers
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization",
+            "X-API-Key",
+            "Content-Type",
+            "Accept",
+            "Origin",
+            "Cache-Control",
+            "X-Requested-With"
+        ));
+
+        // Expose headers that clients may need to read
+        configuration.setExposedHeaders(Arrays.asList(
+            "Content-Type",
+            "X-Content-Type-Options"
+        ));
+
+        // Allow credentials (for session-based auth on web UI)
+        configuration.setAllowCredentials(true);
+
+        // Cache preflight response for 1 hour
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+        // Apply CORS configuration to MCP endpoints
+        source.registerCorsConfiguration("/mcp/**", configuration);
+        source.registerCorsConfiguration("/sse", configuration);
+        source.registerCorsConfiguration("/message", configuration);
+
+        return source;
     }
 }

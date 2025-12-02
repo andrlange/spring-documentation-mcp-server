@@ -75,6 +75,46 @@ public class SpringGuideFetchService {
     );
 
     /**
+     * Re-detect and fix language tags for existing code examples.
+     * This method scans all code examples and updates incorrectly tagged languages
+     * based on content analysis.
+     *
+     * @return number of examples updated
+     */
+    public int fixLanguageTags() {
+        log.info("Starting language tag fix for existing code examples");
+        int updatedCount = 0;
+
+        List<CodeExample> allExamples = codeExampleRepository.findAll();
+        log.info("Checking {} code examples for language tag accuracy", allExamples.size());
+
+        for (CodeExample example : allExamples) {
+            String currentLanguage = example.getLanguage();
+            String code = example.getCodeSnippet();
+
+            if (code == null || code.isEmpty()) {
+                continue;
+            }
+
+            // Re-detect language based on content
+            String detectedLanguage = detectLanguage(null, code);
+
+            // Only update if the detected language is different and more specific
+            // (e.g., we detected Kotlin but it was tagged as Java)
+            if (!detectedLanguage.equals(currentLanguage)) {
+                log.info("Fixing language for '{}': {} -> {}",
+                    example.getTitle(), currentLanguage, detectedLanguage);
+                example.setLanguage(detectedLanguage);
+                codeExampleRepository.save(example);
+                updatedCount++;
+            }
+        }
+
+        log.info("Language tag fix complete. Updated {} examples", updatedCount);
+        return updatedCount;
+    }
+
+    /**
      * Sync code examples from all popular Spring Guides.
      *
      * @return number of code examples synchronized
@@ -193,24 +233,29 @@ public class SpringGuideFetchService {
 
         int index = 1;
         for (DomNode codeBlock : codeBlocks) {
-            String code = codeBlock.asNormalizedText();
+            // Use getTextContent() to preserve newlines and formatting
+            // asNormalizedText() collapses all whitespace which destroys code formatting
+            String code = codeBlock.getTextContent();
 
             // Skip very short snippets (likely not real code examples)
-            if (code.length() < 50) {
+            if (code == null || code.trim().length() < 50) {
                 continue;
             }
+
+            // Clean up the code - trim leading/trailing whitespace but preserve internal formatting
+            code = code.strip();
 
             ExtractedCodeExample example = new ExtractedCodeExample();
             example.index = index++;
             example.code = code;
 
-            // Try to detect language from class attribute
+            // Try to detect language from class attribute and code content
             if (codeBlock instanceof DomElement) {
                 DomElement elem = (DomElement) codeBlock;
                 String className = elem.getAttribute("class");
-                if (className != null && !className.isEmpty()) {
-                    example.language = detectLanguage(className);
-                }
+                example.language = detectLanguage(className, code);
+            } else {
+                example.language = detectLanguage(null, code);
             }
 
             // Try to find context from nearest preceding header
@@ -242,23 +287,94 @@ public class SpringGuideFetchService {
     }
 
     /**
-     * Detect programming language from CSS class name.
+     * Detect programming language from CSS class name and code content.
+     * Uses CSS class as primary indicator but falls back to content analysis
+     * when CSS class is ambiguous or indicates Java (which could be Kotlin).
      *
-     * @param className the CSS class name
-     * @return detected language or "java" as default
+     * @param className the CSS class name (may be null)
+     * @param code the code content
+     * @return detected language
      */
-    private String detectLanguage(String className) {
-        className = className.toLowerCase();
-        if (className.contains("java")) return "java";
-        if (className.contains("kotlin")) return "kotlin";
-        if (className.contains("groovy")) return "groovy";
-        if (className.contains("xml")) return "xml";
-        if (className.contains("json")) return "json";
-        if (className.contains("yaml") || className.contains("yml")) return "yaml";
-        if (className.contains("shell") || className.contains("bash")) return "bash";
-        if (className.contains("sql")) return "sql";
-        if (className.contains("properties")) return "properties";
+    private String detectLanguage(String className, String code) {
+        // First check CSS class for non-Java/non-ambiguous languages
+        if (className != null && !className.isEmpty()) {
+            String classNameLower = className.toLowerCase();
+
+            // These are unambiguous - CSS class is reliable
+            if (classNameLower.contains("kotlin")) return "kotlin";
+            if (classNameLower.contains("groovy")) return "groovy";
+            if (classNameLower.contains("xml")) return "xml";
+            if (classNameLower.contains("json")) return "json";
+            if (classNameLower.contains("yaml") || classNameLower.contains("yml")) return "yaml";
+            if (classNameLower.contains("shell") || classNameLower.contains("bash")) return "bash";
+            if (classNameLower.contains("sql")) return "sql";
+            if (classNameLower.contains("properties")) return "properties";
+        }
+
+        // For Java or when CSS class is ambiguous, analyze code content
+        // Kotlin detection patterns (check these before defaulting to Java)
+        if (code != null && !code.isEmpty()) {
+            if (isKotlinCode(code)) {
+                return "kotlin";
+            }
+            if (isGroovyCode(code)) {
+                return "groovy";
+            }
+        }
+
         return "java"; // Default to Java for Spring guides
+    }
+
+    /**
+     * Detect if code is Kotlin based on language-specific patterns.
+     *
+     * @param code the code content
+     * @return true if code appears to be Kotlin
+     */
+    private boolean isKotlinCode(String code) {
+        // Strong Kotlin indicators (syntax that doesn't exist in Java)
+        if (code.contains("fun ")) return true;                    // Kotlin function declaration
+        if (code.contains("val ")) return true;                    // Kotlin immutable variable
+        if (code.contains("var ")) return true;                    // Kotlin mutable variable (not Java field)
+        if (code.contains("lateinit ")) return true;               // Kotlin late initialization
+        if (code.contains("data class ")) return true;             // Kotlin data class
+        if (code.contains("object ")) return true;                 // Kotlin object declaration
+        if (code.contains("companion object")) return true;        // Kotlin companion object
+        if (code.contains("runApplication<")) return true;         // Kotlin Spring Boot syntax
+        if (code.contains("::class")) return true;                 // Kotlin class reference
+        if (code.contains("?.")) return true;                      // Kotlin safe call operator
+        if (code.contains("!!")) return true;                      // Kotlin non-null assertion
+        if (code.contains("when (")) return true;                  // Kotlin when expression
+        if (code.contains("when(")) return true;                   // Kotlin when expression (no space)
+
+        // Kotlin type annotations (: Type after parameter/variable name)
+        // Be careful: this pattern could match Java lambdas, so check for common Kotlin types
+        if (code.matches("(?s).*\\w+:\\s*(String|Int|Long|Boolean|Double|Float|List|Map|Set).*")) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Detect if code is Groovy based on language-specific patterns.
+     *
+     * @param code the code content
+     * @return true if code appears to be Groovy
+     */
+    private boolean isGroovyCode(String code) {
+        // Strong Groovy indicators
+        if (code.contains("def ")) return true;                    // Groovy dynamic typing
+        if (code.contains("\"\"\"")) return true;                  // Groovy multi-line string
+        if (code.contains("'''")) return true;                     // Groovy multi-line string (single quotes)
+        if (code.contains("@Grab(")) return true;                  // Groovy Grape dependency
+        if (code.contains("@CompileStatic")) return true;          // Groovy compile annotation
+        if (code.contains("@TypeChecked")) return true;            // Groovy type checking
+        if (code.contains(".collect {")) return true;              // Groovy collection method with closure
+        if (code.contains(".each {")) return true;                 // Groovy iteration with closure
+        if (code.contains(".findAll {")) return true;              // Groovy filtering with closure
+
+        return false;
     }
 
     /**
@@ -291,15 +407,19 @@ public class SpringGuideFetchService {
 
     /**
      * Create and configure a WebClient for fetching guides.
+     * JavaScript is disabled for performance and to avoid parsing errors with modern JS.
+     * Spring.io uses Gatsby SSG, so HTML content is pre-rendered.
      *
      * @return configured WebClient
      */
     private WebClient createWebClient() {
         WebClient webClient = new WebClient(BrowserVersion.CHROME);
-        webClient.getOptions().setJavaScriptEnabled(true);
+        // JavaScript DISABLED - spring.io uses Gatsby SSG (content is pre-rendered)
+        webClient.getOptions().setJavaScriptEnabled(false);
         webClient.getOptions().setCssEnabled(false);
         webClient.getOptions().setThrowExceptionOnScriptError(false);
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
+        webClient.getOptions().setPrintContentOnFailingStatusCode(false);
         webClient.getOptions().setTimeout(30000);
         return webClient;
     }

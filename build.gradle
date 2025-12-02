@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.spring.mcp'
-version = '1.3.0'
+version = '1.3.1'
 
 java {
     // Using Java 25 (LTS version)
@@ -33,6 +33,7 @@ ext {
     htmlunitVersion = '4.18.0'
     flexmarkVersion = '0.64.8'
     guavaVersion = '33.5.0-jre'
+    asciidoctorjVersion = '3.0.0'
 }
 
 dependencies {
@@ -64,6 +65,9 @@ dependencies {
     // HTML to Markdown conversion
     implementation "com.vladsch.flexmark:flexmark-html2md-converter:${flexmarkVersion}"
     implementation "com.vladsch.flexmark:flexmark:${flexmarkVersion}"
+
+    // AsciiDoc processing for GitHub-based documentation
+    implementation "org.asciidoctor:asciidoctorj:${asciidoctorjVersion}"
 
     // JSON Processing
     implementation 'com.fasterxml.jackson.core:jackson-databind'

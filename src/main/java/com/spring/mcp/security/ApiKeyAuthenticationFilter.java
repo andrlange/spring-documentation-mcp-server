@@ -48,6 +48,14 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
         String requestUri = request.getRequestURI();
 
+        // Allow OPTIONS requests (CORS preflight) to pass through without API key
+        // CORS preflight requests don't carry custom headers like X-API-Key
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            log.debug("Allowing OPTIONS preflight request for: {}", requestUri);
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // Only process MCP endpoints (both /mcp/** and default Spring AI /sse)
         if (!requestUri.startsWith("/mcp") && !requestUri.startsWith("/sse")) {
             filterChain.doFilter(request, response);
