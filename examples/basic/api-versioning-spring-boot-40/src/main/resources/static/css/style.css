@@ -1,0 +1,598 @@
+/* API Versioning Demo - Spring.io Dark Theme */
+
+/* ============================================
+   Color Variables - Spring.io Dark Theme
+   ============================================ */
+:root {
+    /* Spring Brand Colors */
+    --spring-green: #6db33f;
+    --spring-green-dark: #5fa134;
+    --spring-green-light: #8cc656;
+
+    /* Dark Theme Colors (from spring.io) */
+    --spring-bg-dark: #1b1f23;
+    --spring-card-bg: #1f2326;
+    --spring-nav-bg: #2a2e31;
+    --spring-border-dark: #373a3d;
+    --spring-hover-bg: #2d3135;
+    --spring-code-bg: #161b22;
+
+    /* Text Colors */
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --text-muted: #6c757d;
+
+    /* Status Colors */
+    --danger-red: #dc3545;
+    --warning-orange: #fd7e14;
+    --info-blue: #58a6ff;
+    --success-green: #3fb950;
+
+    /* Version Colors */
+    --version-1-color: #f59e0b;
+    --version-2-color: #10b981;
+
+    /* Shadows */
+    --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================
+   Global Styles
+   ============================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text-primary);
+    background-color: var(--spring-bg-dark);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+a {
+    color: var(--spring-green);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--spring-green-light);
+}
+
+/* ============================================
+   Navigation Bar
+   ============================================ */
+.navbar {
+    background-color: var(--spring-nav-bg);
+    border-bottom: 1px solid var(--spring-border-dark);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--spring-green);
+}
+
+.navbar-brand svg {
+    width: 40px;
+    height: 40px;
+}
+
+.navbar-links {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.navbar-links a {
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.navbar-links a:hover {
+    color: var(--spring-green);
+}
+
+/* ============================================
+   Main Content
+   ============================================ */
+.main-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* ============================================
+   Hero Section
+   ============================================ */
+.hero {
+    text-align: center;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.hero h1 span {
+    color: var(--spring-green);
+}
+
+.hero p {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+/* ============================================
+   Cards
+   ============================================ */
+.card {
+    background-color: var(--spring-card-bg);
+    border: 1px solid var(--spring-border-dark);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.card-header {
+    background-color: var(--spring-nav-bg);
+    border-bottom: 1px solid var(--spring-border-dark);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* ============================================
+   Version Toggle Switch
+   ============================================ */
+.version-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, var(--spring-nav-bg), var(--spring-card-bg));
+    border-radius: 0.75rem;
+    border: 1px solid var(--spring-border-dark);
+    margin-bottom: 2rem;
+}
+
+.version-toggle-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.version-toggle {
+    display: flex;
+    background-color: var(--spring-bg-dark);
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+    border: 1px solid var(--spring-border-dark);
+}
+
+.version-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    border-radius: 0.375rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.version-btn:hover {
+    color: var(--text-primary);
+    background-color: var(--spring-hover-bg);
+}
+
+.version-btn.active {
+    background-color: var(--spring-green);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.version-btn.deprecated {
+    position: relative;
+}
+
+.version-btn .badge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.badge-deprecated {
+    background-color: var(--warning-orange);
+    color: white;
+}
+
+.badge-current {
+    background-color: var(--success-green);
+    color: white;
+}
+
+.version-indicator {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.current-version {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.current-version.v1 {
+    color: var(--version-1-color);
+}
+
+.current-version.v2 {
+    color: var(--version-2-color);
+}
+
+/* ============================================
+   Response Display
+   ============================================ */
+.response-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 1024px) {
+    .response-panel {
+        grid-template-columns: 1fr;
+    }
+}
+
+.response-section {
+    background-color: var(--spring-card-bg);
+    border: 1px solid var(--spring-border-dark);
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.response-section.active {
+    border-color: var(--spring-green);
+    box-shadow: 0 0 0 2px rgba(109, 179, 63, 0.2);
+}
+
+.response-header {
+    background-color: var(--spring-nav-bg);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--spring-border-dark);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.response-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.response-header .version-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.version-badge.v1 {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: var(--version-1-color);
+}
+
+.version-badge.v2 {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: var(--version-2-color);
+}
+
+/* ============================================
+   JSON Display
+   ============================================ */
+.json-display {
+    background-color: var(--spring-code-bg);
+    padding: 1.5rem;
+    overflow-x: auto;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.json-display pre {
+    margin: 0;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.json-display .json-key {
+    color: #79c0ff;
+}
+
+.json-display .json-string {
+    color: #a5d6ff;
+}
+
+.json-display .json-number {
+    color: #79c0ff;
+}
+
+.json-display .json-boolean {
+    color: #ff7b72;
+}
+
+/* ============================================
+   Documentation Section
+   ============================================ */
+.docs-section {
+    margin-top: 3rem;
+}
+
+.docs-section h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.docs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.doc-card {
+    background-color: var(--spring-card-bg);
+    border: 1px solid var(--spring-border-dark);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.doc-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.doc-card h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--spring-green);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.doc-card p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+}
+
+.doc-card code {
+    display: block;
+    background-color: var(--spring-code-bg);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+    font-size: 0.8rem;
+    color: var(--spring-green-light);
+    overflow-x: auto;
+}
+
+/* ============================================
+   Comparison Table
+   ============================================ */
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.comparison-table th,
+.comparison-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--spring-border-dark);
+}
+
+.comparison-table th {
+    background-color: var(--spring-nav-bg);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.comparison-table td {
+    color: var(--text-secondary);
+}
+
+.comparison-table tr:hover td {
+    background-color: var(--spring-hover-bg);
+}
+
+.comparison-table .check {
+    color: var(--success-green);
+}
+
+.comparison-table .cross {
+    color: var(--danger-red);
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+.footer {
+    background-color: var(--spring-nav-bg);
+    border-top: 1px solid var(--spring-border-dark);
+    padding: 2rem;
+    margin-top: 3rem;
+    text-align: center;
+}
+
+.footer p {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.footer a {
+    color: var(--spring-green);
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+.text-spring-green {
+    color: var(--spring-green);
+}
+
+.text-warning {
+    color: var(--warning-orange);
+}
+
+.text-success {
+    color: var(--success-green);
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+
+/* ============================================
+   Loading State
+   ============================================ */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--spring-border-dark);
+    border-top-color: var(--spring-green);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   API Request Info
+   ============================================ */
+.request-info {
+    background-color: var(--spring-code-bg);
+    border: 1px solid var(--spring-border-dark);
+    border-radius: 0.5rem;
+    padding: 1rem 1.5rem;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.request-method {
+    color: var(--success-green);
+    font-weight: 700;
+}
+
+.request-url {
+    color: var(--text-secondary);
+}
+
+.request-header {
+    color: var(--info-blue);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .hero h1 {
+        font-size: 1.75rem;
+    }
+
+    .version-toggle-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .version-indicator {
+        margin-left: 0;
+        justify-content: center;
+    }
+
+    .docs-grid {
+        grid-template-columns: 1fr;
+    }
+}

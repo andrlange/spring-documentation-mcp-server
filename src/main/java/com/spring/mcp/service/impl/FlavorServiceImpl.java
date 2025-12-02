@@ -218,34 +218,113 @@ public class FlavorServiceImpl implements FlavorService {
     }
 
     @Override
-    public FlavorDto importFromMarkdown(String content, FlavorCategory category, String username) {
-        log.info("Importing markdown flavor for category: {} by user: {}", category, username);
+    public ImportResult importFromMarkdown(String content, String username) {
+        log.info("Importing markdown flavor by user: {}", username);
 
-        // Extract title from first H1
-        String title = extractTitle(content);
-        String uniqueName = generateUniqueName(title);
-        String description = extractDescription(content);
+        String warningMessage = null;
+        String markdownContent = content;
+
+        // Parse YAML front matter if present
+        Map<String, String> yamlMetadata = parseYamlFrontMatter(content);
+        if (!yamlMetadata.isEmpty()) {
+            // Remove the YAML front matter from content
+            markdownContent = stripYamlFrontMatter(content);
+            log.debug("Parsed YAML front matter with {} fields", yamlMetadata.size());
+        }
+
+        // Extract metadata from YAML or fall back to content parsing
+        String uniqueName = yamlMetadata.get("unique-name");
+        String displayName = yamlMetadata.get("display-name");
+        String categoryStr = yamlMetadata.get("category");
+        String patternName = yamlMetadata.get("pattern-name");
+        String description = yamlMetadata.get("description");
+        String tagsStr = yamlMetadata.get("tags");
+
+        // Fall back to extracting from content if not in YAML
+        if (displayName == null || displayName.isBlank()) {
+            displayName = extractTitle(markdownContent);
+        }
+        if (uniqueName == null || uniqueName.isBlank()) {
+            uniqueName = generateUniqueNameBase(displayName);
+        }
+
+        // Handle unique name conflicts with auto-rename
+        String originalUniqueName = uniqueName;
+        if (flavorRepository.existsByUniqueName(uniqueName)) {
+            uniqueName = generateUniqueNameWithSuffix(uniqueName);
+            warningMessage = "Name '" + originalUniqueName + "' already exists, renamed to '" + uniqueName + "'. Please review.";
+            log.info("Auto-renamed flavor from '{}' to '{}'", originalUniqueName, uniqueName);
+        }
+
+        // Parse category (may be null if invalid or missing)
+        FlavorCategory category = FlavorCategory.fromString(categoryStr);
+
+        // Parse tags
+        List<String> tags = new ArrayList<>();
+        if (tagsStr != null && !tagsStr.isBlank()) {
+            tags = Arrays.stream(tagsStr.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+        }
 
         FlavorDto dto = FlavorDto.builder()
             .uniqueName(uniqueName)
-            .displayName(title)
+            .displayName(displayName)
             .category(category)
-            .content(content)
+            .patternName(patternName)
+            .content(markdownContent)
             .description(description)
             .isActive(false) // Imported as draft
-            .tags(new ArrayList<>())
+            .tags(tags)
             .metadata(new HashMap<>())
             .build();
 
-        return create(dto, username);
+        // Use direct save to bypass unique name check since we already handled it
+        Flavor flavor = mapToEntity(dto);
+        flavor.setCreatedBy(username);
+        flavor.setUpdatedBy(username);
+        Flavor saved = flavorRepository.save(flavor);
+        log.info("Created imported flavor with id: {}", saved.getId());
+
+        return new ImportResult(mapToDto(saved), warningMessage);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public String exportToMarkdown(Long id) {
-        return flavorRepository.findById(id)
-            .map(Flavor::getContent)
+    public String exportToMarkdown(Long id, boolean includeMetadata) {
+        Flavor flavor = flavorRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Flavor not found: " + id));
+
+        if (!includeMetadata) {
+            return flavor.getContent();
+        }
+
+        // Generate YAML front matter
+        StringBuilder export = new StringBuilder();
+        export.append("---\n");
+        export.append("unique-name: ").append(flavor.getUniqueName()).append("\n");
+        export.append("display-name: ").append(flavor.getDisplayName()).append("\n");
+        if (flavor.getCategory() != null) {
+            export.append("category: ").append(flavor.getCategory().name()).append("\n");
+        }
+        if (flavor.getPatternName() != null && !flavor.getPatternName().isBlank()) {
+            export.append("pattern-name: ").append(flavor.getPatternName()).append("\n");
+        }
+        if (flavor.getDescription() != null && !flavor.getDescription().isBlank()) {
+            export.append("description: ").append(flavor.getDescription()).append("\n");
+        }
+        if (flavor.getTags() != null && !flavor.getTags().isEmpty()) {
+            export.append("tags: ").append(String.join(", ", flavor.getTags())).append("\n");
+        }
+        export.append("---\n");
+
+        // Append the content
+        if (flavor.getContent() != null) {
+            export.append(flavor.getContent());
+        }
+
+        return export.toString();
     }
 
     @Override
@@ -285,6 +364,14 @@ public class FlavorServiceImpl implements FlavorService {
     }
 
     private String generateUniqueName(String title) {
+        String base = generateUniqueNameBase(title);
+        return generateUniqueNameWithSuffix(base);
+    }
+
+    /**
+     * Generate a base unique name from a title (without checking for conflicts).
+     */
+    private String generateUniqueNameBase(String title) {
         String base = title.toLowerCase()
             .replaceAll("[^a-z0-9\\s-]", "")
             .replaceAll("\\s+", "-")
@@ -295,12 +382,100 @@ public class FlavorServiceImpl implements FlavorService {
             base = base.substring(0, 50);
         }
 
+        if (base.isEmpty()) {
+            base = "untitled";
+        }
+
+        return base;
+    }
+
+    /**
+     * Generate a unique name with suffix if needed to avoid conflicts.
+     */
+    private String generateUniqueNameWithSuffix(String base) {
         String uniqueName = base;
         int counter = 1;
         while (flavorRepository.existsByUniqueName(uniqueName)) {
             uniqueName = base + "-" + counter++;
         }
         return uniqueName;
+    }
+
+    /**
+     * Parse YAML front matter from markdown content.
+     * Only parses the first --- ... --- block if it starts at the very beginning.
+     *
+     * @param content the full markdown content
+     * @return map of key-value pairs from the YAML header, empty if no header present
+     */
+    private Map<String, String> parseYamlFrontMatter(String content) {
+        Map<String, String> result = new LinkedHashMap<>();
+
+        if (content == null || !content.startsWith("---")) {
+            return result;
+        }
+
+        // Find the closing ---
+        int firstNewline = content.indexOf('\n');
+        if (firstNewline == -1) {
+            return result;
+        }
+
+        int closingIndex = content.indexOf("\n---", firstNewline);
+        if (closingIndex == -1) {
+            return result;
+        }
+
+        // Extract the YAML content between the ---
+        String yamlContent = content.substring(firstNewline + 1, closingIndex);
+
+        // Parse simple YAML key: value pairs
+        for (String line : yamlContent.split("\n")) {
+            line = line.trim();
+            if (line.isEmpty() || line.startsWith("#")) {
+                continue;
+            }
+
+            int colonIndex = line.indexOf(':');
+            if (colonIndex > 0) {
+                String key = line.substring(0, colonIndex).trim();
+                String value = line.substring(colonIndex + 1).trim();
+                result.put(key, value);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Strip the YAML front matter from markdown content.
+     * Only removes the first --- ... --- block if it starts at the very beginning.
+     *
+     * @param content the full markdown content
+     * @return content without the YAML front matter
+     */
+    private String stripYamlFrontMatter(String content) {
+        if (content == null || !content.startsWith("---")) {
+            return content;
+        }
+
+        int firstNewline = content.indexOf('\n');
+        if (firstNewline == -1) {
+            return content;
+        }
+
+        int closingIndex = content.indexOf("\n---", firstNewline);
+        if (closingIndex == -1) {
+            return content;
+        }
+
+        // Find the end of the closing --- line
+        int contentStart = closingIndex + 4; // Skip \n---
+        if (contentStart < content.length() && content.charAt(contentStart) == '\n') {
+            contentStart++; // Skip the newline after ---
+        }
+
+        return content.substring(contentStart);
     }
 
     private FlavorDto mapToDto(Flavor entity) {

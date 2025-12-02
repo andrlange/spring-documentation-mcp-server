@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Versioning Demo - Spring Boot 4</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="45" fill="#6db33f"/>
+                <path d="M30 50 L45 65 L70 40" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+            <span>API Versioning Demo</span>
+        </div>
+        <div class="navbar-links">
+            <a href="https://github.com/spring-projects/spring-framework" target="_blank">Spring Framework 7</a>
+            <a href="https://spring.io/projects/spring-boot" target="_blank">Spring Boot 4</a>
+            <a href="#docs">Documentation</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1>First-Class <span>API Versioning</span> in Spring Boot 4</h1>
+            <p>
+                Spring Framework 7 introduces native API versioning support with declarative annotations.
+                Toggle between versions below to see how the API responses differ.
+            </p>
+        </section>
+
+        <!-- Version Toggle -->
+        <div class="version-toggle-container">
+            <span class="version-toggle-label">Select API Version:</span>
+            <div class="version-toggle">
+                <button class="version-btn active deprecated" id="btn-v1" onclick="switchVersion('1.0')">
+                    Version 1.0
+                    <span class="badge badge-deprecated">Deprecated</span>
+                </button>
+                <button class="version-btn" id="btn-v2" onclick="switchVersion('2.0')">
+                    Version 2.0
+                    <span class="badge badge-current">Current</span>
+                </button>
+            </div>
+            <div class="version-indicator">
+                <span>Current API Version:</span>
+                <span class="current-version v1" id="current-version">1.0</span>
+            </div>
+        </div>
+
+        <!-- API Request Info -->
+        <div class="request-info">
+            <span class="request-method">GET</span>
+            <span class="request-url">/api/products</span>
+            <span class="request-header" id="request-header">Header: API-Version: 1.0</span>
+        </div>
+
+        <!-- Response Comparison -->
+        <div class="response-panel">
+            <!-- Version 1.0 Response -->
+            <div class="response-section" id="response-v1">
+                <div class="response-header">
+                    <h3>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                        API Response
+                    </h3>
+                    <span class="version-badge v1">v1.0</span>
+                </div>
+                <div class="json-display">
+                    <pre id="json-v1" th:text="${jsonV1}"></pre>
+                </div>
+            </div>
+
+            <!-- Version 2.0 Response -->
+            <div class="response-section" id="response-v2">
+                <div class="response-header">
+                    <h3>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                        API Response
+                    </h3>
+                    <span class="version-badge v2">v2.0</span>
+                </div>
+                <div class="json-display">
+                    <pre id="json-v2" th:text="${jsonV2}"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentation Section -->
+        <section class="docs-section" id="docs">
+            <h2>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" style="color: var(--spring-green)">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                How It Works
+            </h2>
+
+            <div class="docs-grid">
+                <!-- Configuration -->
+                <div class="doc-card">
+                    <h3>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        Configuration
+                    </h3>
+                    <p>Configure API versioning in your WebMvcConfigurer or application.yml</p>
+                    <code>@Override
+public void configureApiVersioning(
+    ApiVersionConfigurer configurer) {
+  configurer
+    .useRequestHeader("API-Version")
+    .setDefaultVersion("1.0")
+    .setSupportedVersions("1.0", "2.0");
+}</code>
+                </div>
+
+                <!-- Controller Annotation -->
+                <div class="doc-card">
+                    <h3>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <polyline points="16 18 22 12 16 6"/>
+                            <polyline points="8 6 2 12 8 18"/>
+                        </svg>
+                        Controller Annotation
+                    </h3>
+                    <p>Use the <code style="display:inline;padding:0.2rem 0.4rem;">version</code> attribute on request mappings</p>
+                    <code>@GetMapping(path = "/{id}", version = "1.0")
+public ProductV1 getProductV1(@PathVariable Long id) {
+    return new ProductV1(id, "Product", 29.99);
+}
+
+@GetMapping(path = "/{id}", version = "2.0+")
+public ProductV2 getProductV2(@PathVariable Long id) {
+    return ProductV2.withDetails(id);
+}</code>
+                </div>
+
+                <!-- Client Request -->
+                <div class="doc-card">
+                    <h3>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                        Client Request
+                    </h3>
+                    <p>Clients specify the desired version in the request header</p>
+                    <code>curl -H "API-Version: 2.0" \
+     http://localhost:8088/api/products/1
+
+# Or using query parameter (if configured):
+curl "http://localhost:8088/api/products/1?version=2.0"</code>
+                </div>
+
+                <!-- Deprecation Support -->
+                <div class="doc-card">
+                    <h3>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        Deprecation Headers
+                    </h3>
+                    <p>Deprecated versions automatically receive RFC 9745 compliant headers</p>
+                    <code>HTTP/1.1 200 OK
+Deprecation: true
+Sunset: Sat, 01 Jun 2025 00:00:00 GMT
+Link: &lt;/docs/migration/1.0&gt;; rel="deprecation"
+Content-Type: application/json</code>
+                </div>
+            </div>
+
+            <!-- Version Comparison Table -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h2>Version Comparison</h2>
+                </div>
+                <div class="card-body">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Version 1.0</th>
+                                <th>Version 2.0</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Basic product info (id, name, price)</td>
+                                <td class="check">&#10003;</td>
+                                <td class="check">&#10003;</td>
+                            </tr>
+                            <tr>
+                                <td>Product description</td>
+                                <td class="cross">&#10007;</td>
+                                <td class="check">&#10003;</td>
+                            </tr>
+                            <tr>
+                                <td>Category & Tags</td>
+                                <td class="cross">&#10007;</td>
+                                <td class="check">&#10003;</td>
+                            </tr>
+                            <tr>
+                                <td>Stock information</td>
+                                <td class="cross">&#10007;</td>
+                                <td class="check">&#10003;</td>
+                            </tr>
+                            <tr>
+                                <td>Rating (average & count)</td>
+                                <td class="cross">&#10007;</td>
+                                <td class="check">&#10003;</td>
+                            </tr>
+                            <tr>
+                                <td>Creation timestamp</td>
+                                <td class="cross">&#10007;</td>
+                                <td class="check">&#10003;</td>
+                            </tr>
+                            <tr>
+                                <td>Deprecation status</td>
+                                <td class="text-warning">Deprecated</td>
+                                <td class="text-success">Current</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>
+            API Versioning Demo &bull; Built with
+            <a href="https://spring.io/projects/spring-boot" target="_blank">Spring Boot 4</a> &amp;
+            <a href="https://spring.io/projects/spring-framework" target="_blank">Spring Framework 7</a>
+            &bull; Part of the
+            <a href="https://github.com/andrlange/spring-mcp" target="_blank">Spring MCP Server</a> examples
+        </p>
+    </footer>
+
+    <script>
+        // Version switching logic
+        let currentVersion = '1.0';
+
+        function switchVersion(version) {
+            currentVersion = version;
+
+            // Update button states
+            document.getElementById('btn-v1').classList.toggle('active', version === '1.0');
+            document.getElementById('btn-v2').classList.toggle('active', version === '2.0');
+
+            // Update current version display
+            const versionDisplay = document.getElementById('current-version');
+            versionDisplay.textContent = version;
+            versionDisplay.className = 'current-version ' + (version === '1.0' ? 'v1' : 'v2');
+
+            // Update request header display
+            document.getElementById('request-header').textContent = 'Header: API-Version: ' + version;
+
+            // Highlight active response panel
+            document.getElementById('response-v1').classList.toggle('active', version === '1.0');
+            document.getElementById('response-v2').classList.toggle('active', version === '2.0');
+
+            // Fetch and display live data
+            fetchApiData(version);
+        }
+
+        async function fetchApiData(version) {
+            try {
+                const response = await fetch('/api/products', {
+                    headers: {
+                        'API-Version': version
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const jsonStr = JSON.stringify(data, null, 2);
+
+                    if (version === '1.0') {
+                        document.getElementById('json-v1').textContent = jsonStr;
+                    } else {
+                        document.getElementById('json-v2').textContent = jsonStr;
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching API data:', error);
+            }
+        }
+
+        // Initialize with version 1.0 highlighted
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('response-v1').classList.add('active');
+        });
+    </script>
+</body>
+</html>

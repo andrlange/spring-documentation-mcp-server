@@ -1,0 +1,142 @@
+# Changelog
+
+All notable changes to the Spring Documentation MCP Server are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.3.2] - 2025-12-02
+
+### Added
+- **Enhanced Flavors Import/Export**: YAML front matter metadata header support
+    - **Import**: Automatic parsing of YAML header metadata (unique-name, display-name, category, pattern-name, description, tags)
+    - **Export**: Modal dialog with toggle to include/exclude metadata header (default: enabled)
+    - Kebab-case field naming convention in YAML headers for cross-tool compatibility
+    - Auto-rename with warning message for duplicate unique names on import
+    - Category validation supports both enum names and display names (e.g., "ARCHITECTURE" or "Architecture")
+    - Added new API Versioning Example in examples/basic to demonstrate new API Versioning in Spring Boot 4.0
+
+### Changed
+- **Spring AI MCP Refactoring**: Migrated to Spring AI 1.1.0 annotation-based MCP server
+    - Replaced `@Tool`/`@ToolParam` with `@McpTool`/`@McpToolParam` annotations
+    - New annotation package: `org.springaicommunity.mcp.annotation` (Spring AI Community)
+    - Automatic tool discovery via `McpServerAnnotationScannerAutoConfiguration`
+    - Removed manual `MethodToolCallbackProvider` registration from `McpConfig.java`
+    - Simplified configuration - tools are now auto-registered as Spring beans
+
+## [1.3.1] - 2025-12-01
+
+### Added
+- **GitHub Documentation Scanner**: New documentation and code example scanner using GitHub sources from spring-projects organization
+    - Fetches AsciiDoc documentation directly from Spring project repositories
+    - Supports version-specific documentation paths with automatic tag resolution
+    - Configurable documentation paths per project with version threshold overrides
+    - Processes `.adoc` files with full AsciiDoc-to-HTML conversion
+- **Extended Documentation Page**: Cascaded documentation view combining spring.io docs and GitHub source docs
+    - Two-tier documentation structure: spring.io reference links + GitHub source documentation
+    - Expandable content sections with rendered AsciiDoc/Markdown
+    - Full-text search across both documentation sources
+    - Version-aware documentation browsing
+- **Extended Code Examples Page**: Enhanced with topic grouping and improved code viewing
+    - Topic/category grouping for better organization
+    - Syntax highlighting with highlight.js (Atom One Dark theme)
+    - Code view modal with copy-to-clipboard functionality
+    - Preserved line breaks and formatting in code snippets
+
+### Changed
+- **UI Enhancements**: Added Kotlin "K" gradient icon in Dashboard Language Evolution section
+- **UI Enhancements**: Added Java coffee cup icon and Kotlin "K" icon on Languages page statistics cards
+
+## [1.3.0] - 2025-11-30
+
+### Added
+- **Flavors Feature**: New optional feature for managing company-specific guidelines and configurations
+    - Support for 5 categories: Architecture, Compliance, Agents, Initialization, General
+    - Markdown-based content with full-text search using PostgreSQL tsvector
+    - Import/Export functionality for sharing flavors between teams
+    - Create flavors from scratch or import from markdown files
+    - Dedicated UI with category filtering and search
+    - 8 new MCP tools for AI assistants to query flavor data
+    - Dashboard integration showing flavor statistics by category
+    - Configurable via `mcp.features.flavors.enabled` (default: true)
+
+### Fixed
+- Fixed login page CSS loading issue (added /vendor/** to security permitAll)
+- Fixed HTTP Basic Auth modal popup on login page
+
+## [1.2.0] - 2025-11-29
+
+### Added
+- **Language Evolution Tracking**: New optional feature for tracking Java (8+) and Kotlin (1.6+) language evolution
+    - Track new features, deprecations, removals, and preview features for each language version
+    - JEP (Java Enhancement Proposal) and KEP (Kotlin Enhancement Proposal) tracking
+    - Code pattern examples showing old vs new idioms (e.g., pre-records vs records)
+    - Spring Boot language version requirements mapping
+    - Version comparison to see what changed between versions
+    - Dedicated UI page with filters by language, version, status, and category
+    - 6 new MCP tools for AI assistants to query language evolution data
+    - Configurable scheduler (DAILY/WEEKLY/MONTHLY) for language data sync
+    - Configurable via `mcp.features.language-evolution.enabled` (default: true)
+
+### Changed
+- Updated Java from 21 to 25 (LTS)
+- Total MCP tools increased to 23
+
+## [1.1.0] - 2025-11-28
+
+### Added
+- **OpenRewrite Migration Recipes**: New optional feature providing migration knowledge for Spring ecosystem upgrades
+    - Dynamic recipe generation based on Spring projects in the database
+    - Covers all 55+ Spring projects with version upgrade paths
+    - Includes transformations for dependencies, imports, properties, and annotations
+    - Dedicated UI for browsing recipes with dark mode styling
+    - Configurable via `mcp.features.openrewrite.enabled` (default: true)
+
+### Changed
+- **UI Enhancements**: Dark mode styling for recipe details page
+- Total MCP tools increased to 17
+
+## [1.0.2] - 2025-11-27
+
+### Changed
+- **Spring Boot**: Bumped from 3.5.7 to 3.5.8
+- **Spring AI**: Upgraded from 1.0.3 to 1.1.0
+
+### Added
+- **Example App**: Added first 100% AI-generated example application (`examples/todo-app-example/`)
+    - Multi-user Todo app with Spring Boot 4.0.0
+    - Spring Security authentication
+    - PostgreSQL database with Flyway migrations
+    - Custom Actuator endpoints
+    - Dark-themed Thymeleaf UI
+    - Built entirely using this MCP server for Spring documentation lookup
+
+## [1.0.1] - 2025-11-26
+
+### Added
+- Initial public release
+- 10 MCP tools for Spring documentation access
+- Full-text search with PostgreSQL
+- Web management UI
+- API Key authentication
+
+---
+
+## Version Summary
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| 1.3.2 | 2025-12-02 | YAML metadata headers for Flavors, Spring AI 1.1.0 MCP refactoring |
+| 1.3.1 | 2025-12-01 | GitHub documentation scanner, enhanced code examples |
+| 1.3.0 | 2025-11-30 | Flavors feature (8 MCP tools) |
+| 1.2.0 | 2025-11-29 | Language Evolution tracking (6 MCP tools) |
+| 1.1.0 | 2025-11-28 | OpenRewrite migration recipes (7 MCP tools) |
+| 1.0.2 | 2025-11-27 | Spring Boot 3.5.8, example app |
+| 1.0.1 | 2025-11-26 | Initial release (10 MCP tools) |
+
+## MCP Tools Evolution
+
+- **v1.0.1**: 10 documentation tools
+- **v1.1.0**: +7 migration tools = 17 total
+- **v1.2.0**: +6 language evolution tools = 23 total
+- **v1.3.0**: +8 flavors tools = **31 total**

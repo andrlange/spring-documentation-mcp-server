@@ -294,30 +294,39 @@ public class FlavorsController {
 
     /**
      * Import markdown file.
+     * Parses YAML front matter header if present to extract metadata.
      */
     @PostMapping("/import")
     @PreAuthorize("hasRole('ADMIN')")
     public String importMarkdown(
             @RequestParam("file") MultipartFile file,
-            @RequestParam String category,
             @AuthenticationPrincipal UserDetails user,
             RedirectAttributes redirectAttributes) {
 
-        log.info("Importing markdown file for category: {} by user: {}", category, user.getUsername());
+        log.info("Importing markdown file by user: {}", user.getUsername());
 
         try {
-            FlavorCategory cat = FlavorCategory.fromString(category);
-            if (cat == null) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Invalid category: " + category);
-                return "redirect:/flavors";
+            String content = new String(file.getBytes(), StandardCharsets.UTF_8);
+            FlavorService.ImportResult result = flavorService.importFromMarkdown(content, user.getUsername());
+
+            // Build success message
+            StringBuilder successMsg = new StringBuilder();
+            successMsg.append("Imported '").append(result.flavor().getDisplayName()).append("' successfully!");
+
+            // Add warning if name was auto-renamed
+            if (result.warningMessage() != null) {
+                redirectAttributes.addFlashAttribute("warningMessage", result.warningMessage());
             }
 
-            String content = new String(file.getBytes(), StandardCharsets.UTF_8);
-            FlavorDto imported = flavorService.importFromMarkdown(content, cat, user.getUsername());
+            // Add info about missing category if needed
+            if (result.flavor().getCategory() == null) {
+                successMsg.append(" Please select a category.");
+            } else {
+                successMsg.append(" Review and activate when ready.");
+            }
 
-            redirectAttributes.addFlashAttribute("successMessage",
-                "Imported '" + imported.getDisplayName() + "' successfully! Review and activate when ready.");
-            return "redirect:/flavors/" + imported.getId() + "/edit";
+            redirectAttributes.addFlashAttribute("successMessage", successMsg.toString());
+            return "redirect:/flavors/" + result.flavor().getId() + "/edit";
 
         } catch (IOException e) {
             log.error("Error reading imported file", e);
@@ -328,21 +337,28 @@ public class FlavorsController {
 
     /**
      * Export flavor as markdown.
+     *
+     * @param id the flavor ID
+     * @param includeMetadata if true, includes YAML front matter header (default: true)
      */
     @GetMapping("/{id}/export")
     @PreAuthorize("isAuthenticated()")
     @ResponseBody
-    public ResponseEntity<String> exportMarkdown(@PathVariable Long id) {
+    public ResponseEntity<String> exportMarkdown(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "true") boolean includeMetadata) {
 
-        log.info("Exporting flavor id: {} as markdown", id);
+        log.info("Exporting flavor id: {} as markdown (includeMetadata: {})", id, includeMetadata);
 
         FlavorDto flavor = flavorService.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Flavor not found: " + id));
 
+        String content = flavorService.exportToMarkdown(id, includeMetadata);
+
         return ResponseEntity.ok()
             .header("Content-Type", "text/markdown; charset=UTF-8")
             .header("Content-Disposition", "attachment; filename=\"" + flavor.getUniqueName() + ".md\"")
-            .body(flavor.getContent());
+            .body(content);
     }
 
     /**

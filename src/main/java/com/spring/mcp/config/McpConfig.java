@@ -1,72 +1,26 @@
 package com.spring.mcp.config;
 
-import com.spring.mcp.service.tools.FlavorTools;
-import com.spring.mcp.service.tools.LanguageEvolutionTools;
-import com.spring.mcp.service.tools.MigrationTools;
-import com.spring.mcp.service.tools.SpringDocumentationTools;
-import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.ai.tool.method.MethodToolCallbackProvider;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * MCP Server Configuration
- * Registers MCP tools for Spring AI MCP Server auto-discovery
  *
- * This configuration follows the official Spring AI MCP Server pattern:
- * - Uses MethodToolCallbackProvider for @Tool annotated methods
- * - Registers tool objects for auto-discovery
- * - Enables automatic tool registration with the MCP server
+ * With Spring AI 1.1.0, MCP tools are automatically discovered via the
+ * McpServerAnnotationScannerAutoConfiguration. Beans with @McpTool annotated methods
+ * are automatically registered as MCP tools.
  *
- * @see <a href="https://docs.spring.io/spring-ai/reference/api/mcp/mcp-server-boot-starter-docs.html">Spring AI MCP Server Documentation</a>
+ * Tool classes:
+ * - SpringDocumentationTools: 10 documentation tools (always available)
+ * - MigrationTools: 7 OpenRewrite migration tools (optional, when enabled)
+ * - LanguageEvolutionTools: 6 language evolution tools (optional, when enabled)
+ * - FlavorTools: 8 flavor/guidelines tools (optional, when enabled)
+ *
+ * @see <a href="https://docs.spring.io/spring-ai/reference/api/mcp/mcp-annotations-server.html">Spring AI MCP Annotations</a>
  */
 @Configuration
 public class McpConfig {
 
-    /**
-     * Register all MCP tools for the server.
-     * <p>
-     * The MethodToolCallbackProvider scans the provided tool objects for @Tool annotated methods
-     * and automatically registers them with the MCP server. All methods annotated with @Tool
-     * will be exposed as MCP tools.
-     * <p>
-     * Tools registered:
-     * - SpringDocumentationTools: 10 documentation tools (always available)
-     * - MigrationTools: 7 OpenRewrite migration tools (optional, when enabled)
-     * - LanguageEvolutionTools: 6 language evolution tools (optional, when enabled)
-     * - FlavorTools: 8 flavor/guidelines tools (optional, when enabled)
-     *
-     * @param springDocumentationTools the Spring Documentation tools service
-     * @param migrationTools optional Migration tools service (when OpenRewrite feature is enabled)
-     * @param languageEvolutionTools optional Language Evolution tools (when feature is enabled)
-     * @param flavorTools optional Flavor tools (when Flavors feature is enabled)
-     * @return ToolCallbackProvider configured with all available tools
-     */
-    @Bean
-    public ToolCallbackProvider toolCallbackProvider(
-            SpringDocumentationTools springDocumentationTools,
-            Optional<MigrationTools> migrationTools,
-            Optional<LanguageEvolutionTools> languageEvolutionTools,
-            Optional<FlavorTools> flavorTools) {
+    // No manual tool registration needed with Spring AI 1.1.0
+    // @McpTool annotated beans are auto-discovered by McpServerAnnotationScannerAutoConfiguration
 
-        List<Object> toolObjects = new ArrayList<>();
-        toolObjects.add(springDocumentationTools);
-
-        // Add migration tools if OpenRewrite feature is enabled
-        migrationTools.ifPresent(toolObjects::add);
-
-        // Add language evolution tools if feature is enabled
-        languageEvolutionTools.ifPresent(toolObjects::add);
-
-        // Add flavor tools if Flavors feature is enabled
-        flavorTools.ifPresent(toolObjects::add);
-
-        return MethodToolCallbackProvider.builder()
-            .toolObjects(toolObjects.toArray())
-            .build();
-    }
 }

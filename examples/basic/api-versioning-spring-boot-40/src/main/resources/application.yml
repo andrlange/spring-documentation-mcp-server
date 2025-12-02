@@ -1,0 +1,44 @@
+# API Versioning Demo Application Configuration
+info:
+  app:
+    name: API Versioning Demo
+    version: 1.0.0
+    description: Demonstrates Spring Boot 4 / Spring Framework 7 API Versioning
+
+spring:
+  application:
+    name: api-versioning-demo
+
+  # Spring Framework 7 API Versioning Configuration
+  # Can also be configured programmatically via WebMvcConfigurer
+  mvc:
+    apiversion:
+      use:
+        header: API-Version
+      default-version: "1.0"
+      supported-versions:
+        - "1.0"
+        - "2.0"
+      deprecated-versions:
+        - "1.0"
+
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+
+  web:
+    resources:
+      cache:
+        period: 0
+
+server:
+  port: ${SERVER_PORT:8088}
+
+logging:
+  level:
+    root: INFO
+    com.example.apiversioning: DEBUG
+    org.springframework.web: DEBUG

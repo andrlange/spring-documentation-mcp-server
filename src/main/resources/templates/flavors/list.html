@@ -64,6 +64,11 @@
         <span th:text="${successMessage}">Success message</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
+    <div th:if="${warningMessage}" class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span th:text="${warningMessage}">Warning message</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
     <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="bi bi-exclamation-triangle me-2"></i>
         <span th:text="${errorMessage}">Error message</span>
@@ -270,10 +275,12 @@
                                         sec:authorize="hasRole('ADMIN')">
                                     <i th:class="${flavor.isActive ? 'bi bi-toggle-on' : 'bi bi-toggle-off'}"></i>
                                 </button>
-                                <a th:href="@{/flavors/{id}/export(id=${flavor.id})}"
-                                   class="btn btn-outline-light" title="Export as Markdown">
+                                <button type="button" class="btn btn-outline-light export-flavor-btn"
+                                        th:data-id="${flavor.id}"
+                                        th:data-name="${flavor.displayName}"
+                                        title="Export as Markdown">
                                     <i class="bi bi-download"></i>
-                                </a>
+                                </button>
                                 <button type="button" class="btn btn-outline-danger delete-flavor-btn"
                                         th:data-id="${flavor.id}"
                                         th:data-name="${flavor.displayName}"
@@ -302,21 +309,26 @@
                 <form th:action="@{/flavors/import}" method="post" enctype="multipart/form-data">
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="importCategory" class="form-label">Category</label>
-                            <select id="importCategory" name="category" class="form-select" required>
-                                <option value="">Select category...</option>
-                                <option th:each="cat : ${categories}"
-                                        th:value="${cat.name()}"
-                                        th:text="${cat.displayName}">
-                                </option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
                             <label for="importFile" class="form-label">Markdown File</label>
                             <input type="file" id="importFile" name="file" class="form-control"
                                    accept=".md,.markdown,text/markdown" required>
                             <div class="form-text">
-                                Upload a .md or .markdown file. The first H1 heading will be used as the title.
+                                Upload a .md or .markdown file. Metadata can be provided via YAML front matter:
+                            </div>
+                            <div class="mt-2 p-2 bg-secondary rounded small">
+                                <code class="text-light">
+                                    ---<br>
+                                    unique-name: my-flavor<br>
+                                    display-name: My Flavor<br>
+                                    category: ARCHITECTURE<br>
+                                    pattern-name: Pattern Name<br>
+                                    description: Description<br>
+                                    tags: tag1, tag2, tag3<br>
+                                    ---
+                                </code>
+                            </div>
+                            <div class="form-text mt-2">
+                                If no YAML header is present, the title will be extracted from the first H1 heading.
                             </div>
                         </div>
                     </div>
@@ -327,6 +339,38 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="exportModalLabel">
+                        <i class="bi bi-download me-2"></i>Export Flavor
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Export <strong id="exportFlavorName"></strong> as Markdown file.</p>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="includeMetadataSwitch" checked>
+                        <label class="form-check-label" for="includeMetadataSwitch">
+                            Include metadata header
+                        </label>
+                    </div>
+                    <div class="form-text mt-2">
+                        When enabled, exports with YAML front matter containing unique-name, display-name, category, etc.
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-spring-green" id="confirmExportBtn">
+                        <i class="bi bi-download me-1"></i>Download
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -391,6 +435,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Error toggling status');
             });
         });
+    });
+
+    // Export flavor
+    let flavorToExport = null;
+    const exportModal = document.getElementById('exportModal');
+    const exportModalInstance = new bootstrap.Modal(exportModal);
+
+    document.querySelectorAll('.export-flavor-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            flavorToExport = this.dataset.id;
+            document.getElementById('exportFlavorName').textContent = this.dataset.name;
+            // Reset checkbox to checked (default)
+            document.getElementById('includeMetadataSwitch').checked = true;
+            exportModalInstance.show();
+        });
+    });
+
+    document.getElementById('confirmExportBtn').addEventListener('click', function() {
+        if (!flavorToExport) return;
+
+        const includeMetadata = document.getElementById('includeMetadataSwitch').checked;
+        const exportUrl = `/flavors/${flavorToExport}/export?includeMetadata=${includeMetadata}`;
+
+        // Trigger download by creating a temporary link
+        const link = document.createElement('a');
+        link.href = exportUrl;
+        link.download = '';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        exportModalInstance.hide();
+        flavorToExport = null;
     });
 
     // Delete flavor
