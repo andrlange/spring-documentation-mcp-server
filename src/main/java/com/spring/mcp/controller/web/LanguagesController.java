@@ -7,8 +7,8 @@ import com.spring.mcp.repository.*;
 import com.spring.mcp.service.language.LanguageEvolutionService;
 import com.spring.mcp.service.language.LanguageSyncService;
 import com.spring.mcp.service.scheduler.LanguageSchedulerService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,17 +30,32 @@ import java.util.stream.Collectors;
  */
 @Controller
 @RequestMapping("/languages")
-@RequiredArgsConstructor
 @Slf4j
 @ConditionalOnProperty(name = "mcp.features.language-evolution.enabled", havingValue = "true", matchIfMissing = true)
 public class LanguagesController {
 
     private final LanguageEvolutionService languageEvolutionService;
     private final LanguageSyncService languageSyncService;
-    private final LanguageSchedulerService languageSchedulerService;
+    private final Optional<LanguageSchedulerService> languageSchedulerService;
     private final LanguageVersionRepository versionRepository;
     private final LanguageFeatureRepository featureRepository;
     private final LanguageCodePatternRepository codePatternRepository;
+
+    @Autowired
+    public LanguagesController(
+            LanguageEvolutionService languageEvolutionService,
+            LanguageSyncService languageSyncService,
+            Optional<LanguageSchedulerService> languageSchedulerService,
+            LanguageVersionRepository versionRepository,
+            LanguageFeatureRepository featureRepository,
+            LanguageCodePatternRepository codePatternRepository) {
+        this.languageEvolutionService = languageEvolutionService;
+        this.languageSyncService = languageSyncService;
+        this.languageSchedulerService = languageSchedulerService;
+        this.versionRepository = versionRepository;
+        this.featureRepository = featureRepository;
+        this.codePatternRepository = codePatternRepository;
+    }
 
     /**
      * Display languages list page with filters.
@@ -126,10 +141,12 @@ public class LanguagesController {
                 .findByLanguageAndIsLtsTrueOrderByMajorVersionDesc(LanguageType.JAVA);
         model.addAttribute("ltsVersions", ltsVersions);
 
-        // Last sync info
-        LanguageSchedulerSettings schedulerSettings = languageSchedulerService.getSettings();
-        model.addAttribute("lastSyncRun", schedulerSettings.getLastSyncRun());
-        model.addAttribute("nextSyncRun", schedulerSettings.getNextSyncRun());
+        // Last sync info (only if scheduler service is available)
+        if (languageSchedulerService.isPresent()) {
+            LanguageSchedulerSettings schedulerSettings = languageSchedulerService.get().getSettings();
+            model.addAttribute("lastSyncRun", schedulerSettings.getLastSyncRun());
+            model.addAttribute("nextSyncRun", schedulerSettings.getNextSyncRun());
+        }
 
         return "languages/list";
     }
@@ -252,8 +269,13 @@ public class LanguagesController {
     public ResponseEntity<Map<String, Object>> triggerSync() {
         log.info("Manual language sync triggered");
 
+        if (languageSchedulerService.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "error", "Language scheduler service not available"));
+        }
+
         try {
-            LanguageSyncService.SyncResult result = languageSchedulerService.triggerManualSync();
+            LanguageSyncService.SyncResult result = languageSchedulerService.get().triggerManualSync();
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", result.isSuccess());

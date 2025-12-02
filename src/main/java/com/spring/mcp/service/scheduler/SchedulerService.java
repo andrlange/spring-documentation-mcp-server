@@ -20,6 +20,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
+import org.springframework.context.annotation.Profile;
+
 /**
  * Service for managing scheduled automatic synchronizations.
  * Runs comprehensive sync at configured time daily.
@@ -31,6 +33,7 @@ import java.util.concurrent.ScheduledFuture;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Profile("!test")
 public class SchedulerService {
 
     private final SchedulerSettingsRepository schedulerSettingsRepository;

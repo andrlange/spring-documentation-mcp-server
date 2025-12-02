@@ -14,6 +14,8 @@ import jakarta.annotation.PostConstruct;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
+import org.springframework.context.annotation.Profile;
+
 /**
  * Service for managing scheduled automatic language synchronizations.
  * Supports daily, weekly, and monthly sync frequencies with configurable times.
@@ -25,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Profile("!test")
 public class LanguageSchedulerService {
 
     private final LanguageSchedulerSettingsRepository settingsRepository;

@@ -1,0 +1,105 @@
+# Test Profile Configuration
+# This profile uses PostgreSQL via Testcontainers for proper array/jsonb support
+
+spring:
+  application:
+    name: spring-mcp-server-test
+
+  # PostgreSQL configuration - will be overridden by Testcontainers
+  datasource:
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Disable Flyway for tests - use JPA auto-ddl + custom init script
+  flyway:
+    enabled: false
+
+  # Disable Thymeleaf caching
+  thymeleaf:
+    cache: false
+
+  security:
+    user:
+      name: admin
+      password: admin
+      roles: ADMIN
+
+  # Spring AI MCP Server Configuration for tests
+  ai:
+    mcp:
+      server:
+        name: "spring-documentation-server-test"
+        type: "sync"
+        version: "1.3.2-test"
+        sse-endpoint: /mcp/spring/sse
+        sse-message-endpoint: /mcp/spring/messages
+        capabilities:
+          tool: true
+          completion: false
+          prompt: false
+          resource: false
+
+server:
+  port: 0  # Random port for tests
+
+# MCP Server Configuration
+mcp:
+  server:
+    name: "Spring Documentation MCP Server (Test)"
+    version: "1.3.2-test"
+    sse:
+      timeout: 60000
+      heartbeat-interval: 5000
+
+  documentation:
+    bootstrap:
+      enabled: false
+      on-startup: false
+
+  features:
+    openrewrite:
+      enabled: true
+      sync:
+        enabled: false
+    language-evolution:
+      enabled: true
+      sync:
+        enabled: false
+    flavors:
+      enabled: true
+
+# GitHub - disabled for tests
+github:
+  api:
+    token: ""
+  documentation:
+    enabled: false
+
+# Test API Key Configuration
+# This key can be used for testing: "test_api_key_for_mcp_testing_12345"
+# BCrypt hash of the test key (generated with cost factor 12)
+test:
+  api-key:
+    name: "test-api-key"
+    # Plain text key: test_api_key_for_mcp_testing_12345
+    # This hash is for verification in tests
+    key-hash: "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewKyNiLXCJw8.Mgi"
+    enabled: true
+
+# Reduced logging for tests
+logging:
+  level:
+    root: WARN
+    com.spring.mcp: INFO
+    org.springframework.security: WARN
+    org.springframework.ai.mcp: DEBUG
+    org.hibernate.SQL: WARN
+    org.testcontainers: INFO

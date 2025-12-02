@@ -51,7 +51,7 @@ logs/
 
 ### AI
 PHASE*.md
-CRAWLER_DESIGN.md
+docs/CRAWLER_DESIGN.md
 CLAUDE.md
 .claude/
 docs/
@@ -61,3 +61,4 @@ docs/
 .mcp.json
 
 /prompts/
+/node_modules/
