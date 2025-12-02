@@ -16,76 +16,72 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - **Language Evolution**: Java (8+) and Kotlin (1.6+) feature tracking with deprecations, removals, and code pattern examples
 - **Flavors**: Company-specific guidelines, architecture patterns, compliance rules, AI agent configurations, and project initialization templates
 
+## Table of Contents
+
+- [What is this?](#what-is-this)
+- [Changelog](#changelog)
+- [Screenshots](#screenshots)
+- [Current Status](#current-status)
+  - [MCP Tools (31 tools available)](#-fully-implemented-features)
+  - [Web Management UI](#web-management-ui)
+  - [Documentation Sync Services](#documentation-sync-services)
+  - [Database Features](#database-features)
+- [Prerequisites](#prerequisites)
+  - [Install Java 25](#install-java-25)
+- [Quick Start](#quick-start)
+- [API Key Authentication](#api-key-authentication)
+  - [Creating an API Key](#creating-an-api-key)
+  - [Using API Keys](#using-api-keys)
+- [Testing the MCP Server](#testing-the-mcp-server)
+  - [Option 1: MCP Inspector](#option-1-mcp-inspector-recommended-for-testing)
+  - [Option 2: Claude Desktop/Claude Code](#option-2-claude-desktopclaude-code)
+  - [Available MCP Tools](#available-mcp-tools)
+- [Configuration](#configuration)
+  - [Environment Variables](#environment-variables)
+  - [Application Configuration](#application-configuration)
+- [Technology Stack](#technology-stack)
+- [Database Schema](#database-schema)
+  - [Core Tables](#core-tables)
+  - [Full-Text Search](#full-text-search)
+- [Development](#development)
+  - [Running Tests](#running-tests)
+  - [Database Migrations](#database-migrations)
+- [API Endpoints](#api-endpoints)
+  - [Web UI](#web-ui)
+  - [REST API](#rest-api)
+  - [MCP Protocol](#mcp-protocol)
+  - [Health & Monitoring](#health--monitoring)
+- [Features in Detail](#features-in-detail)
+  - [Documentation Synchronization](#documentation-synchronization)
+  - [Full-Text Search](#full-text-search-1)
+  - [Code Examples](#code-examples)
+  - [OpenRewrite Migration Recipes](#openrewrite-migration-recipes-optional-feature)
+  - [Language Evolution Tracking](#language-evolution-tracking-optional-feature)
+  - [Flavors - Company Guidelines & Patterns](#flavors---company-guidelines--patterns-optional-feature)
+  - [Scheduler Configuration](#scheduler-configuration)
+- [Troubleshooting](#troubleshooting)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+- [Resources](#resources)
+
 ## Changelog
 
-### v1.3.1 (2025-12-01)
-- **GitHub Documentation Scanner**: New documentation and code example scanner using GitHub sources from spring-projects organization
-    - Fetches AsciiDoc documentation directly from Spring project repositories
-    - Supports version-specific documentation paths with automatic tag resolution
-    - Configurable documentation paths per project with version threshold overrides
-    - Processes `.adoc` files with full AsciiDoc-to-HTML conversion
-- **Extended Documentation Page**: Cascaded documentation view combining spring.io docs and GitHub source docs
-    - Two-tier documentation structure: spring.io reference links + GitHub source documentation
-    - Expandable content sections with rendered AsciiDoc/Markdown
-    - Full-text search across both documentation sources
-    - Version-aware documentation browsing
-- **Extended Code Examples Page**: Enhanced with topic grouping and improved code viewing
-    - Topic/category grouping for better organization
-    - Syntax highlighting with highlight.js (Atom One Dark theme)
-    - Code view modal with copy-to-clipboard functionality
-    - Preserved line breaks and formatting in code snippets
-- **UI Enhancements**: Added Kotlin "K" gradient icon in Dashboard Language Evolution section
-- **UI Enhancements**: Added Java coffee cup icon and Kotlin "K" icon on Languages page statistics cards
+> **Full changelog**: See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
-### v1.3.0 (2025-11-30)
-- **Flavors Feature**: New optional feature for managing company-specific guidelines and configurations
-    - Support for 5 categories: Architecture, Compliance, Agents, Initialization, General
-    - Markdown-based content with full-text search using PostgreSQL tsvector
-    - Import/Export functionality for sharing flavors between teams
-    - Create flavors from scratch or import from markdown files
-    - Dedicated UI with category filtering and search
-    - 8 new MCP tools for AI assistants to query flavor data
-    - Dashboard integration showing flavor statistics by category
-    - Configurable via `mcp.features.flavors.enabled` (default: true)
+### Recent Releases
 
-### v1.2.0 (2025-11-29)
-- **Language Evolution Tracking**: New optional feature for tracking Java (8+) and Kotlin (1.6+) language evolution
-    - Track new features, deprecations, removals, and preview features for each language version
-    - JEP (Java Enhancement Proposal) and KEP (Kotlin Enhancement Proposal) tracking
-    - Code pattern examples showing old vs new idioms (e.g., pre-records vs records)
-    - Spring Boot language version requirements mapping
-    - Version comparison to see what changed between versions
-    - Dedicated UI page with filters by language, version, status, and category
-    - 6 new MCP tools for AI assistants to query language evolution data
-    - Configurable scheduler (DAILY/WEEKLY/MONTHLY) for language data sync
-    - Configurable via `mcp.features.language-evolution.enabled` (default: true)
+| Version | Date | Highlights                                                   |
+|---------|------|--------------------------------------------------------------|
+| **1.3.2** | 2025-12-02 | YAML metadata headers for Flavors import/export, new example |
+| **1.3.1** | 2025-12-01 | GitHub documentation scanner, enhanced code examples         |
+| **1.3.0** | 2025-11-30 | Flavors feature (8 MCP tools)                                |
+| **1.2.0** | 2025-11-29 | Language Evolution tracking (6 MCP tools)                    |
+| **1.1.0** | 2025-11-28 | OpenRewrite migration recipes (7 MCP tools)                  |
+| **1.0.2** | 2025-11-27 | Spring Boot 3.5.8, example app                               |
+| **1.0.1** | 2025-11-26 | Initial release (10 MCP tools)                               |
 
-### v1.1.0 (2025-11-28)
-- **OpenRewrite Migration Recipes**: New optional feature providing migration knowledge for Spring ecosystem upgrades
-    - Dynamic recipe generation based on Spring projects in the database
-    - Covers all 55+ Spring projects with version upgrade paths
-    - Includes transformations for dependencies, imports, properties, and annotations
-    - Dedicated UI for browsing recipes with dark mode styling
-    - Configurable via `mcp.features.openrewrite.enabled` (default: true)
-- **UI Enhancements**: Dark mode styling for recipe details page
-
-### v1.0.2 (2025-11-27)
-- **Spring Boot**: Bumped from 3.5.7 to 3.5.8
-- **Spring AI**: Upgraded from 1.0.3 to 1.1.0
-- **Example App**: Added first 100% AI-generated example application (`examples/todo-app-example/`)
-    - Multi-user Todo app with Spring Boot 4.0.0
-    - Spring Security authentication
-    - PostgreSQL database with Flyway migrations
-    - Custom Actuator endpoints
-    - Dark-themed Thymeleaf UI
-    - Built entirely using this MCP server for Spring documentation lookup
-
-### v1.0.1
-- Initial public release
-- 10 MCP tools for Spring documentation access
-- Full-text search with PostgreSQL
-- Web management UI
-- API Key authentication
+**MCP Tools**: 10 (docs) + 7 (migration) + 6 (language) + 8 (flavors) = **31 total**
 
 ## Screenshots
 
@@ -312,7 +308,7 @@ docker-compose ps
 
 ### 4. Run the Application
 ```bash
-java -jar build/libs/spring-mcp-server-1.3.1.jar
+java -jar build/libs/spring-mcp-server-1.3.2.jar
 ```
 
 Or using Gradle:
@@ -1295,11 +1291,28 @@ export FLAVORS_ENABLED=false
 **Features**:
 - **5 Categories**: Architecture, Compliance, Agents, Initialization, General
 - **Markdown Content**: Rich content with full-text search using PostgreSQL tsvector
-- **Import/Export**: Share flavors between teams via markdown files
+- **Import/Export with YAML Metadata**: Share flavors between teams via markdown files with optional YAML front matter headers containing metadata (unique-name, display-name, category, pattern-name, description, tags)
 - **Create from Scratch**: Build flavors directly in the UI editor
 - **Category Filtering**: Quick access to flavors by category
 - **Dashboard Integration**: Statistics showing flavor counts by category
 - **8 MCP Tools**: AI assistants can query flavor data for context-aware assistance
+
+**YAML Front Matter Format** (v1.3.2+):
+```markdown
+---
+unique-name: my-flavor-identifier
+display-name: My Flavor Display Name
+category: ARCHITECTURE
+pattern-name: Optional Pattern Name
+description: Brief description of the flavor content
+tags: tag1, tag2, tag3
+---
+
+# Actual Markdown Content Here
+...
+```
+
+When importing, all metadata fields are automatically extracted from the YAML header. When exporting, you can choose to include or exclude the metadata header via a toggle in the export modal.
 
 **Categories Explained**:
 - **Architecture**: Design patterns and architectural guidelines (hexagonal, microservices, event-driven)
@@ -1450,11 +1463,11 @@ lsof -ti :8080 | xargs kill -9
 - [x] Enhanced search with highlighting and snippets
 - [x] More code examples across Spring ecosystem
 - [x] GitHub integration for code samples
+- [x] Migration of Manual Tool registration to @McpTool
 
 ### In Progress 🚧
 
 - [ ] Performance optimization for large result sets
-- [ ] Migration of Manual Tool registration to @McpTool
 
 ### Planned 📋
 - [ ] Semantic search using embeddings

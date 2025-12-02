@@ -38,6 +38,7 @@ public enum FlavorCategory {
 
     /**
      * Parse category from string (case-insensitive).
+     * Accepts enum names, display names, and common variations.
      *
      * @param value the string value
      * @return the FlavorCategory or null if not found
@@ -46,10 +47,31 @@ public enum FlavorCategory {
         if (value == null || value.isBlank()) {
             return null;
         }
+
+        String normalized = value.trim();
+
+        // Try exact enum name match (case-insensitive)
         try {
-            return FlavorCategory.valueOf(value.toUpperCase().trim());
-        } catch (IllegalArgumentException e) {
-            return null;
+            return FlavorCategory.valueOf(normalized.toUpperCase());
+        } catch (IllegalArgumentException ignored) {
+            // Continue to display name matching
         }
+
+        // Try display name match (case-insensitive)
+        String lowerValue = normalized.toLowerCase();
+        for (FlavorCategory category : values()) {
+            // Match display name
+            if (category.displayName.equalsIgnoreCase(normalized)) {
+                return category;
+            }
+            // Match without spaces/special chars (e.g., "Agents/Subagent" matches "Agents / Subagent")
+            String normalizedDisplay = category.displayName.toLowerCase().replaceAll("[\\s/]+", "");
+            String normalizedInput = lowerValue.replaceAll("[\\s/]+", "");
+            if (normalizedDisplay.equals(normalizedInput)) {
+                return category;
+            }
+        }
+
+        return null;
     }
 }

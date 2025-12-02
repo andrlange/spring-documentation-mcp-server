@@ -7,8 +7,8 @@ import com.spring.mcp.model.enums.FlavorCategory;
 import com.spring.mcp.service.FlavorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.ai.tool.annotation.ToolParam;
+import org.springaicommunity.mcp.annotation.McpTool;
+import org.springaicommunity.mcp.annotation.McpToolParam;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -33,18 +33,18 @@ public class FlavorTools {
 
     private final FlavorService flavorService;
 
-    @Tool(description = """
+    @McpTool(description = """
         Search company flavors (guidelines, architecture patterns, compliance rules, agent configurations).
         Returns summaries matching the search criteria.
         """)
     public List<FlavorSummaryDto> searchFlavors(
-            @ToolParam(description = "Search query for flavor content (searches name, description, and content)")
+            @McpToolParam(description = "Search query for flavor content (searches name, description, and content)")
             String query,
-            @ToolParam(description = "Filter by category: ARCHITECTURE, COMPLIANCE, AGENTS, INITIALIZATION, GENERAL. Optional.")
+            @McpToolParam(description = "Filter by category: ARCHITECTURE, COMPLIANCE, AGENTS, INITIALIZATION, GENERAL. Optional.")
             String category,
-            @ToolParam(description = "Filter by tags (e.g., ['spring-boot', 'kafka']). Optional.")
+            @McpToolParam(description = "Filter by tags (e.g., ['spring-boot', 'kafka']). Optional.")
             List<String> tags,
-            @ToolParam(description = "Maximum results to return (default: 10, max: 50)")
+            @McpToolParam(description = "Maximum results to return (default: 10, max: 50)")
             Integer limit
     ) {
         log.info("Tool: searchFlavors - query={}, category={}, tags={}, limit={}", query, category, tags, limit);
@@ -54,11 +54,11 @@ public class FlavorTools {
         return flavorService.search(query, cat, tags, maxResults);
     }
 
-    @Tool(description = """
+    @McpTool(description = """
         Get complete flavor content by its unique name. Returns full markdown content and metadata.
         """)
     public FlavorDto getFlavorByName(
-            @ToolParam(description = "Unique name of the flavor (e.g., 'hexagonal-spring-boot')")
+            @McpToolParam(description = "Unique name of the flavor (e.g., 'hexagonal-spring-boot')")
             String uniqueName
     ) {
         log.info("Tool: getFlavorByName - uniqueName={}", uniqueName);
@@ -67,11 +67,11 @@ public class FlavorTools {
             .orElseThrow(() -> new IllegalArgumentException("Flavor not found: " + uniqueName));
     }
 
-    @Tool(description = """
+    @McpTool(description = """
         List all active flavors in a specific category.
         """)
     public List<FlavorDto> getFlavorsByCategory(
-            @ToolParam(description = "Category: ARCHITECTURE, COMPLIANCE, AGENTS, INITIALIZATION, or GENERAL")
+            @McpToolParam(description = "Category: ARCHITECTURE, COMPLIANCE, AGENTS, INITIALIZATION, or GENERAL")
             String category
     ) {
         log.info("Tool: getFlavorsByCategory - category={}", category);
@@ -83,12 +83,12 @@ public class FlavorTools {
         return flavorService.findByCategory(cat);
     }
 
-    @Tool(description = """
+    @McpTool(description = """
         Get architecture flavors relevant to specific technologies.
         Use this when you need architectural guidance for a particular tech stack.
         """)
     public List<FlavorDto> getArchitecturePatterns(
-            @ToolParam(description = "Technology slugs (e.g., ['spring-boot', 'kafka', 'jpa'])")
+            @McpToolParam(description = "Technology slugs (e.g., ['spring-boot', 'kafka', 'jpa'])")
             List<String> slugs
     ) {
         log.info("Tool: getArchitecturePatterns - slugs={}", slugs);
@@ -99,12 +99,12 @@ public class FlavorTools {
         return flavorService.findArchitectureByTechnologies(slugs);
     }
 
-    @Tool(description = """
+    @McpTool(description = """
         Get compliance flavors by rule names or framework identifiers.
         Use this when you need to ensure code meets regulatory requirements.
         """)
     public List<FlavorDto> getComplianceRules(
-            @ToolParam(description = "Rule names or framework identifiers (e.g., ['GDPR', 'SOC2', 'PCI-DSS'])")
+            @McpToolParam(description = "Rule names or framework identifiers (e.g., ['GDPR', 'SOC2', 'PCI-DSS'])")
             List<String> rules
     ) {
         log.info("Tool: getComplianceRules - rules={}", rules);
@@ -115,12 +115,12 @@ public class FlavorTools {
         return flavorService.findComplianceByRules(rules);
     }
 
-    @Tool(description = """
+    @McpTool(description = """
         Get agent/subagent configuration for a specific use case.
         Use this to configure AI assistants for specific development workflows.
         """)
     public FlavorDto getAgentConfiguration(
-            @ToolParam(description = "Use case identifier (e.g., 'backend-development', 'ui-development', 'testing')")
+            @McpToolParam(description = "Use case identifier (e.g., 'backend-development', 'ui-development', 'testing')")
             String useCase
     ) {
         log.info("Tool: getAgentConfiguration - useCase={}", useCase);
@@ -129,12 +129,12 @@ public class FlavorTools {
             .orElseThrow(() -> new IllegalArgumentException("No agent configuration found for use case: " + useCase));
     }
 
-    @Tool(description = """
+    @McpTool(description = """
         Get project initialization template for a specific use case.
         Use this when setting up new projects to ensure consistent scaffolding.
         """)
     public FlavorDto getProjectInitialization(
-            @ToolParam(description = "Use case identifier (e.g., 'microservice', 'api-gateway', 'monolith')")
+            @McpToolParam(description = "Use case identifier (e.g., 'microservice', 'api-gateway', 'monolith')")
             String useCase
     ) {
         log.info("Tool: getProjectInitialization - useCase={}", useCase);
@@ -143,7 +143,7 @@ public class FlavorTools {
             .orElseThrow(() -> new IllegalArgumentException("No initialization template found for use case: " + useCase));
     }
 
-    @Tool(description = """
+    @McpTool(description = """
         List all available flavor categories with counts of active flavors in each.
         """)
     public CategoryStatsDto listFlavorCategories() {

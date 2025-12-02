@@ -25,6 +25,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Controller for system settings.
@@ -42,8 +43,8 @@ public class SettingsController {
 
     private final SettingsService settingsService;
     private final ApiKeyService apiKeyService;
-    private final SchedulerService schedulerService;
-    private final LanguageSchedulerService languageSchedulerService;
+    private final Optional<SchedulerService> schedulerService;
+    private final Optional<LanguageSchedulerService> languageSchedulerService;
 
     // Optional - may not be available in test contexts
     private final ServletWebServerApplicationContext webServerAppContext;
@@ -58,8 +59,8 @@ public class SettingsController {
     public SettingsController(
             SettingsService settingsService,
             ApiKeyService apiKeyService,
-            SchedulerService schedulerService,
-            LanguageSchedulerService languageSchedulerService,
+            Optional<SchedulerService> schedulerService,
+            Optional<LanguageSchedulerService> languageSchedulerService,
             @Autowired(required = false) ServletWebServerApplicationContext webServerAppContext) {
         this.settingsService = settingsService;
         this.apiKeyService = apiKeyService;
@@ -101,28 +102,32 @@ public class SettingsController {
         model.addAttribute("apiKeys", apiKeys);
         model.addAttribute("apiKeyStats", apiKeyService.getStatistics());
 
-        // Load scheduler settings
-        SchedulerSettings schedulerSettings = schedulerService.getSettings();
-        model.addAttribute("schedulerSettings", schedulerSettings);
+        // Load scheduler settings (if available)
+        if (schedulerService.isPresent()) {
+            SchedulerSettings schedulerSettings = schedulerService.get().getSettings();
+            model.addAttribute("schedulerSettings", schedulerSettings);
 
-        // Format time for display based on user preference
-        String displayTime = schedulerService.formatTimeForDisplay(
-            schedulerSettings.getSyncTime(),
-            schedulerSettings.getTimeFormat()
-        );
-        model.addAttribute("displayTime", displayTime);
+            // Format time for display based on user preference
+            String displayTime = schedulerService.get().formatTimeForDisplay(
+                schedulerSettings.getSyncTime(),
+                schedulerSettings.getTimeFormat()
+            );
+            model.addAttribute("displayTime", displayTime);
+        }
 
-        // Load language scheduler settings
-        LanguageSchedulerSettings languageSchedulerSettings = languageSchedulerService.getSettings();
-        model.addAttribute("languageSchedulerSettings", languageSchedulerSettings);
-        model.addAttribute("syncFrequencies", SyncFrequency.values());
+        // Load language scheduler settings (if available)
+        if (languageSchedulerService.isPresent()) {
+            LanguageSchedulerSettings languageSchedulerSettings = languageSchedulerService.get().getSettings();
+            model.addAttribute("languageSchedulerSettings", languageSchedulerSettings);
+            model.addAttribute("syncFrequencies", SyncFrequency.values());
 
-        // Format language scheduler time for display
-        String languageDisplayTime = languageSchedulerService.formatTimeForDisplay(
-            languageSchedulerSettings.getSyncTime(),
-            languageSchedulerSettings.getTimeFormat()
-        );
-        model.addAttribute("languageDisplayTime", languageDisplayTime);
+            // Format language scheduler time for display
+            String languageDisplayTime = languageSchedulerService.get().formatTimeForDisplay(
+                languageSchedulerSettings.getSyncTime(),
+                languageSchedulerSettings.getTimeFormat()
+            );
+            model.addAttribute("languageDisplayTime", languageDisplayTime);
+        }
 
         return "settings/index";
     }
@@ -169,9 +174,14 @@ public class SettingsController {
 
         log.debug("Updating scheduler settings: syncEnabled={}, syncTime={}", syncEnabled, syncTime);
 
+        if (schedulerService.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Scheduler service not available");
+            return "redirect:/settings";
+        }
+
         try {
-            SchedulerSettings currentSettings = schedulerService.getSettings();
-            schedulerService.updateSettings(syncEnabled, syncTime, currentSettings.getTimeFormat());
+            SchedulerSettings currentSettings = schedulerService.get().getSettings();
+            schedulerService.get().updateSettings(syncEnabled, syncTime, currentSettings.getTimeFormat());
 
             redirectAttributes.addFlashAttribute("success",
                 "Scheduler settings updated successfully. " +
@@ -195,6 +205,11 @@ public class SettingsController {
     public ResponseEntity<Map<String, Object>> updateTimeFormat(@RequestParam String timeFormat) {
         log.debug("Updating time format to: {}", timeFormat);
 
+        if (schedulerService.isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("success", false, "error", "Scheduler service not available"));
+        }
+
         try {
             // Validate time format
             if (!timeFormat.equals("12h") && !timeFormat.equals("24h")) {
@@ -202,10 +217,10 @@ public class SettingsController {
                     .body(Map.of("success", false, "error", "Invalid time format"));
             }
 
-            SchedulerSettings settings = schedulerService.updateTimeFormat(timeFormat);
+            SchedulerSettings settings = schedulerService.get().updateTimeFormat(timeFormat);
 
             // Format time for display
-            String displayTime = schedulerService.formatTimeForDisplay(
+            String displayTime = schedulerService.get().formatTimeForDisplay(
                 settings.getSyncTime(),
                 settings.getTimeFormat()
             );
@@ -240,11 +255,16 @@ public class SettingsController {
         log.debug("Updating language scheduler settings: syncEnabled={}, frequency={}, syncTime={}",
                 syncEnabled, frequency, syncTime);
 
+        if (languageSchedulerService.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Language scheduler service not available");
+            return "redirect:/settings";
+        }
+
         try {
             SyncFrequency syncFrequency = SyncFrequency.valueOf(frequency.toUpperCase());
-            LanguageSchedulerSettings currentSettings = languageSchedulerService.getSettings();
+            LanguageSchedulerSettings currentSettings = languageSchedulerService.get().getSettings();
 
-            languageSchedulerService.updateSettings(
+            languageSchedulerService.get().updateSettings(
                     syncEnabled, syncFrequency, syncTime, weekdays,
                     dayOfMonth != null ? dayOfMonth : 1,
                     currentSettings.getTimeFormat());
@@ -272,15 +292,20 @@ public class SettingsController {
     public ResponseEntity<Map<String, Object>> updateLanguageTimeFormat(@RequestParam String timeFormat) {
         log.debug("Updating language scheduler time format to: {}", timeFormat);
 
+        if (languageSchedulerService.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "error", "Language scheduler service not available"));
+        }
+
         try {
             if (!timeFormat.equals("12h") && !timeFormat.equals("24h")) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("success", false, "error", "Invalid time format"));
             }
 
-            LanguageSchedulerSettings settings = languageSchedulerService.updateTimeFormat(timeFormat);
+            LanguageSchedulerSettings settings = languageSchedulerService.get().updateTimeFormat(timeFormat);
 
-            String displayTime = languageSchedulerService.formatTimeForDisplay(
+            String displayTime = languageSchedulerService.get().formatTimeForDisplay(
                     settings.getSyncTime(),
                     settings.getTimeFormat()
             );

@@ -8,8 +8,8 @@ import com.spring.mcp.repository.*;
 import com.spring.mcp.service.language.LanguageEvolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.ai.tool.annotation.ToolParam;
+import org.springaicommunity.mcp.annotation.McpTool;
+import org.springaicommunity.mcp.annotation.McpToolParam;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -38,13 +38,13 @@ public class LanguageEvolutionTools {
     /**
      * Get available versions for a programming language (Java or Kotlin)
      */
-    @Tool(description = """
+    @McpTool(description = """
         Get all available versions for Java or Kotlin language.
         Returns version information including LTS status, release dates, and support end dates.
         Use this to determine which language versions are currently supported or recommended.
         """)
     public LanguageVersionsResponse getLanguageVersions(
-            @ToolParam(description = "Language type: 'JAVA' or 'KOTLIN' (required)") String language) {
+            @McpToolParam(description = "Language type: 'JAVA' or 'KOTLIN' (required)") String language) {
 
         log.info("Tool: getLanguageVersions - language={}", language);
 
@@ -69,17 +69,17 @@ public class LanguageEvolutionTools {
     /**
      * Get features for a specific language version
      */
-    @Tool(description = """
+    @McpTool(description = """
         Get language features for a specific Java or Kotlin version.
         Returns new features, deprecations, and removals with detailed descriptions.
         Includes JEP/KEP numbers for Java Enhancement Proposals and Kotlin Enhancement Proposals.
         Use this to understand what's new or changed in a specific language version.
         """)
     public LanguageFeaturesResponse getLanguageFeatures(
-            @ToolParam(description = "Language type: 'JAVA' or 'KOTLIN' (required)") String language,
-            @ToolParam(description = "Version string (optional, e.g., '21' for Java 21, '2.0' for Kotlin 2.0). If not provided, returns all features.") String version,
-            @ToolParam(description = "Filter by status: 'NEW', 'DEPRECATED', 'REMOVED', 'PREVIEW', 'INCUBATING' (optional)") String status,
-            @ToolParam(description = "Filter by category (optional, e.g., 'Pattern Matching', 'Concurrency')") String category) {
+            @McpToolParam(description = "Language type: 'JAVA' or 'KOTLIN' (required)") String language,
+            @McpToolParam(description = "Version string (optional, e.g., '21' for Java 21, '2.0' for Kotlin 2.0). If not provided, returns all features.") String version,
+            @McpToolParam(description = "Filter by status: 'NEW', 'DEPRECATED', 'REMOVED', 'PREVIEW', 'INCUBATING' (optional)") String status,
+            @McpToolParam(description = "Filter by category (optional, e.g., 'Pattern Matching', 'Concurrency')") String category) {
 
         log.info("Tool: getLanguageFeatures - language={}, version={}, status={}, category={}", language, version, status, category);
 
@@ -125,13 +125,13 @@ public class LanguageEvolutionTools {
     /**
      * Get modern code patterns for a language feature
      */
-    @Tool(description = """
+    @McpTool(description = """
         Get modern code pattern examples showing old vs new ways to write code.
         Returns before/after code snippets with explanations for migrating to newer language features.
         Use this to help developers modernize their code when upgrading Java or Kotlin versions.
         """)
     public CodePatternResponse getModernPatterns(
-            @ToolParam(description = "Feature ID to get patterns for (required, use getLanguageFeatures to find feature IDs)") Long featureId) {
+            @McpToolParam(description = "Feature ID to get patterns for (required, use getLanguageFeatures to find feature IDs)") Long featureId) {
 
         log.info("Tool: getModernPatterns - featureId={}", featureId);
 
@@ -168,15 +168,15 @@ public class LanguageEvolutionTools {
     /**
      * Check deprecated APIs between language versions
      */
-    @Tool(description = """
+    @McpTool(description = """
         Check for deprecated and removed APIs when upgrading from one language version to another.
         Returns list of deprecations and removals that need attention during migration.
         Use this before upgrading Java or Kotlin version to identify breaking changes.
         """)
     public LanguageVersionDiffResponse getLanguageVersionDiff(
-            @ToolParam(description = "Language type: 'JAVA' or 'KOTLIN' (required)") String language,
-            @ToolParam(description = "Source version to migrate from (required, e.g., '11' for Java 11)") String fromVersion,
-            @ToolParam(description = "Target version to migrate to (required, e.g., '21' for Java 21)") String toVersion) {
+            @McpToolParam(description = "Language type: 'JAVA' or 'KOTLIN' (required)") String language,
+            @McpToolParam(description = "Source version to migrate from (required, e.g., '11' for Java 11)") String fromVersion,
+            @McpToolParam(description = "Target version to migrate to (required, e.g., '21' for Java 21)") String toVersion) {
 
         log.info("Tool: getLanguageVersionDiff - language={}, from={}, to={}", language, fromVersion, toVersion);
 
@@ -222,13 +222,13 @@ public class LanguageEvolutionTools {
     /**
      * Get Spring Boot language requirements
      */
-    @Tool(description = """
+    @McpTool(description = """
         Get Java and Kotlin version requirements for a specific Spring Boot version.
         Returns minimum, recommended, and maximum supported language versions.
         Use this to ensure correct language version when starting a new Spring Boot project.
         """)
     public SpringBootLanguageRequirementResponse getSpringBootLanguageRequirements(
-            @ToolParam(description = "Spring Boot version (required, e.g., '3.5.7', '4.0.0')") String springBootVersion) {
+            @McpToolParam(description = "Spring Boot version (required, e.g., '3.5.7', '4.0.0')") String springBootVersion) {
 
         log.info("Tool: getSpringBootLanguageRequirements - springBootVersion={}", springBootVersion);
 
@@ -266,14 +266,14 @@ public class LanguageEvolutionTools {
     /**
      * Search language features by keyword
      */
-    @Tool(description = """
+    @McpTool(description = """
         Search for language features by keyword across all Java and Kotlin versions.
         Returns features matching the search term in name or description.
         Use this to find specific features or capabilities across language versions.
         """)
     public LanguageFeaturesResponse searchLanguageFeatures(
-            @ToolParam(description = "Search term (required, e.g., 'virtual thread', 'record', 'sealed')") String searchTerm,
-            @ToolParam(description = "Language type: 'JAVA', 'KOTLIN', or null for both (optional)") String language) {
+            @McpToolParam(description = "Search term (required, e.g., 'virtual thread', 'record', 'sealed')") String searchTerm,
+            @McpToolParam(description = "Language type: 'JAVA', 'KOTLIN', or null for both (optional)") String language) {
 
         log.info("Tool: searchLanguageFeatures - searchTerm={}, language={}", searchTerm, language);
 

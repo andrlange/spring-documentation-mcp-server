@@ -5,8 +5,8 @@ import com.spring.mcp.model.dto.mcp.*;
 import com.spring.mcp.service.migration.MigrationKnowledgeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.ai.tool.annotation.ToolParam;
+import org.springaicommunity.mcp.annotation.McpTool;
+import org.springaicommunity.mcp.annotation.McpToolParam;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -25,15 +25,15 @@ public class MigrationTools {
     private final MigrationKnowledgeService migrationService;
     private final OpenRewriteFeatureConfig featureConfig;
 
-    @Tool(description = """
+    @McpTool(description = """
         Get comprehensive migration guide for upgrading Spring Boot versions.
         Returns all breaking changes, import updates, dependency changes,
         property migrations, and code modifications needed.
         Use this BEFORE generating code for a specific Spring Boot version.
         """)
     public MigrationGuideDto getSpringMigrationGuide(
-            @ToolParam(description = "Source Spring Boot version (e.g., '3.5.8')") String fromVersion,
-            @ToolParam(description = "Target Spring Boot version (e.g., '4.0.0')") String toVersion
+            @McpToolParam(description = "Source Spring Boot version (e.g., '3.5.8')") String fromVersion,
+            @McpToolParam(description = "Target Spring Boot version (e.g., '4.0.0')") String toVersion
     ) {
         log.info("Tool: getSpringMigrationGuide - from {} to {}", fromVersion, toVersion);
 
@@ -44,14 +44,14 @@ public class MigrationTools {
         return migrationService.getMigrationGuide("spring-boot", fromVersion, toVersion);
     }
 
-    @Tool(description = """
+    @McpTool(description = """
         Get list of breaking changes for a specific Spring project version.
         Use this before generating code to avoid compilation errors.
         Returns severity levels: CRITICAL, ERROR, WARNING, INFO.
         """)
     public List<BreakingChangeDto> getBreakingChanges(
-            @ToolParam(description = "Project slug (e.g., 'spring-boot', 'spring-security', 'spring-framework')") String project,
-            @ToolParam(description = "Target version to check (e.g., '4.0.0', '7.0.0')") String version
+            @McpToolParam(description = "Project slug (e.g., 'spring-boot', 'spring-security', 'spring-framework')") String project,
+            @McpToolParam(description = "Target version to check (e.g., '4.0.0', '7.0.0')") String version
     ) {
         log.info("Tool: getBreakingChanges - project={}, version={}", project, version);
 
@@ -62,16 +62,16 @@ public class MigrationTools {
         return migrationService.getBreakingChanges(project, version);
     }
 
-    @Tool(description = """
+    @McpTool(description = """
         Search migration knowledge base for specific topics.
         Examples: 'flyway starter', 'health indicator', 'thymeleaf request',
         'MockBean replacement', 'security configuration'.
         Returns relevant transformations with code examples.
         """)
     public List<TransformationDto> searchMigrationKnowledge(
-            @ToolParam(description = "Search term (e.g., 'flyway', 'actuator health', '@MockBean')") String searchTerm,
-            @ToolParam(description = "Project to search in (default: 'spring-boot')") String project,
-            @ToolParam(description = "Maximum results to return (default: 10)") Integer limit
+            @McpToolParam(description = "Search term (e.g., 'flyway', 'actuator health', '@MockBean')") String searchTerm,
+            @McpToolParam(description = "Project to search in (default: 'spring-boot')") String project,
+            @McpToolParam(description = "Maximum results to return (default: 10)") Integer limit
     ) {
         log.info("Tool: searchMigrationKnowledge - term='{}', project={}, limit={}", searchTerm, project, limit);
 
@@ -84,12 +84,12 @@ public class MigrationTools {
         return migrationService.searchTransformations(proj, searchTerm, lim);
     }
 
-    @Tool(description = """
+    @McpTool(description = """
         Get list of available target versions for migration.
         Use this to discover what upgrade paths are documented.
         """)
     public List<String> getAvailableMigrationPaths(
-            @ToolParam(description = "Project slug (e.g., 'spring-boot')") String project
+            @McpToolParam(description = "Project slug (e.g., 'spring-boot')") String project
     ) {
         log.info("Tool: getAvailableMigrationPaths - project={}", project);
 
@@ -100,14 +100,14 @@ public class MigrationTools {
         return migrationService.getAvailableMigrationTargets(project);
     }
 
-    @Tool(description = """
+    @McpTool(description = """
         Get transformations filtered by type for a specific migration.
         Types: IMPORT, DEPENDENCY, PROPERTY, CODE, BUILD, TEMPLATE, ANNOTATION, CONFIG.
         """)
     public List<TransformationDto> getTransformationsByType(
-            @ToolParam(description = "Project slug (e.g., 'spring-boot')") String project,
-            @ToolParam(description = "Target version (e.g., '4.0.0')") String version,
-            @ToolParam(description = "Transformation type (IMPORT, DEPENDENCY, PROPERTY, CODE, BUILD, TEMPLATE, ANNOTATION, CONFIG)") String type
+            @McpToolParam(description = "Project slug (e.g., 'spring-boot')") String project,
+            @McpToolParam(description = "Target version (e.g., '4.0.0')") String version,
+            @McpToolParam(description = "Transformation type (IMPORT, DEPENDENCY, PROPERTY, CODE, BUILD, TEMPLATE, ANNOTATION, CONFIG)") String type
     ) {
         log.info("Tool: getTransformationsByType - project={}, version={}, type={}", project, version, type);
 
@@ -118,13 +118,13 @@ public class MigrationTools {
         return migrationService.getTransformationsByType(project, version, type);
     }
 
-    @Tool(description = """
+    @McpTool(description = """
         Find the replacement for a deprecated class or method.
         Use when you encounter deprecated APIs and need to find the new alternative.
         """)
     public DeprecationReplacementDto getDeprecationReplacement(
-            @ToolParam(description = "Fully qualified deprecated class name (e.g., 'org.springframework.boot.actuate.health.Health')") String className,
-            @ToolParam(description = "Deprecated method name (optional, null for entire class deprecation)") String methodName
+            @McpToolParam(description = "Fully qualified deprecated class name (e.g., 'org.springframework.boot.actuate.health.Health')") String className,
+            @McpToolParam(description = "Deprecated method name (optional, null for entire class deprecation)") String methodName
     ) {
         log.info("Tool: getDeprecationReplacement - class={}, method={}", className, methodName);
 
@@ -135,13 +135,13 @@ public class MigrationTools {
         return migrationService.findReplacement(className, methodName);
     }
 
-    @Tool(description = """
+    @McpTool(description = """
         Check if specific dependencies are compatible with a target Spring Boot version.
         Returns compatibility information and recommended versions.
         """)
     public CompatibilityReportDto checkVersionCompatibility(
-            @ToolParam(description = "Target Spring Boot version (e.g., '4.0.0')") String springBootVersion,
-            @ToolParam(description = "List of dependencies to check (e.g., 'spring-security', 'flyway', 'thymeleaf')") List<String> dependencies
+            @McpToolParam(description = "Target Spring Boot version (e.g., '4.0.0')") String springBootVersion,
+            @McpToolParam(description = "List of dependencies to check (e.g., 'spring-security', 'flyway', 'thymeleaf')") List<String> dependencies
     ) {
         log.info("Tool: checkVersionCompatibility - bootVersion={}, deps={}", springBootVersion, dependencies);
 

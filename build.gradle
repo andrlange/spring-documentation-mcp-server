@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.spring.mcp'
-version = '1.3.1'
+version = '1.3.2'
 
 java {
     // Using Java 25 (LTS version)
@@ -89,10 +89,14 @@ dependencies {
 
     // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.testcontainers:postgresql'
     testImplementation 'org.testcontainers:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Spring AI MCP Client for integration testing
+    testImplementation "org.springframework.ai:spring-ai-starter-mcp-client-webflux:${springAiVersion}"
 }
 
 dependencyManagement {

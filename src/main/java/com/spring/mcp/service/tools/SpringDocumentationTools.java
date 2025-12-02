@@ -19,8 +19,8 @@ import com.spring.mcp.service.documentation.DocumentationServiceImpl;
 import com.spring.mcp.service.mcp.McpVersionResolverService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.ai.tool.annotation.ToolParam;
+import org.springaicommunity.mcp.annotation.McpTool;
+import org.springaicommunity.mcp.annotation.McpToolParam;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -51,15 +51,15 @@ public class SpringDocumentationTools {
     /**
      * Search Spring documentation with full-text search
      */
-    @Tool(description = """
+    @McpTool(description = """
         Search across all Spring documentation. Supports filtering by project, version, and documentation type.
         Returns relevant documentation links and snippets with relevance ranking.
         """)
     public SearchDocsResponse searchSpringDocs(
-            @ToolParam(description = "Search query string (required)") String query,
-            @ToolParam(description = "Project slug filter (optional, e.g., 'spring-boot', 'spring-framework')") String project,
-            @ToolParam(description = "Version filter (optional, e.g., '3.5.7')") String version,
-            @ToolParam(description = "Documentation type filter (optional, e.g., 'reference', 'api')") String docType) {
+            @McpToolParam(description = "Search query string (required)") String query,
+            @McpToolParam(description = "Project slug filter (optional, e.g., 'spring-boot', 'spring-framework')") String project,
+            @McpToolParam(description = "Version filter (optional, e.g., '3.5.7')") String version,
+            @McpToolParam(description = "Documentation type filter (optional, e.g., 'reference', 'api')") String docType) {
 
         log.info("Tool: searchSpringDocs - query={}, project={}, version={}, docType={}", query, project, version, docType);
         Instant startTime = Instant.now();
@@ -95,11 +95,11 @@ public class SpringDocumentationTools {
     /**
      * Get available versions for a Spring project
      */
-    @Tool(description = """
+    @McpTool(description = """
         List available versions for a Spring project. Shows latest stable, n-2 minor versions, and n+1 preview versions.
         """)
     public VersionsResponse getSpringVersions(
-            @ToolParam(description = "Project slug (required, e.g., 'spring-boot', 'spring-framework', 'spring-data')") String project) {
+            @McpToolParam(description = "Project slug (required, e.g., 'spring-boot', 'spring-framework', 'spring-data')") String project) {
 
         log.info("Tool: getSpringVersions - project={}", project);
 
@@ -134,7 +134,7 @@ public class SpringDocumentationTools {
     /**
      * List all available Spring projects
      */
-    @Tool(description = """
+    @McpTool(description = """
         List all available Spring projects in the documentation system.
         Returns project names, slugs, descriptions, and homepage URLs.
         """)
@@ -165,13 +165,13 @@ public class SpringDocumentationTools {
     /**
      * Get all documentation for a specific Spring project version
      */
-    @Tool(description = """
+    @McpTool(description = """
         Get all documentation for a specific Spring project version.
         Returns all documentation links organized by type (reference, api, guides, etc.).
         """)
     public DocumentationByVersionResponse getDocumentationByVersion(
-            @ToolParam(description = "Project slug (required, e.g., 'spring-boot', 'spring-framework')") String project,
-            @ToolParam(description = "Version string (required, e.g., '3.5.7', '6.2.1')") String version) {
+            @McpToolParam(description = "Project slug (required, e.g., 'spring-boot', 'spring-framework')") String project,
+            @McpToolParam(description = "Version string (required, e.g., '3.5.7', '6.2.1')") String version) {
 
         log.info("Tool: getDocumentationByVersion - project={}, version={}", project, version);
         Instant startTime = Instant.now();
@@ -225,16 +225,16 @@ public class SpringDocumentationTools {
     /**
      * Search for code examples with optional filters
      */
-    @Tool(description = """
+    @McpTool(description = """
         Search for code examples with optional filters.
         Returns code snippets, descriptions, and metadata.
         """)
     public CodeExamplesResponse getCodeExamples(
-            @ToolParam(description = "Search query for title/description (optional)") String query,
-            @ToolParam(description = "Project slug filter (optional, e.g., 'spring-boot')") String project,
-            @ToolParam(description = "Version filter (optional, e.g., '3.5.7')") String version,
-            @ToolParam(description = "Programming language filter (optional, e.g., 'java', 'kotlin', 'groovy')") String language,
-            @ToolParam(description = "Maximum number of results (optional, default: 10, max: 50)") Integer limit) {
+            @McpToolParam(description = "Search query for title/description (optional)") String query,
+            @McpToolParam(description = "Project slug filter (optional, e.g., 'spring-boot')") String project,
+            @McpToolParam(description = "Version filter (optional, e.g., '3.5.7')") String version,
+            @McpToolParam(description = "Programming language filter (optional, e.g., 'java', 'kotlin', 'groovy')") String language,
+            @McpToolParam(description = "Maximum number of results (optional, default: 10, max: 50)") Integer limit) {
 
         log.info("Tool: getCodeExamples - query={}, project={}, version={}, language={}, limit={}",
             query, project, version, language, limit);
@@ -302,13 +302,13 @@ public class SpringDocumentationTools {
     /**
      * List all Spring Boot versions with optional filtering
      */
-    @Tool(description = """
+    @McpTool(description = """
         List all Spring Boot versions available in the system. Results include version numbers, states (GA, RC, SNAPSHOT, MILESTONE),
         release dates, and support end dates (OSS and Enterprise). Results are ordered by version descending (latest first).
         """)
     public SpringBootVersionsResponse listSpringBootVersions(
-            @ToolParam(description = "Filter by version state (optional): 'GA', 'RC', 'SNAPSHOT', 'MILESTONE'") String state,
-            @ToolParam(description = "Maximum number of results (optional, default: 20, max: 100)") Integer limit) {
+            @McpToolParam(description = "Filter by version state (optional): 'GA', 'RC', 'SNAPSHOT', 'MILESTONE'") String state,
+            @McpToolParam(description = "Maximum number of results (optional, default: 20, max: 100)") Integer limit) {
 
         log.info("Tool: listSpringBootVersions - state={}, limit={}", state, limit);
         Instant startTime = Instant.now();
@@ -358,13 +358,13 @@ public class SpringDocumentationTools {
     /**
      * Get the latest Spring Boot version for a given major.minor combination
      */
-    @Tool(description = """
+    @McpTool(description = """
         Get the latest patch version for a specific Spring Boot major.minor version.
         For example, for Spring Boot 3.5, returns the latest 3.5.x version.
         """)
     public LatestSpringBootVersionResponse getLatestSpringBootVersion(
-            @ToolParam(description = "Major version number (required, e.g., 3)") Integer majorVersion,
-            @ToolParam(description = "Minor version number (required, e.g., 5)") Integer minorVersion) {
+            @McpToolParam(description = "Major version number (required, e.g., 3)") Integer majorVersion,
+            @McpToolParam(description = "Minor version number (required, e.g., 5)") Integer minorVersion) {
 
         log.info("Tool: getLatestSpringBootVersion - major={}, minor={}", majorVersion, minorVersion);
         Instant startTime = Instant.now();
@@ -403,13 +403,13 @@ public class SpringDocumentationTools {
     /**
      * Filter Spring Boot versions by support status
      */
-    @Tool(description = """
+    @McpTool(description = """
         Filter Spring Boot versions by their support status (active or ended).
         Uses the system's enterprise subscription setting to determine which support date to check.
         """)
     public FilteredSpringBootVersionsResponse filterSpringBootVersionsBySupport(
-            @ToolParam(description = "Filter by support status (optional) - 'true' for supported versions, 'false' for end-of-life") Boolean supportActive,
-            @ToolParam(description = "Maximum number of results (optional, default: 20, max: 100)") Integer limit) {
+            @McpToolParam(description = "Filter by support status (optional) - 'true' for supported versions, 'false' for end-of-life") Boolean supportActive,
+            @McpToolParam(description = "Maximum number of results (optional, default: 20, max: 100)") Integer limit) {
 
         log.info("Tool: filterSpringBootVersionsBySupport - supportActive={}, limit={}", supportActive, limit);
         Instant startTime = Instant.now();
@@ -463,13 +463,13 @@ public class SpringDocumentationTools {
     /**
      * List all Spring projects compatible with a specific Spring Boot version
      */
-    @Tool(description = """
+    @McpTool(description = """
         List all Spring projects that are compatible with a specific Spring Boot version (major.minor).
         Returns projects and their compatible versions for the given Spring Boot version.
         """)
     public ProjectsBySpringBootVersionResponse listProjectsBySpringBootVersion(
-            @ToolParam(description = "Spring Boot major version number (required, e.g., 3)") Integer majorVersion,
-            @ToolParam(description = "Spring Boot minor version number (required, e.g., 5)") Integer minorVersion) {
+            @McpToolParam(description = "Spring Boot major version number (required, e.g., 3)") Integer majorVersion,
+            @McpToolParam(description = "Spring Boot minor version number (required, e.g., 5)") Integer minorVersion) {
 
         log.info("Tool: listProjectsBySpringBootVersion - major={}, minor={}", majorVersion, minorVersion);
         Instant startTime = Instant.now();
@@ -547,12 +547,12 @@ public class SpringDocumentationTools {
     /**
      * Find Spring projects by use case keyword search
      */
-    @Tool(description = """
+    @McpTool(description = """
         Search for Spring projects by use case. Searches in project names and descriptions for keywords.
         Useful for finding projects that solve specific problems or use cases.
         """)
     public ProjectsByUseCaseResponse findProjectsByUseCase(
-            @ToolParam(description = "Use case keyword or phrase (required, e.g., 'data access', 'security', 'messaging', 'web')") String useCase) {
+            @McpToolParam(description = "Use case keyword or phrase (required, e.g., 'data access', 'security', 'messaging', 'web')") String useCase) {
 
         log.info("Tool: findProjectsByUseCase - useCase={}", useCase);
         Instant startTime = Instant.now();

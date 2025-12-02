@@ -46,8 +46,30 @@ public interface FlavorService {
     CategoryStatsDto getStatistics();
 
     // Import/Export
-    FlavorDto importFromMarkdown(String content, FlavorCategory category, String username);
-    String exportToMarkdown(Long id);
+    /**
+     * Import a flavor from markdown content.
+     * Parses YAML front matter header if present to extract metadata.
+     * Returns the imported FlavorDto along with any warning messages.
+     *
+     * @param content the markdown content (may include YAML front matter)
+     * @param username the user performing the import
+     * @return ImportResult containing the FlavorDto and any warning messages
+     */
+    ImportResult importFromMarkdown(String content, String username);
+
+    /**
+     * Export a flavor as markdown.
+     *
+     * @param id the flavor ID
+     * @param includeMetadata if true, prepends YAML front matter header with metadata
+     * @return the markdown content
+     */
+    String exportToMarkdown(Long id, boolean includeMetadata);
+
+    /**
+     * Result of import operation, containing the imported flavor and any warnings.
+     */
+    record ImportResult(FlavorDto flavor, String warningMessage) {}
 
     // Validation
     boolean isUniqueNameAvailable(String uniqueName, Long excludeId);
