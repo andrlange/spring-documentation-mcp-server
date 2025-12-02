@@ -74,4 +74,53 @@ public interface DocumentationLinkRepository extends JpaRepository<Documentation
         AND d.is_active = true
         """, nativeQuery = true)
     long countWithRecentlyUpdatedVersions(@Param("days") int days);
+
+    /**
+     * Find GitHub Reference docs by project slug and normalized version (major.minor.patch).
+     * This matches GitHub docs to Overview docs by normalizing version strings.
+     *
+     * @param projectSlug the project slug (e.g., "spring-boot")
+     * @param versionPrefix the version prefix to match (e.g., "4.0.0" matches "4.0.0", "4.0.0.RELEASE", etc.)
+     * @return list of GitHub Reference documentation links
+     */
+    @Query(value = """
+        SELECT dl.*
+        FROM documentation_links dl
+        JOIN documentation_types dt ON dl.doc_type_id = dt.id
+        JOIN project_versions pv ON dl.version_id = pv.id
+        JOIN spring_projects sp ON pv.project_id = sp.id
+        WHERE sp.slug = :projectSlug
+        AND dt.name = 'GitHub Reference'
+        AND dl.is_active = true
+        AND (
+            pv.version = :versionPrefix
+            OR pv.version LIKE :versionPrefix || '.%'
+            OR pv.version LIKE :versionPrefix || '-SNAPSHOT'
+            OR REPLACE(REPLACE(pv.version, '.RELEASE', ''), '.BUILD-SNAPSHOT', '') = :versionPrefix
+        )
+        ORDER BY dl.title
+        """, nativeQuery = true)
+    List<DocumentationLink> findGitHubDocsByProjectAndVersion(
+        @Param("projectSlug") String projectSlug,
+        @Param("versionPrefix") String versionPrefix
+    );
+
+    /**
+     * Find GitHub Reference docs by project ID.
+     * Returns all GitHub docs for the given project.
+     *
+     * @param projectId the project ID
+     * @return list of GitHub Reference documentation links
+     */
+    @Query(value = """
+        SELECT dl.*
+        FROM documentation_links dl
+        JOIN documentation_types dt ON dl.doc_type_id = dt.id
+        JOIN project_versions pv ON dl.version_id = pv.id
+        WHERE pv.project_id = :projectId
+        AND dt.name = 'GitHub Reference'
+        AND dl.is_active = true
+        ORDER BY pv.version DESC, dl.title
+        """, nativeQuery = true)
+    List<DocumentationLink> findGitHubDocsByProject(@Param("projectId") Long projectId);
 }

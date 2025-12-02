@@ -60,65 +60,69 @@ with all applicable licenses of the following components:
    License: BSD 2-Clause License
    Copyright: Vladimir Schneider
 
-9. Jackson (https://github.com/FasterXML/jackson)
+9. AsciidoctorJ (https://github.com/asciidoctor/asciidoctorj)
    License: Apache License 2.0
-   Copyright: FasterXML, LLC
+   Copyright: The Asciidoctor Project
 
-10. Apache Commons Lang (https://commons.apache.org/proper/commons-lang/)
+10. Jackson (https://github.com/FasterXML/jackson)
+    License: Apache License 2.0
+    Copyright: FasterXML, LLC
+
+11. Apache Commons Lang (https://commons.apache.org/proper/commons-lang/)
     License: Apache License 2.0
     Copyright: The Apache Software Foundation
 
-11. Google Guava (https://github.com/google/guava)
+12. Google Guava (https://github.com/google/guava)
     License: Apache License 2.0
     Copyright: Google Inc.
 
-12. Project Lombok (https://projectlombok.org/)
+13. Project Lombok (https://projectlombok.org/)
     License: MIT License
     Copyright: The Project Lombok Authors
 
-13. Docker (https://www.docker.com/)
+14. Docker (https://www.docker.com/)
     License: Apache License 2.0
     Copyright: Docker, Inc.
 
-14. Model Context Protocol (https://modelcontextprotocol.io/)
+15. Model Context Protocol (https://modelcontextprotocol.io/)
     License: MIT License
     Copyright: Anthropic PBC
 
 --- Frontend Libraries (bundled in /static/vendor/) ---
 
-15. EasyMDE (https://github.com/Ionaru/easy-markdown-editor)
+16. EasyMDE (https://github.com/Ionaru/easy-markdown-editor)
     License: MIT License
     Copyright: Sparksuite, Inc. and Jeroen Akkerman
 
-16. Alpine.js (https://alpinejs.dev/)
+17. Alpine.js (https://alpinejs.dev/)
     License: MIT License
     Copyright: Caleb Porzio
 
-17. Bootstrap (https://getbootstrap.com/)
+18. Bootstrap (https://getbootstrap.com/)
     License: MIT License
     Copyright: The Bootstrap Authors
 
-18. Bootstrap Icons (https://icons.getbootstrap.com/)
+19. Bootstrap Icons (https://icons.getbootstrap.com/)
     License: MIT License
     Copyright: The Bootstrap Authors
 
-19. Chart.js (https://www.chartjs.org/)
+20. Chart.js (https://www.chartjs.org/)
     License: MIT License
     Copyright: Chart.js Contributors
 
-20. HTMX (https://htmx.org/)
+21. HTMX (https://htmx.org/)
     License: BSD Zero Clause License
     Copyright: Big Sky Software
 
-21. Highlight.js (https://highlightjs.org/)
+22. Highlight.js (https://highlightjs.org/)
     License: BSD 3-Clause License
     Copyright: Ivan Sagalaev and contributors
 
-22. Marked (https://marked.js.org/)
+23. Marked (https://marked.js.org/)
     License: MIT License
     Copyright: Christopher Jeffrey
 
-23. GitHub Markdown CSS (https://github.com/sindresorhus/github-markdown-css)
+24. GitHub Markdown CSS (https://github.com/sindresorhus/github-markdown-css)
     License: MIT License
     Copyright: Sindre Sorhus
 

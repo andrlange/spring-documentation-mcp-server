@@ -65,6 +65,14 @@ public class SpringBootVersion {
     @Column(name = "api_doc_url", length = 500)
     private String apiDocUrl;
 
+    /**
+     * Indicates if this version is only available under enterprise subscription.
+     * Enterprise-only versions have ended OSS support but still have active enterprise support.
+     */
+    @Column(name = "is_enterprise_only")
+    @Builder.Default
+    private Boolean isEnterpriseOnly = false;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -82,12 +90,15 @@ public class SpringBootVersion {
 
 
     public String referenceDocUrlFormatted() {
+        if (referenceDocUrl == null || referenceDocUrl.isBlank()) {
+            return "";
+        }
+
         String url = referenceDocUrl;
 
-        if(isCurrent) {
+        if (Boolean.TRUE.equals(isCurrent)) {
             // https://docs.spring.io/spring-boot/{version}/index.html
             url = url.replace("{version}/", "");
-
         } else {
             url = url.replace("{version}", getFormattedVersion());
         }
@@ -95,12 +106,15 @@ public class SpringBootVersion {
     }
 
     public String apiDocUrlFormatted() {
+        if (apiDocUrl == null || apiDocUrl.isBlank()) {
+            return "";
+        }
+
         String url = apiDocUrl;
 
-        if(isCurrent) {
+        if (Boolean.TRUE.equals(isCurrent)) {
             // https://docs.spring.io/spring-boot/{version}/index.html
             url = url.replace("{version}/", "");
-
         } else {
             url = url.replace("{version}", getFormattedVersion());
         }

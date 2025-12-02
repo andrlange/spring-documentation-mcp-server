@@ -33,7 +33,10 @@
         <div class="col-md-2 col-6 mb-3">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body text-center">
-                    <h3 class="text-primary" th:text="${javaVersionCount}">0</h3>
+                    <div class="mb-2">
+                        <i class="bi bi-cup-hot-fill text-warning" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <h3 class="text-warning mb-1" th:text="${javaVersionCount}">0</h3>
                     <small class="text-muted">Java Versions</small>
                 </div>
             </div>
@@ -41,7 +44,10 @@
         <div class="col-md-2 col-6 mb-3">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body text-center">
-                    <h3 class="text-info" th:text="${kotlinVersionCount}">0</h3>
+                    <div class="mb-2">
+                        <span class="fw-bold" style="font-size: 1.5rem; background: linear-gradient(135deg, #7F52FF 0%, #E24462 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">K</span>
+                    </div>
+                    <h3 class="mb-1" style="color: #7F52FF;" th:text="${kotlinVersionCount}">0</h3>
                     <small class="text-muted">Kotlin Versions</small>
                 </div>
             </div>

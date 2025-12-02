@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spring.mcp.model.entity.SpringBootVersion;
 import com.spring.mcp.model.enums.VersionState;
 import com.spring.mcp.repository.SpringBootVersionRepository;
+import com.spring.mcp.service.SettingsService;
 import com.spring.mcp.util.VersionParser;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,9 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service for synchronizing Spring Boot versions into the spring_boot_versions table.
@@ -38,6 +41,7 @@ public class SpringBootVersionSyncService {
     private final SpringBootVersionRepository springBootVersionRepository;
     private final WebClient.Builder webClientBuilder;
     private final ObjectMapper objectMapper;
+    private final SettingsService settingsService;
 
     private static final String SPRING_BOOT_PAGE_DATA_URL =
         "https://spring.io/page-data/projects/spring-boot/page-data.json";
@@ -104,7 +108,8 @@ public class SpringBootVersionSyncService {
     }
 
     /**
-     * Parse Spring Boot version data from JSON
+     * Parse Spring Boot version data from JSON.
+     * Includes enterprise-supported versions when enterprise subscription is enabled.
      */
     private List<VersionData> parseVersionData(String jsonData) {
         List<VersionData> versionDataList = new ArrayList<>();
@@ -114,12 +119,16 @@ public class SpringBootVersionSyncService {
             return versionDataList;
         }
 
+        boolean enterpriseEnabled = settingsService.isEnterpriseSubscriptionEnabled();
+        LocalDate today = LocalDate.now();
+
         try {
             JsonNode root = objectMapper.readTree(jsonData);
             JsonNode fields = root.path("result").path("data").path("page").path("fields");
 
-            // Parse documentation array for version info
+            // Parse documentation array for version info (actively documented versions)
             JsonNode documentation = fields.path("documentation");
+            Map<String, VersionData> versionMap = new HashMap<>();
 
             if (documentation.isArray()) {
                 for (JsonNode versionNode : documentation) {
@@ -131,30 +140,65 @@ public class SpringBootVersionSyncService {
                             .apiDocUrl(versionNode.path("api").asText(null))
                             .isCurrent(versionNode.path("current").asBoolean(false))
                             .gatsbyStatus(versionNode.path("status").asText(null))
+                            .isEnterpriseOnly(false)
                             .build();
 
                         versionDataList.add(versionData);
+                        // Store by major.minor for matching
+                        VersionParser.ParsedVersion parsed = VersionParser.parse(version);
+                        String key = parsed.getMajorVersion() + "." + parsed.getMinorVersion();
+                        versionMap.put(key, versionData);
                         log.trace("Parsed version: {} (current: {})", version, versionData.isCurrent());
                     }
                 }
             }
 
-            // Parse support generations for support dates
+            // Parse support generations for support dates AND enterprise-only versions
             JsonNode support = fields.path("support").path("generations");
 
             if (support.isArray()) {
                 for (JsonNode generation : support) {
                     String gen = generation.path("generation").asText(null);
-                    if (gen != null) {
-                        // Find matching version in versionDataList
-                        for (VersionData versionData : versionDataList) {
-                            if (matchesGeneration(versionData.getVersion(), gen)) {
-                                versionData.setInitialRelease(parseDate(generation.path("initialRelease").asText(null)));
-                                versionData.setOssSupportEnd(parseDate(generation.path("ossSupportEnd").asText(null)));
-                                versionData.setEnterpriseSupportEnd(parseDate(generation.path("enterpriseSupportEnd").asText(null)));
-                                log.trace("Matched generation {} to version {}", gen, versionData.getVersion());
-                            }
-                        }
+                    if (gen == null) continue;
+
+                    LocalDate initialRelease = parseDate(generation.path("initialRelease").asText(null));
+                    LocalDate ossSupportEnd = parseDate(generation.path("ossSupportEnd").asText(null));
+                    LocalDate enterpriseSupportEnd = parseDate(generation.path("enterpriseSupportEnd").asText(null));
+
+                    // Extract major.minor from generation (e.g., "2.7.x" -> "2.7")
+                    VersionParser.ParsedVersion genParsed = VersionParser.parse(gen);
+                    String key = genParsed.getMajorVersion() + "." + genParsed.getMinorVersion();
+
+                    // Check if we already have a documented version for this generation
+                    VersionData existingVersion = versionMap.get(key);
+
+                    if (existingVersion != null) {
+                        // Update support dates for existing version
+                        existingVersion.setInitialRelease(initialRelease);
+                        existingVersion.setOssSupportEnd(ossSupportEnd);
+                        existingVersion.setEnterpriseSupportEnd(enterpriseSupportEnd);
+                        log.trace("Matched generation {} to version {}", gen, existingVersion.getVersion());
+                    } else if (enterpriseEnabled && enterpriseSupportEnd != null && enterpriseSupportEnd.isAfter(today)) {
+                        // No documented version, but enterprise support is still active
+                        // Create an enterprise-only version entry using the generation pattern
+                        log.info("Adding enterprise-supported version {} (enterprise support until {})",
+                            gen, enterpriseSupportEnd);
+
+                        VersionData enterpriseVersion = VersionData.builder()
+                            .version(gen) // Use generation pattern like "2.7.x"
+                            .isCurrent(false)
+                            .gatsbyStatus("ENTERPRISE")
+                            .initialRelease(initialRelease)
+                            .ossSupportEnd(ossSupportEnd)
+                            .enterpriseSupportEnd(enterpriseSupportEnd)
+                            .isEnterpriseOnly(true)
+                            .build();
+
+                        versionDataList.add(enterpriseVersion);
+                        versionMap.put(key, enterpriseVersion);
+                    } else if (enterpriseSupportEnd != null) {
+                        log.debug("Skipping generation {} - enterprise support ended {} (enterprise mode: {})",
+                            gen, enterpriseSupportEnd, enterpriseEnabled ? "enabled" : "disabled");
                     }
                 }
             }
@@ -163,18 +207,9 @@ public class SpringBootVersionSyncService {
             log.error("Error parsing Spring Boot version data", e);
         }
 
+        log.info("Parsed {} Spring Boot versions (enterprise mode: {})",
+            versionDataList.size(), enterpriseEnabled ? "enabled" : "disabled");
         return versionDataList;
-    }
-
-    /**
-     * Check if a specific version matches a generation (e.g., "3.5.7" matches "3.5.x")
-     */
-    private boolean matchesGeneration(String version, String generation) {
-        VersionParser.ParsedVersion parsed = VersionParser.parse(version);
-        VersionParser.ParsedVersion genParsed = VersionParser.parse(generation);
-
-        return parsed.getMajorVersion() == genParsed.getMajorVersion() &&
-               parsed.getMinorVersion() == genParsed.getMinorVersion();
     }
 
     /**
@@ -240,6 +275,7 @@ public class SpringBootVersionSyncService {
             .enterpriseSupportEnd(versionData.getEnterpriseSupportEnd())
             .referenceDocUrl(versionData.getReferenceDocUrl())
             .apiDocUrl(versionData.getApiDocUrl())
+            .isEnterpriseOnly(versionData.isEnterpriseOnly())
             .build();
     }
 
@@ -266,6 +302,9 @@ public class SpringBootVersionSyncService {
 
         // Update current flag
         existing.setIsCurrent(versionData.isCurrent());
+
+        // Update enterprise-only flag
+        existing.setIsEnterpriseOnly(versionData.isEnterpriseOnly());
 
         // Update state based on Gatsby status
         VersionState state = determineVersionState(versionData.getGatsbyStatus(), versionData.getVersion());
@@ -313,6 +352,7 @@ public class SpringBootVersionSyncService {
         private LocalDate initialRelease;
         private LocalDate ossSupportEnd;
         private LocalDate enterpriseSupportEnd;
+        private boolean isEnterpriseOnly;
     }
 
     /**

@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spring.mcp.model.dto.crawler.VersionData;
 import com.spring.mcp.model.entity.ProjectVersion;
+import com.spring.mcp.model.entity.SpringBootVersion;
 import com.spring.mcp.model.entity.SpringProject;
 import com.spring.mcp.model.enums.VersionState;
 import com.spring.mcp.repository.ProjectVersionRepository;
+import com.spring.mcp.repository.SpringBootVersionRepository;
 import com.spring.mcp.repository.SpringProjectRepository;
 import com.spring.mcp.util.VersionParser;
 import lombok.extern.slf4j.Slf4j;
@@ -35,15 +37,18 @@ public class SpringProjectPageCrawlerService {
 
     private final SpringProjectRepository springProjectRepository;
     private final ProjectVersionRepository projectVersionRepository;
+    private final SpringBootVersionRepository springBootVersionRepository;
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
     public SpringProjectPageCrawlerService(SpringProjectRepository springProjectRepository,
                                            ProjectVersionRepository projectVersionRepository,
+                                           SpringBootVersionRepository springBootVersionRepository,
                                            WebClient.Builder webClientBuilder,
                                            ObjectMapper objectMapper) {
         this.springProjectRepository = springProjectRepository;
         this.projectVersionRepository = projectVersionRepository;
+        this.springBootVersionRepository = springBootVersionRepository;
         this.webClient = webClientBuilder.build();
         this.objectMapper = objectMapper;
     }
@@ -81,6 +86,16 @@ public class SpringProjectPageCrawlerService {
             // Update database
             int updated = updateProjectVersions(project, versionDataList);
             result.setVersionsUpdated(updated);
+
+            // For spring-boot: also sync enterprise-only versions from spring_boot_versions
+            // These versions are under extended enterprise support but not in spring.io documentation
+            if ("spring-boot".equals(slug)) {
+                int enterpriseVersions = syncEnterpriseOnlyVersions(project);
+                if (enterpriseVersions > 0) {
+                    log.info("Synced {} enterprise-only versions for spring-boot", enterpriseVersions);
+                    result.setVersionsUpdated(result.getVersionsUpdated() + enterpriseVersions);
+                }
+            }
 
             result.setSuccess(true);
             log.info("Crawl completed for {}: {} versions parsed, {} updated",
@@ -383,6 +398,69 @@ public class SpringProjectPageCrawlerService {
         } else {
             return VersionState.GA;  // Default for release versions
         }
+    }
+
+    /**
+     * Sync enterprise-only Spring Boot versions from spring_boot_versions to project_versions.
+     * These are versions that are under extended enterprise support but no longer in spring.io documentation.
+     *
+     * For example: Spring Boot 2.7.x has enterprise support until 2029-06 but is not in active documentation.
+     *
+     * @param springBootProject The spring-boot project entity
+     * @return Number of enterprise versions synced
+     */
+    private int syncEnterpriseOnlyVersions(SpringProject springBootProject) {
+        int syncedCount = 0;
+
+        // Find all enterprise-only versions from spring_boot_versions
+        List<SpringBootVersion> enterpriseVersions = springBootVersionRepository.findAll().stream()
+            .filter(v -> Boolean.TRUE.equals(v.getIsEnterpriseOnly()))
+            .toList();
+
+        if (enterpriseVersions.isEmpty()) {
+            log.debug("No enterprise-only Spring Boot versions found");
+            return 0;
+        }
+
+        log.info("Found {} enterprise-only Spring Boot versions to sync", enterpriseVersions.size());
+
+        for (SpringBootVersion enterpriseVersion : enterpriseVersions) {
+            String version = enterpriseVersion.getVersion();
+
+            // Check if this version already exists in project_versions
+            Optional<ProjectVersion> existing = projectVersionRepository
+                .findByProjectAndVersion(springBootProject, version);
+
+            if (existing.isPresent()) {
+                log.debug("Enterprise version {} already exists in project_versions", version);
+                continue;
+            }
+
+            // Create new project version entry for the enterprise version
+            ProjectVersion projectVersion = new ProjectVersion();
+            projectVersion.setProject(springBootProject);
+            projectVersion.setVersion(version);
+            projectVersion.setMajorVersion(enterpriseVersion.getMajorVersion());
+            projectVersion.setMinorVersion(enterpriseVersion.getMinorVersion());
+            projectVersion.setPatchVersion(enterpriseVersion.getPatchVersion() != null ?
+                enterpriseVersion.getPatchVersion() : 0);
+            projectVersion.setState(enterpriseVersion.getState() != null ?
+                enterpriseVersion.getState() : VersionState.GA);
+            projectVersion.setStatus("ENTERPRISE");
+            projectVersion.setReleaseDate(enterpriseVersion.getReleasedAt());
+            projectVersion.setOssSupportEnd(enterpriseVersion.getOssSupportEnd());
+            projectVersion.setEnterpriseSupportEnd(enterpriseVersion.getEnterpriseSupportEnd());
+            projectVersion.setReferenceDocUrl(enterpriseVersion.getReferenceDocUrl());
+            projectVersion.setApiDocUrl(enterpriseVersion.getApiDocUrl());
+
+            projectVersionRepository.save(projectVersion);
+            syncedCount++;
+
+            log.info("Created enterprise project version: {} (enterprise support until {})",
+                version, enterpriseVersion.getEnterpriseSupportEnd());
+        }
+
+        return syncedCount;
     }
 
     /**

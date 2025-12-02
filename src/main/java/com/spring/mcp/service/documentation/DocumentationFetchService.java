@@ -607,11 +607,12 @@ public class DocumentationFetchService {
     }
 
     /**
-     * Fetches JavaScript-rendered content using HtmlUnit.
-     * Used for pages that require JavaScript execution to render content.
+     * Fetches HTML content using HtmlUnit.
+     * JavaScript is disabled for performance and to avoid parsing errors with modern JS.
+     * Spring.io uses Gatsby SSG, so HTML content is pre-rendered and doesn't require JS execution.
      *
      * @param url the URL to fetch
-     * @return the rendered HTML content, or empty string if fetching fails
+     * @return the HTML content, or empty string if fetching fails
      */
     private String fetchJavaScriptRenderedContent(String url) {
         if (url == null || url.isBlank()) {
@@ -619,34 +620,33 @@ public class DocumentationFetchService {
             return "";
         }
 
-        log.debug("Fetching JavaScript-rendered page from URL: {}", url);
+        log.debug("Fetching page from URL: {}", url);
         long startTime = System.currentTimeMillis();
 
         try (org.htmlunit.WebClient webClient = new org.htmlunit.WebClient(org.htmlunit.BrowserVersion.CHROME)) {
-            // Configure HtmlUnit
-            webClient.getOptions().setJavaScriptEnabled(true);
+            // Configure HtmlUnit - JavaScript DISABLED for performance and to avoid JS parsing errors
+            // Spring.io uses Gatsby with Static Site Generation, so HTML is pre-rendered
+            webClient.getOptions().setJavaScriptEnabled(false);
             webClient.getOptions().setCssEnabled(false);
             webClient.getOptions().setThrowExceptionOnScriptError(false);
             webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
             webClient.getOptions().setTimeout(fetchTimeout);
+            webClient.getOptions().setPrintContentOnFailingStatusCode(false);
 
             // Fetch the page
             org.htmlunit.html.HtmlPage page = webClient.getPage(url);
 
-            // Wait for JavaScript to execute
-            webClient.waitForBackgroundJavaScript(10000); // Wait up to 10 seconds
-
-            // Get the rendered HTML
+            // Get the HTML (no need to wait for JS since it's disabled)
             String html = page.asXml();
 
             long duration = System.currentTimeMillis() - startTime;
-            log.info("Successfully fetched JavaScript-rendered page from URL: {} in {}ms (size: {} bytes)",
+            log.info("Successfully fetched page from URL: {} in {}ms (size: {} bytes)",
                 url, duration, html.length());
 
             return html;
 
         } catch (Exception e) {
-            log.error("Error fetching JavaScript-rendered content from URL: {} - Error: {}",
+            log.error("Error fetching content from URL: {} - Error: {}",
                 url, e.getMessage(), e);
             return "";
         }

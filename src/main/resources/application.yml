@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring MCP Server
-    version: 1.3.0
+    version: 1.3.1
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.8
@@ -68,7 +68,7 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.3.0"
+        version: "1.3.1"
         instructions: |
           Spring Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 
@@ -264,6 +264,55 @@ mcp:
         min-height: "400px"
         max-height: "600px"
 
+# GitHub Configuration for Documentation Fetching
+github:
+  api:
+    base-url: https://api.github.com
+    raw-url: https://raw.githubusercontent.com
+    token: ${GITHUB_TOKEN:}  # Optional: increases rate limit to 5000 req/hour
+    organization: spring-projects
+    timeout: 30000  # 30 seconds
+    max-retries: 3
+    retry-delay: 1000  # 1 second
+
+  documentation:
+    enabled: true
+    schedule: "0 0 4 * * ?"  # Daily at 4 AM
+    max-files-per-sync: 500
+    file-extensions:
+      - .adoc
+
+    # Default documentation paths (for main branch / latest versions)
+    paths:
+      spring-boot: documentation/spring-boot-docs/src/docs/antora/modules
+      spring-security: docs/modules/ROOT/pages
+      spring-framework: framework-docs/modules/ROOT/pages
+      spring-data-commons: src/main/antora/modules/ROOT/pages
+      spring-data-jpa: src/main/antora/modules/ROOT/pages
+      spring-batch: docs/modules/ROOT/pages
+      spring-integration: src/reference/antora/modules/ROOT/pages
+      spring-kafka: src/main/antora/modules/ROOT/pages
+      spring-ai: docs/modules/ROOT/pages
+
+    # Version-specific path overrides (structure changed between versions)
+    version-paths:
+      spring-boot:
+        threshold: "4.0.0"
+        old-path: spring-boot-project/spring-boot-docs/src/docs/antora/modules
+        new-path: documentation/spring-boot-docs/src/docs/antora/modules
+
+    # Tag prefixes (some projects use 'v' prefix, others don't)
+    tag-prefixes:
+      spring-boot: "v"
+      spring-framework: "v"
+      spring-security: ""
+      spring-data-commons: ""
+      spring-data-jpa: ""
+      spring-batch: ""
+      spring-integration: "v"
+      spring-kafka: "v"
+      spring-ai: "v"
+
 # Actuator for health checks and monitoring
 management:
   endpoints:
@@ -294,6 +343,15 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     org.flywaydb: INFO
+    # MCP Server logging
+    io.modelcontextprotocol: INFO
+    org.springframework.ai.mcp: INFO
+    # Suppress HtmlUnit noise (JavaScript engine errors, obsolete content type warnings)
+    org.htmlunit: ERROR
+    org.htmlunit.javascript: OFF
+    org.htmlunit.css: OFF
+    org.htmlunit.corejs: OFF
+    org.htmlunit.IncorrectnessListenerImpl: OFF
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

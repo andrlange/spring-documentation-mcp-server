@@ -16,6 +16,11 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 /**
  * Controller for managing code examples.
  * Handles operations for Spring code examples and samples.
@@ -33,6 +38,22 @@ public class ExamplesController {
     private final CodeExampleRepository codeExampleRepository;
     private final ProjectVersionRepository projectVersionRepository;
     private final SpringProjectRepository springProjectRepository;
+
+    /**
+     * Pattern to extract topic from example title.
+     * Matches titles like "Messaging with RabbitMQ - Example 1"
+     */
+    private static final Pattern EXAMPLE_TITLE_PATTERN = Pattern.compile("^(.+?)\\s*-\\s*Example\\s*\\d+$");
+
+    /**
+     * DTO for grouped examples by topic.
+     */
+    public record TopicGroup(
+        String topic,
+        List<CodeExample> examples,
+        String projectName,
+        String version
+    ) {}
 
     /**
      * List all code examples with advanced filtering and full-text search.
@@ -73,6 +94,10 @@ public class ExamplesController {
 
             log.debug("Found {} code examples matching filters", examples.size());
 
+            // Group examples by topic
+            List<TopicGroup> topicGroups = groupExamplesByTopic(examples);
+            log.debug("Grouped into {} topics", topicGroups.size());
+
             // Prepare filter data for dropdowns
             var allProjects = springProjectRepository.findAll(Sort.by(Sort.Direction.ASC, "name")).stream()
                 .filter(SpringProject::getActive)
@@ -83,12 +108,13 @@ public class ExamplesController {
             var allCategories = codeExampleRepository.findDistinctCategories();
 
             // Add attributes to model
-            model.addAttribute("examples", examples);
+            model.addAttribute("topicGroups", topicGroups);
             model.addAttribute("allProjects", allProjects);
             model.addAttribute("allCategories", allCategories);
             model.addAttribute("activePage", "examples");
             model.addAttribute("pageTitle", "Code Examples");
             model.addAttribute("totalElements", examples.size());
+            model.addAttribute("totalTopics", topicGroups.size());
 
             // Preserve filter values
             model.addAttribute("selectedProject", projectSlug != null ? projectSlug : "");
@@ -100,14 +126,69 @@ public class ExamplesController {
         } catch (Exception e) {
             log.error("Error listing code examples", e);
             model.addAttribute("error", "Error loading code examples: " + e.getMessage());
-            model.addAttribute("examples", java.util.List.of());
+            model.addAttribute("topicGroups", java.util.List.of());
             model.addAttribute("allProjects", java.util.List.of());
             model.addAttribute("allCategories", java.util.List.of());
             model.addAttribute("activePage", "examples");
             model.addAttribute("pageTitle", "Code Examples");
             model.addAttribute("totalElements", 0);
+            model.addAttribute("totalTopics", 0);
             return "examples/list";
         }
+    }
+
+    /**
+     * Group examples by topic extracted from their titles.
+     * Titles like "Messaging with RabbitMQ - Example 1" become group "Messaging with RabbitMQ".
+     */
+    private List<TopicGroup> groupExamplesByTopic(List<CodeExample> examples) {
+        // Group by topic
+        Map<String, List<CodeExample>> grouped = new LinkedHashMap<>();
+
+        for (CodeExample example : examples) {
+            String topic = extractTopic(example.getTitle());
+            grouped.computeIfAbsent(topic, k -> new ArrayList<>()).add(example);
+        }
+
+        // Convert to TopicGroup list
+        return grouped.entrySet().stream()
+            .map(entry -> {
+                List<CodeExample> topicExamples = entry.getValue();
+                // Sort examples by title within each topic
+                topicExamples.sort(Comparator.comparing(CodeExample::getTitle));
+
+                // Get project/version from first example
+                String projectName = null;
+                String version = null;
+                if (!topicExamples.isEmpty() && topicExamples.get(0).getVersion() != null) {
+                    var v = topicExamples.get(0).getVersion();
+                    if (v.getProject() != null) {
+                        projectName = v.getProject().getName();
+                    }
+                    version = v.getVersion();
+                }
+
+                return new TopicGroup(entry.getKey(), topicExamples, projectName, version);
+            })
+            .sorted(Comparator.comparing(TopicGroup::topic))
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Extract topic from example title by removing " - Example N" suffix.
+     */
+    private String extractTopic(String title) {
+        if (title == null) {
+            return "Unknown";
+        }
+
+        Matcher matcher = EXAMPLE_TITLE_PATTERN.matcher(title);
+        if (matcher.matches()) {
+            return matcher.group(1).trim();
+        }
+
+        // If no pattern match, use the whole title
+        return title;
     }
 
     /**
