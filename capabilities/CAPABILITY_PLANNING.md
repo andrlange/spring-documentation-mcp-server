@@ -490,7 +490,7 @@ When disabled, only 10 documentation tools are available.
 
 ## 13. Planned Feature: Flavors (Company Guidelines Storage)
 
-> **Status**: PLANNED | **Evaluation Document**: [FLAVORS_EVALUATION.md](./FLAVORS_EVALUATION.md)
+> **Status**: PLANNED | **Evaluation Document**: [FLAVORS_EVALUATION.md](release-1.3.0/FLAVORS_EVALUATION.md)
 
 ### 13.1 Overview
 

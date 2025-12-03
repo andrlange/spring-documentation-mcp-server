@@ -141,7 +141,7 @@ Break into phases: backend, frontend, rollout, testing.
 - Add AI validation step in PR workflow.
 
 **Phase 3 — UI & Developer Experience**
-- Add admin UI page using React.  
+- Add admin UI page using Thymeleaf.  
 - Provide `/generate-flavor-template` action for developers.
 
 **Phase 4 — Rollout**
