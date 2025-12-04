@@ -36,6 +36,106 @@
             margin-bottom: 0.25rem;
             display: inline-block;
         }
+
+        /* Group styles */
+        .group-public { color: #22d3ee; }
+        .group-private { color: #f472b6; }
+
+        .badge-group-public {
+            background-color: #22d3ee;
+            color: #0f172a;
+        }
+        .badge-group-private {
+            background-color: #f472b6;
+            color: #0f172a;
+        }
+
+        .group-card {
+            background-color: var(--bs-dark);
+            border: 1px solid var(--bs-gray-700);
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .group-card:hover {
+            border-color: var(--bs-gray-500);
+        }
+
+        .group-header {
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .group-header:hover {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .group-content {
+            padding: 0 1rem 1rem 1rem;
+            border-top: 1px solid var(--bs-gray-700);
+        }
+
+        .group-description {
+            padding: 0.75rem 0;
+            color: var(--bs-gray-400);
+            font-size: 0.9rem;
+        }
+
+        .group-flavors-list {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+        }
+
+        .group-flavor-item {
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.25rem;
+            margin-bottom: 0.25rem;
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .group-flavor-item:hover {
+            background-color: rgba(255, 255, 255, 0.06);
+        }
+
+        .group-flavor-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .expand-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .group-card.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .group-flavors-table {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 0.375rem;
+            overflow: hidden;
+        }
+
+        .group-flavors-table thead th {
+            border-bottom: 1px solid var(--bs-gray-700);
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .group-flavors-table tbody td {
+            border-bottom: 1px solid var(--bs-gray-800);
+            padding: 0.5rem 0.75rem;
+            vertical-align: middle;
+        }
+
+        .group-flavors-table tbody tr:last-child td {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
@@ -133,9 +233,22 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
                     <form method="get" th:action="@{/flavors}" class="row g-3 align-items-end">
-                        <div class="col-md-3">
+                        <div class="col-md-2">
+                            <label for="groupFilter" class="form-label fw-semibold">
+                                <i class="bi bi-collection text-spring-green"></i> Group
+                            </label>
+                            <select id="groupFilter" name="groupId" class="form-select">
+                                <option value="">All Groups</option>
+                                <option th:each="grp : ${availableGroups}"
+                                        th:value="${grp.id}"
+                                        th:text="${grp.displayName} + (${grp.isPublic()} ? ' (Public)' : ' (Private)')"
+                                        th:selected="${selectedGroupId != null and selectedGroupId == grp.id}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
                             <label for="categoryFilter" class="form-label fw-semibold">
-                                <i class="bi bi-collection text-spring-green"></i> Category
+                                <i class="bi bi-grid text-spring-green"></i> Category
                             </label>
                             <select id="categoryFilter" name="category" class="form-select">
                                 <option value="">All Categories</option>
@@ -156,7 +269,7 @@
                                 <option value="false" th:selected="${selectedActive == false}">Inactive</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="searchInput" class="form-label fw-semibold">
                                 <i class="bi bi-search text-spring-green"></i> Search
                             </label>
@@ -178,8 +291,172 @@
         </div>
     </div>
 
-    <!-- Empty State -->
-    <div th:if="${#lists.isEmpty(flavors)}" class="text-center py-5">
+    <!-- Selected Group Header (when filtering by group) -->
+    <div th:if="${selectedGroupName != null}" class="alert alert-info mb-4">
+        <i class="bi bi-funnel me-2"></i>
+        Showing flavors from group: <strong th:text="${selectedGroupName}">Group Name</strong>
+        <a th:href="@{/flavors}" class="ms-3 text-decoration-none">
+            <i class="bi bi-x-circle"></i> Clear filter
+        </a>
+    </div>
+
+    <!-- Flavor Groups Section -->
+    <div th:if="${groups != null and !#lists.isEmpty(groups)}" class="mb-4">
+        <h5 class="mb-3">
+            <i class="bi bi-collection me-2" style="color: #a78bfa;"></i>Flavor Groups
+            <span class="badge bg-secondary ms-2" th:text="${#lists.size(groups)}">0</span>
+        </h5>
+
+        <div th:each="group : ${groups}" class="group-card" th:data-group-id="${group.id}">
+            <!-- Group Header (clickable to expand) -->
+            <div class="group-header" onclick="toggleGroup(this)">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-collection me-2" style="color: #a78bfa;"></i>
+                    <span class="fw-semibold" th:text="${group.displayName}">Group Name</span>
+                    <span th:if="${group.isPublic()}" class="badge badge-group-public ms-2">
+                        <i class="bi bi-globe"></i> Public
+                    </span>
+                    <span th:unless="${group.isPublic()}" class="badge badge-group-private ms-2">
+                        <i class="bi bi-lock"></i> Private
+                    </span>
+                    <span class="badge bg-secondary ms-2" th:text="${group.flavorCount} + ' flavors'">0 flavors</span>
+                </div>
+                <i class="bi bi-chevron-down expand-icon"></i>
+            </div>
+
+            <!-- Group Content (hidden by default) -->
+            <div class="group-content" style="display: none;">
+                <!-- Description -->
+                <div th:if="${group.description}" class="group-description" th:text="${group.description}">
+                    Group description...
+                </div>
+
+                <!-- Flavors Table (same as ungrouped flavors) -->
+                <div th:if="${group.groupFlavors != null and !group.groupFlavors.isEmpty()}" class="table-responsive">
+                    <table class="table table-hover mb-0 group-flavors-table">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Category</th>
+                                <th scope="col">Pattern</th>
+                                <th scope="col">Tags</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Updated</th>
+                                <th scope="col" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="gf : ${group.groupFlavors}" class="flavor-card">
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <a th:href="@{/flavors/{id}(id=${gf.flavor.id})}"
+                                           class="fw-semibold text-decoration-none text-light"
+                                           th:text="${gf.flavor.displayName}">
+                                            Flavor Name
+                                        </a>
+                                        <small class="text-muted" th:text="${gf.flavor.uniqueName}">unique-name</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span th:class="'badge bg-flavor-' + ${gf.flavor.category.colorClass}">
+                                        <i th:class="${gf.flavor.category.iconClass} + ' me-1'"></i>
+                                        <span th:text="${gf.flavor.category.displayName}">Category</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${gf.flavor.patternName}" th:text="${gf.flavor.patternName}" class="text-muted">Pattern</span>
+                                    <span th:unless="${gf.flavor.patternName}" class="text-muted">-</span>
+                                </td>
+                                <td>
+                                    <span th:if="${gf.flavor.tags != null and !gf.flavor.tags.isEmpty()}">
+                                        <span th:each="tag, iter : ${gf.flavor.tags}" th:if="${iter.index < 3}"
+                                              class="tag-badge" th:text="${tag}">tag</span>
+                                        <span th:if="${#lists.size(gf.flavor.tags) > 3}" class="text-muted">
+                                            +[[${#lists.size(gf.flavor.tags) - 3}]] more
+                                        </span>
+                                    </span>
+                                    <span th:unless="${gf.flavor.tags != null and !gf.flavor.tags.isEmpty()}" class="text-muted">-</span>
+                                </td>
+                                <td>
+                                    <span th:if="${gf.flavor.isActive}" class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Active
+                                    </span>
+                                    <span th:unless="${gf.flavor.isActive}" class="badge bg-secondary">
+                                        <i class="bi bi-pause-circle"></i> Inactive
+                                    </span>
+                                </td>
+                                <td>
+                                    <small th:if="${gf.flavor.updatedAt}"
+                                           th:text="${#temporals.format(gf.flavor.updatedAt, 'yyyy-MM-dd HH:mm')}"
+                                           class="text-muted">
+                                        2024-01-01
+                                    </small>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a th:href="@{/flavors/{id}(id=${gf.flavor.id})}"
+                                           class="btn btn-outline-light" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a th:href="@{/flavors/{id}/edit(id=${gf.flavor.id})}"
+                                           class="btn btn-outline-light" title="Edit"
+                                           sec:authorize="hasRole('ADMIN')">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-light toggle-active-btn"
+                                                th:data-id="${gf.flavor.id}"
+                                                th:data-active="${gf.flavor.isActive}"
+                                                th:title="${gf.flavor.isActive ? 'Deactivate' : 'Activate'}"
+                                                sec:authorize="hasRole('ADMIN')">
+                                            <i th:class="${gf.flavor.isActive ? 'bi bi-toggle-on' : 'bi bi-toggle-off'}"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-light export-flavor-btn"
+                                                th:data-id="${gf.flavor.id}"
+                                                th:data-name="${gf.flavor.displayName}"
+                                                title="Export as Markdown">
+                                            <i class="bi bi-download"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger delete-flavor-btn"
+                                                th:data-id="${gf.flavor.id}"
+                                                th:data-name="${gf.flavor.displayName}"
+                                                title="Delete"
+                                                sec:authorize="hasRole('ADMIN')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div th:if="${group.groupFlavors == null or group.groupFlavors.isEmpty()}" class="text-muted small py-2">
+                    <i class="bi bi-info-circle me-1"></i> No flavors in this group
+                </div>
+
+                <!-- Group Actions -->
+                <div class="mt-3 d-flex gap-2">
+                    <a th:href="@{/groups/{id}(id=${group.id})}" class="btn btn-sm btn-outline-light">
+                        <i class="bi bi-eye me-1"></i> View Group
+                    </a>
+                    <a th:href="@{/groups/{id}/edit(id=${group.id})}" class="btn btn-sm btn-outline-light"
+                       sec:authorize="hasRole('ADMIN')">
+                        <i class="bi bi-pencil me-1"></i> Edit Group
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ungrouped Flavors Section Header -->
+    <div th:if="${!#lists.isEmpty(flavors)}" class="mb-3">
+        <h5>
+            <i class="bi bi-palette me-2" style="color: #fbbf24;"></i>Ungrouped Flavors
+            <span class="badge bg-secondary ms-2" th:text="${#lists.size(flavors)}">0</span>
+        </h5>
+    </div>
+
+    <!-- Empty State (only when no groups AND no ungrouped flavors) -->
+    <div th:if="${(groups == null or #lists.isEmpty(groups)) and #lists.isEmpty(flavors)}" class="text-center py-5">
         <div class="mb-4">
             <i class="bi bi-palette display-1 text-muted"></i>
         </div>
@@ -195,7 +472,7 @@
         </button>
     </div>
 
-    <!-- Flavors Table -->
+    <!-- Ungrouped Flavors Table -->
     <div th:if="${!#lists.isEmpty(flavors)}" class="card border-0 shadow-sm">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
@@ -402,6 +679,22 @@
 
 <div layout:fragment="scripts">
 <script th:inline="javascript">
+// Toggle group expand/collapse
+function toggleGroup(headerElement) {
+    const groupCard = headerElement.closest('.group-card');
+    const groupContent = groupCard.querySelector('.group-content');
+
+    if (groupCard.classList.contains('expanded')) {
+        // Collapse
+        groupCard.classList.remove('expanded');
+        groupContent.style.display = 'none';
+    } else {
+        // Expand
+        groupCard.classList.add('expanded');
+        groupContent.style.display = 'block';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;

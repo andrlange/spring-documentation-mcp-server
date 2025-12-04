@@ -139,6 +139,44 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Groups Assignment Card -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-dark border-secondary">
+                        <h5 class="mb-0"><i class="bi bi-collection me-2" style="color: #a78bfa;"></i>Group Assignments</h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${availableGroups != null and !#lists.isEmpty(availableGroups)}">
+                            <div class="form-text mb-3">
+                                Select groups to organize this flavor. Public groups are visible to all users.
+                            </div>
+                            <div class="group-checkbox-list">
+                                <div th:each="group : ${availableGroups}" class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox"
+                                           name="groupIds"
+                                           th:id="${'group-' + group.id}"
+                                           th:value="${group.id}"
+                                           th:checked="${selectedGroupIds != null and #lists.contains(selectedGroupIds, group.id)}">
+                                    <label class="form-check-label" th:for="${'group-' + group.id}">
+                                        <span th:text="${group.displayName}">Group Name</span>
+                                        <span th:if="${group.isPublic()}" class="badge ms-1" style="background-color: #22d3ee; color: #0f172a;">
+                                            <i class="bi bi-globe"></i> Public
+                                        </span>
+                                        <span th:unless="${group.isPublic()}" class="badge ms-1" style="background-color: #f472b6; color: #0f172a;">
+                                            <i class="bi bi-lock"></i> Private
+                                        </span>
+                                        <br>
+                                        <small th:if="${group.description}" class="text-muted" th:text="${#strings.abbreviate(group.description, 60)}">Description</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:if="${availableGroups == null or #lists.isEmpty(availableGroups)}" class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            No groups available. <a th:href="@{/groups/new}" class="text-decoration-none">Create a group</a> first.
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Right Column - Content Editor -->

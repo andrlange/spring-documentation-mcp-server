@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title th:text="${isNew} ? 'New Flavor Group' : 'Edit Flavor Group'">Flavor Group - Spring MCP Server</title>
+    <style>
+        /* Two-box selector styling */
+        .two-box-selector .form-select {
+            background-color: var(--bs-dark);
+            border-color: var(--bs-gray-600);
+            color: var(--bs-light);
+            min-height: 200px;
+        }
+
+        .two-box-selector .form-select:focus {
+            border-color: #6db33f;
+            box-shadow: 0 0 0 0.2rem rgba(109, 179, 63, 0.25);
+        }
+
+        .two-box-selector .form-select option {
+            padding: 0.5rem;
+        }
+
+        .two-box-selector .form-select option:checked {
+            background: linear-gradient(0deg, #6db33f 0%, #6db33f 100%);
+            color: #0f172a;
+        }
+
+        .two-box-selector .move-buttons {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .two-box-selector .move-buttons .btn {
+            padding: 0.5rem 1rem;
+        }
+
+        .member-count {
+            font-size: 0.875rem;
+            color: var(--bs-gray-400);
+        }
+
+        /* Group visibility colors */
+        .group-public { color: #22d3ee; }
+        .group-private { color: #f472b6; }
+
+        .visibility-hint {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        .visibility-hint.public {
+            background-color: rgba(34, 211, 238, 0.15);
+            border: 1px solid rgba(34, 211, 238, 0.3);
+        }
+        .visibility-hint.private {
+            background-color: rgba(244, 114, 182, 0.15);
+            border: 1px solid rgba(244, 114, 182, 0.3);
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="bi bi-collection" style="color: #a78bfa;"></i>
+            <span th:text="${isNew} ? 'New Flavor Group' : 'Edit Flavor Group'">Flavor Group</span>
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a th:href="@{/groups}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Groups
+            </a>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span th:text="${errorMessage}">Error message</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Group Form -->
+    <form th:action="${isNew} ? @{/groups} : @{/groups/{id}(id=${group.id})}" method="post">
+
+        <!-- Basic Information -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle me-2 text-spring-green"></i>Basic Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="uniqueName" class="form-label fw-semibold">
+                            Unique Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" id="uniqueName" name="uniqueName" class="form-control"
+                               th:value="${group.uniqueName}"
+                               th:readonly="${!isNew}"
+                               placeholder="e.g., payment-platform"
+                               pattern="[a-z0-9-]+"
+                               minlength="3"
+                               required>
+                        <div class="form-text">
+                            URL-friendly identifier (lowercase, dashes). Cannot be changed after creation.
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="displayName" class="form-label fw-semibold">
+                            Display Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" id="displayName" name="displayName" class="form-control"
+                               th:value="${group.displayName}"
+                               placeholder="e.g., Payment Platform Team"
+                               required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-9 mb-3">
+                        <label for="description" class="form-label fw-semibold">Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="2"
+                                  placeholder="Describe the purpose of this group..."
+                                  th:text="${group.description}"></textarea>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-semibold">Status</label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="isActive" name="isActive"
+                                   th:checked="${group.isActive}" value="true">
+                            <label class="form-check-label" for="isActive">
+                                Active
+                            </label>
+                        </div>
+                        <div class="form-text">
+                            Inactive groups are hidden from UI and MCP.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visibility Hint -->
+                <div id="visibilityHint" class="visibility-hint public">
+                    <i class="bi bi-globe me-2 group-public"></i>
+                    <strong class="group-public">Public Group</strong>
+                    <span class="text-muted ms-2">No members assigned - visible to everyone</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Members Section -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-people me-2 text-spring-green"></i>Members
+                    <small class="text-muted ms-2">(Adding members makes this a private group)</small>
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- User Members -->
+                <div class="mb-4">
+                    <h6 class="mb-3">
+                        <i class="bi bi-person me-1"></i> User Members
+                        <span class="member-count" id="userMemberCount">(0 selected)</span>
+                    </h6>
+                    <div class="two-box-selector">
+                        <div class="row">
+                            <div class="col-5">
+                                <label class="form-label small text-muted">Available Users</label>
+                                <select multiple class="form-select" size="8" id="availableUsers">
+                                    <option th:each="user : ${availableUsers}"
+                                            th:if="${!selectedUserIds.contains(user.id)}"
+                                            th:value="${user.id}"
+                                            th:text="${user.username + ' (' + user.role + ')'}">
+                                        User
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-2 move-buttons">
+                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                        onclick="moveSelected('availableUsers', 'selectedUsers', 'userIds')">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                        onclick="moveSelected('selectedUsers', 'availableUsers', 'userIds')">
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
+                            </div>
+                            <div class="col-5">
+                                <label class="form-label small text-muted">Selected Users</label>
+                                <select multiple class="form-select" size="8" id="selectedUsers">
+                                    <option th:each="user : ${availableUsers}"
+                                            th:if="${selectedUserIds.contains(user.id)}"
+                                            th:value="${user.id}"
+                                            th:text="${user.username + ' (' + user.role + ')'}">
+                                        User
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Hidden inputs for selected user IDs -->
+                    <div id="userIdsContainer">
+                        <input th:each="id : ${selectedUserIds}" type="hidden" name="userIds" th:value="${id}">
+                    </div>
+                </div>
+
+                <!-- API Key Members -->
+                <div>
+                    <h6 class="mb-3">
+                        <i class="bi bi-key me-1"></i> API Key Members
+                        <span class="member-count" id="apiKeyMemberCount">(0 selected)</span>
+                    </h6>
+                    <div class="two-box-selector">
+                        <div class="row">
+                            <div class="col-5">
+                                <label class="form-label small text-muted">Available API Keys</label>
+                                <select multiple class="form-select" size="8" id="availableApiKeys">
+                                    <option th:each="key : ${availableApiKeys}"
+                                            th:if="${!selectedApiKeyIds.contains(key.id)}"
+                                            th:value="${key.id}"
+                                            th:text="${key.name}">
+                                        API Key
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-2 move-buttons">
+                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                        onclick="moveSelected('availableApiKeys', 'selectedApiKeys', 'apiKeyIds')">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                        onclick="moveSelected('selectedApiKeys', 'availableApiKeys', 'apiKeyIds')">
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
+                            </div>
+                            <div class="col-5">
+                                <label class="form-label small text-muted">Selected API Keys</label>
+                                <select multiple class="form-select" size="8" id="selectedApiKeys">
+                                    <option th:each="key : ${availableApiKeys}"
+                                            th:if="${selectedApiKeyIds.contains(key.id)}"
+                                            th:value="${key.id}"
+                                            th:text="${key.name}">
+                                        API Key
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Hidden inputs for selected API key IDs -->
+                    <div id="apiKeyIdsContainer">
+                        <input th:each="id : ${selectedApiKeyIds}" type="hidden" name="apiKeyIds" th:value="${id}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flavors Section -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-palette me-2" style="color: #a78bfa;"></i>Flavors
+                    <span class="member-count" id="flavorCount">(0 selected)</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="two-box-selector">
+                    <div class="row">
+                        <div class="col-5">
+                            <label class="form-label small text-muted">Available Flavors</label>
+                            <select multiple class="form-select" size="10" id="availableFlavors">
+                                <option th:each="flavor : ${availableFlavors}"
+                                        th:if="${!selectedFlavorIds.contains(flavor.id)}"
+                                        th:value="${flavor.id}"
+                                        th:text="${flavor.displayName + ' [' + flavor.category.displayName + ']'}">
+                                    Flavor
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-2 move-buttons">
+                            <button type="button" class="btn btn-outline-primary btn-sm"
+                                    onclick="moveSelected('availableFlavors', 'selectedFlavors', 'flavorIds')">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-sm"
+                                    onclick="moveSelected('selectedFlavors', 'availableFlavors', 'flavorIds')">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small text-muted">Selected Flavors</label>
+                            <select multiple class="form-select" size="10" id="selectedFlavors">
+                                <option th:each="flavor : ${availableFlavors}"
+                                        th:if="${selectedFlavorIds.contains(flavor.id)}"
+                                        th:value="${flavor.id}"
+                                        th:text="${flavor.displayName + ' [' + flavor.category.displayName + ']'}">
+                                    Flavor
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- Hidden inputs for selected flavor IDs -->
+                <div id="flavorIdsContainer">
+                    <input th:each="id : ${selectedFlavorIds}" type="hidden" name="flavorIds" th:value="${id}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="d-flex gap-2 mb-4">
+            <button type="submit" class="btn btn-spring-green">
+                <i class="bi bi-check-lg me-1"></i>
+                <span th:text="${isNew} ? 'Create Group' : 'Save Changes'">Save</span>
+            </button>
+            <a th:href="@{/groups}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg me-1"></i> Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<div layout:fragment="scripts">
+<script th:inline="javascript">
+// Two-box selector functionality
+function moveSelected(fromId, toId, hiddenInputName) {
+    const fromSelect = document.getElementById(fromId);
+    const toSelect = document.getElementById(toId);
+    const container = document.getElementById(hiddenInputName + 'Container');
+
+    // Get selected options
+    const selectedOptions = Array.from(fromSelect.selectedOptions);
+
+    // Move each selected option
+    selectedOptions.forEach(option => {
+        toSelect.appendChild(option);
+        option.selected = false;
+    });
+
+    // Sort options alphabetically
+    sortSelect(toSelect);
+    sortSelect(fromSelect);
+
+    // Update hidden inputs
+    updateHiddenInputs(hiddenInputName);
+
+    // Update counts and visibility hint
+    updateCounts();
+    updateVisibilityHint();
+}
+
+function sortSelect(select) {
+    const options = Array.from(select.options);
+    options.sort((a, b) => a.text.localeCompare(b.text));
+    select.innerHTML = '';
+    options.forEach(option => select.appendChild(option));
+}
+
+function updateHiddenInputs(inputName) {
+    const container = document.getElementById(inputName + 'Container');
+    const selectId = inputName === 'userIds' ? 'selectedUsers' :
+                     inputName === 'apiKeyIds' ? 'selectedApiKeys' : 'selectedFlavors';
+    const select = document.getElementById(selectId);
+
+    // Clear existing hidden inputs
+    container.innerHTML = '';
+
+    // Create new hidden inputs for each selected item
+    Array.from(select.options).forEach(option => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = inputName;
+        input.value = option.value;
+        container.appendChild(input);
+    });
+}
+
+function updateCounts() {
+    const userCount = document.getElementById('selectedUsers').options.length;
+    const apiKeyCount = document.getElementById('selectedApiKeys').options.length;
+    const flavorCount = document.getElementById('selectedFlavors').options.length;
+
+    document.getElementById('userMemberCount').textContent = `(${userCount} selected)`;
+    document.getElementById('apiKeyMemberCount').textContent = `(${apiKeyCount} selected)`;
+    document.getElementById('flavorCount').textContent = `(${flavorCount} selected)`;
+}
+
+function updateVisibilityHint() {
+    const userCount = document.getElementById('selectedUsers').options.length;
+    const apiKeyCount = document.getElementById('selectedApiKeys').options.length;
+    const hint = document.getElementById('visibilityHint');
+
+    const isPublic = userCount === 0 && apiKeyCount === 0;
+
+    if (isPublic) {
+        hint.className = 'visibility-hint public';
+        hint.innerHTML = '<i class="bi bi-globe me-2 group-public"></i>' +
+                         '<strong class="group-public">Public Group</strong>' +
+                         '<span class="text-muted ms-2">No members assigned - visible to everyone</span>';
+    } else {
+        hint.className = 'visibility-hint private';
+        hint.innerHTML = '<i class="bi bi-lock me-2 group-private"></i>' +
+                         '<strong class="group-private">Private Group</strong>' +
+                         '<span class="text-muted ms-2">Only members can access this group and its flavors</span>';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateCounts();
+    updateVisibilityHint();
+
+    // Auto-normalize unique name input
+    const uniqueNameInput = document.getElementById('uniqueName');
+    if (uniqueNameInput && !uniqueNameInput.readOnly) {
+        uniqueNameInput.addEventListener('input', function() {
+            this.value = this.value.toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^a-z0-9-]/g, '');
+        });
+    }
+});
+</script>
+</div>
+</body>
+</html>

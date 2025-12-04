@@ -19,11 +19,11 @@ services:
     restart: unless-stopped
 
   # Uncomment this section once the application is ready to be containerized
-  # spring-mcp-server:
+  # spring-boot-documentation-mcp-server:
   #   build:
   #     context: .
   #     dockerfile: Dockerfile
-  #   container_name: spring-mcp-server
+  #   container_name: spring-boot-documentation-mcp-server
   #   environment:
   #     DB_HOST: postgres
   #     DB_PORT: 5432

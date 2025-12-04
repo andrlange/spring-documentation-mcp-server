@@ -7,6 +7,7 @@ import com.spring.mcp.model.dto.flavor.CategoryStatsDto;
 import com.spring.mcp.model.enums.FeatureStatus;
 import com.spring.mcp.model.enums.LanguageType;
 import com.spring.mcp.repository.*;
+import com.spring.mcp.service.FlavorGroupService;
 import com.spring.mcp.service.FlavorService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,7 @@ public class DashboardController {
     private final LanguageFeatureRepository languageFeatureRepository;
     private final FlavorsFeatureConfig flavorsFeatureConfig;
     private final FlavorService flavorService;
+    private final FlavorGroupService flavorGroupService;
 
     /**
      * Display the dashboard page with statistics.
@@ -176,6 +178,10 @@ public class DashboardController {
                 CategoryStatsDto flavorStats = flavorService.getStatistics();
                 model.addAttribute("flavorStats", flavorStats);
 
+                // Flavor Groups Statistics
+                FlavorGroupService.GroupStatistics groupStats = flavorGroupService.getGroupStatistics();
+                model.addAttribute("groupStats", groupStats);
+
                 log.debug("Flavor stats - Active: {}, Architecture: {}, Compliance: {}, Agents: {}, Init: {}, General: {}",
                     flavorStats.getTotalActive(),
                     flavorStats.getArchitectureCount(),
@@ -183,6 +189,12 @@ public class DashboardController {
                     flavorStats.getAgentsCount(),
                     flavorStats.getInitializationCount(),
                     flavorStats.getGeneralCount());
+
+                log.debug("Group stats - Total: {}, Active: {}, Public: {}, Private: {}",
+                    groupStats.totalGroups(),
+                    groupStats.activeGroups(),
+                    groupStats.publicGroups(),
+                    groupStats.privateGroups());
             }
 
             // Set active page for sidebar navigation

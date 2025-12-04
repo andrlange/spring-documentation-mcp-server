@@ -6,7 +6,7 @@ This document tracks the version configuration across all project files to ensur
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Application** | 1.3.2 | Spring MCP Server |
+| **Application** | 1.3.3 | Spring MCP Server |
 | **Java (JDK)** | 25 | LTS version |
 | **Spring Boot** | 3.5.8 | Latest stable |
 | **Spring AI** | 1.1.0 | MCP Server support |
@@ -17,7 +17,7 @@ This document tracks the version configuration across all project files to ensur
 
 ### build.gradle
 ```groovy
-version = '1.3.2'
+version = '1.3.3'
 
 java {
     toolchain {
@@ -48,8 +48,8 @@ services:
 services:
   postgres:
     image: postgres:18-alpine
-  spring-mcp-server:
-    image: spring-mcp-server:1.3.2
+  spring-boot-documentation-mcp-server:
+    image: spring-boot-documentation-mcp-server:1.3.3
 ```
 
 ### application.yml
@@ -58,7 +58,7 @@ services:
 info:
   app:
     name: Spring MCP Server
-    version: 1.3.2
+    version: 1.3.3
   spring-boot:
     version: 3.5.8
 
@@ -66,12 +66,12 @@ spring:
   ai:
     mcp:
       server:
-        version: "1.3.2"
+        version: "1.3.3"
 ```
 
 ### build-container.sh
 ```bash
-APP_VERSION="1.3.2"
+APP_VERSION="1.3.3"
 JAVA_VERSION="25"
 ```
 
@@ -83,7 +83,7 @@ When updating versions, ensure all files listed above are updated consistently:
    - `build.gradle` - `version` property
    - `application.yml` - `info.app.version` and `spring.ai.mcp.server.version`
    - `build-container.sh` - `APP_VERSION`
-   - `docker-compose-all.yaml` - `spring-mcp-server` image tag
+   - `docker-compose-all.yaml` - `spring-boot-documentation-mcp-server` image tag
    - `README.md` - jar filename and changelog
 
 2. **Spring Boot Version Update**:
@@ -102,7 +102,7 @@ When updating versions, ensure all files listed above are updated consistently:
 
 ## MCP Tools Count
 
-Current: **31 tools** (10 documentation + 7 migration + 6 language evolution + 8 flavors)
+Current: **34 tools** (10 documentation + 7 migration + 6 language evolution + 8 flavors + 3 flavor groups)
 
 Update these locations when adding/removing tools:
 - `application.yml` - `spring.ai.mcp.server.instructions`
@@ -110,6 +110,14 @@ Update these locations when adding/removing tools:
 - `.claude/memory/project-memory.md` - MCP Tools count
 
 ## Changelog
+
+### v1.3.3 (2025-12-04)
+- Added Flavor Groups feature (3 new MCP tools) - Team-based authorization and organization for Flavors
+- New tools: `listFlavorGroups`, `getFlavorsGroup`, `getFlavorGroupStatistics`
+- Public groups (no members) visible to everyone, Private groups (has members) visible only to members
+- Inactive groups and their flavors are completely hidden from UI and MCP
+- Database: V9 migration adds flavor_groups, group_user_members, group_apikey_members, group_flavors tables
+- Total MCP tools: 34
 
 ### v1.3.2 (2025-12-02)
 - Enhanced Flavors Import/Export with YAML front matter header support

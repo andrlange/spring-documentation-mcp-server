@@ -20,9 +20,9 @@ services:
       - spring-mcp-network
     restart: unless-stopped
 
-  spring-mcp-server:
-    image: spring-mcp-server:1.3.2
-    container_name: spring-mcp-server
+  spring-boot-documentation-mcp-server:
+    image: spring-boot-documentation-mcp-server:1.3.3
+    container_name: spring-boot-documentation-mcp-server
     environment:
       DB_HOST: postgres
       DB_PORT: 5432

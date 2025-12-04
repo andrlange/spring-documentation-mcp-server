@@ -1,13 +1,13 @@
 #!/bin/bash
-# Spring MCP Server - Container Build Script
+# Spring Boot Documentation MCP Server - Container Build Script
 # This script builds and optionally pushes the Docker container
 
 set -e
 
 # Version Configuration
-APP_VERSION="1.3.2"
+APP_VERSION="1.3.3"
 JAVA_VERSION="25"
-IMAGE_NAME="spring-mcp-server"
+IMAGE_NAME="spring-boot-documentation-mcp-server"
 REGISTRY="${DOCKER_REGISTRY:-}"
 
 # Colors for output
