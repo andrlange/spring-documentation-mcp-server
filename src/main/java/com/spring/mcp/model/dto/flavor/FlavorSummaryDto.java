@@ -1,6 +1,7 @@
 package com.spring.mcp.model.dto.flavor;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.spring.mcp.model.entity.Flavor;
 import com.spring.mcp.model.enums.FlavorCategory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -59,5 +60,28 @@ public class FlavorSummaryDto {
      */
     public String getTagsString() {
         return tags != null ? String.join(", ", tags) : "";
+    }
+
+    /**
+     * Creates a summary DTO from a Flavor entity.
+     *
+     * @param flavor the Flavor entity
+     * @return a summary DTO
+     */
+    public static FlavorSummaryDto from(Flavor flavor) {
+        if (flavor == null) {
+            return null;
+        }
+        return FlavorSummaryDto.builder()
+                .id(flavor.getId())
+                .uniqueName(flavor.getUniqueName())
+                .displayName(flavor.getDisplayName())
+                .category(flavor.getCategory())
+                .patternName(flavor.getPatternName())
+                .description(flavor.getDescription())
+                .tags(flavor.getTags())
+                .isActive(flavor.getIsActive())
+                .updatedAt(flavor.getUpdatedAt())
+                .build();
     }
 }

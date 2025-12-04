@@ -3,6 +3,8 @@ package com.spring.mcp.config;
 import com.spring.mcp.model.entity.*;
 import com.spring.mcp.model.enums.*;
 import com.spring.mcp.repository.*;
+import com.spring.mcp.repository.FlavorGroupRepository;
+import com.spring.mcp.repository.GroupFlavorRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationRunner;
@@ -40,12 +42,15 @@ public class TestDataBootstrapConfig {
             ApiKeyRepository apiKeyRepository,
             LanguageVersionRepository languageVersionRepository,
             LanguageFeatureRepository languageFeatureRepository,
-            FlavorRepository flavorRepository) {
+            FlavorRepository flavorRepository,
+            FlavorGroupRepository flavorGroupRepository,
+            GroupFlavorRepository groupFlavorRepository) {
 
         return args -> {
             log.info("Bootstrapping test data for MCP integration tests...");
 
             // Create test API key
+            ApiKey testApiKey = null;
             if (apiKeyRepository.findByName(TEST_API_KEY_NAME).isEmpty()) {
                 BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
                 ApiKey apiKey = new ApiKey();
@@ -55,8 +60,10 @@ public class TestDataBootstrapConfig {
                 apiKey.setDescription("Test API key for MCP integration tests");
                 apiKey.setIsActive(true);
                 apiKey.setCreatedAt(LocalDateTime.now());
-                apiKeyRepository.save(apiKey);
+                testApiKey = apiKeyRepository.save(apiKey);
                 log.info("Created test API key: {}", TEST_API_KEY_NAME);
+            } else {
+                testApiKey = apiKeyRepository.findByName(TEST_API_KEY_NAME).orElse(null);
             }
 
             // Create test projects
@@ -70,6 +77,9 @@ public class TestDataBootstrapConfig {
 
             // Create test flavors
             createTestFlavors(flavorRepository);
+
+            // Create test flavor groups
+            createTestFlavorGroups(flavorGroupRepository, groupFlavorRepository, flavorRepository, testApiKey);
 
             log.info("Test data bootstrap completed.");
         };
@@ -317,6 +327,74 @@ public class TestDataBootstrapConfig {
             flavor.setTags(tags);
             flavor.setIsActive(true);
             flavorRepository.save(flavor);
+        }
+    }
+
+    private void createTestFlavorGroups(FlavorGroupRepository flavorGroupRepository,
+                                         GroupFlavorRepository groupFlavorRepository,
+                                         FlavorRepository flavorRepository,
+                                         ApiKey testApiKey) {
+        // Create public group (no members - visible to everyone)
+        FlavorGroup publicGroup = createFlavorGroup(flavorGroupRepository,
+                "engineering-standards", "Engineering Standards",
+                "Organization-wide engineering standards and best practices",
+                true);
+
+        // Create another public group
+        FlavorGroup architectureGroup = createFlavorGroup(flavorGroupRepository,
+                "architecture-patterns", "Architecture Patterns",
+                "Common architecture patterns for Spring Boot applications",
+                true);
+
+        // Create inactive group (should be hidden from all views)
+        createFlavorGroup(flavorGroupRepository,
+                "deprecated-patterns", "Deprecated Patterns",
+                "Old patterns no longer in use",
+                false);
+
+        // Add flavors to groups
+        Flavor hexagonalFlavor = flavorRepository.findByUniqueName("hexagonal-spring-boot").orElse(null);
+        Flavor gdprFlavor = flavorRepository.findByUniqueName("gdpr-compliance").orElse(null);
+
+        if (hexagonalFlavor != null && publicGroup != null) {
+            addFlavorToGroup(groupFlavorRepository, publicGroup, hexagonalFlavor);
+        }
+
+        if (gdprFlavor != null && publicGroup != null) {
+            addFlavorToGroup(groupFlavorRepository, publicGroup, gdprFlavor);
+        }
+
+        if (hexagonalFlavor != null && architectureGroup != null) {
+            addFlavorToGroup(groupFlavorRepository, architectureGroup, hexagonalFlavor);
+        }
+
+        log.info("Created test flavor groups");
+    }
+
+    private FlavorGroup createFlavorGroup(FlavorGroupRepository flavorGroupRepository,
+                                           String uniqueName, String displayName,
+                                           String description, boolean isActive) {
+        return flavorGroupRepository.findByUniqueName(uniqueName)
+                .orElseGet(() -> {
+                    FlavorGroup group = FlavorGroup.builder()
+                            .uniqueName(uniqueName)
+                            .displayName(displayName)
+                            .description(description)
+                            .isActive(isActive)
+                            .build();
+                    return flavorGroupRepository.save(group);
+                });
+    }
+
+    private void addFlavorToGroup(GroupFlavorRepository groupFlavorRepository,
+                                   FlavorGroup group, Flavor flavor) {
+        if (!groupFlavorRepository.existsByGroupIdAndFlavorId(group.getId(), flavor.getId())) {
+            GroupFlavor groupFlavor = GroupFlavor.builder()
+                    .group(group)
+                    .flavor(flavor)
+                    .addedBy("test-system")
+                    .build();
+            groupFlavorRepository.save(groupFlavor);
         }
     }
 }

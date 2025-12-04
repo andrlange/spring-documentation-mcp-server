@@ -2,7 +2,12 @@ package com.spring.mcp.controller.web;
 
 import com.spring.mcp.model.dto.flavor.CategoryStatsDto;
 import com.spring.mcp.model.dto.flavor.FlavorDto;
+import com.spring.mcp.model.entity.FlavorGroup;
+import com.spring.mcp.model.entity.User;
 import com.spring.mcp.model.enums.FlavorCategory;
+import com.spring.mcp.model.enums.UserRole;
+import com.spring.mcp.repository.UserRepository;
+import com.spring.mcp.service.FlavorGroupService;
 import com.spring.mcp.service.FlavorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,9 +44,14 @@ import java.util.stream.Collectors;
 public class FlavorsController {
 
     private final FlavorService flavorService;
+    private final FlavorGroupService flavorGroupService;
+    private final UserRepository userRepository;
 
     /**
      * Display flavors list page with filters.
+     * Shows groups at the top (public first, then private), then ungrouped flavors.
+     * Admins see all groups; regular users only see public groups + groups they're members of.
+     * When a specific group is selected via filter, shows only that group's flavors.
      */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
@@ -49,12 +59,39 @@ public class FlavorsController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) Boolean active,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long groupId,
+            @AuthenticationPrincipal UserDetails userDetails,
             Model model) {
 
-        log.debug("Flavors page: category={}, active={}, search={}", category, active, search);
+        log.debug("Flavors page: category={}, active={}, search={}, groupId={}", category, active, search, groupId);
 
         model.addAttribute("activePage", "flavors");
         model.addAttribute("pageTitle", "Flavors");
+
+        // Get current user and check if admin
+        User currentUser = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
+        boolean isAdmin = currentUser != null && currentUser.getRole() == UserRole.ADMIN;
+
+        // Get accessible groups for the current user
+        List<FlavorGroup> accessibleGroups;
+        if (isAdmin) {
+            // Admins see all active groups
+            accessibleGroups = flavorGroupService.findAllActiveGroups();
+        } else {
+            // Regular users see public groups + groups they're members of
+            Long userId = currentUser != null ? currentUser.getId() : null;
+            accessibleGroups = flavorGroupService.findAccessibleGroupsForUser(userId);
+        }
+
+        // Sort groups: public first, then private, both alphabetically by display name
+        List<FlavorGroup> sortedGroups = accessibleGroups.stream()
+            .sorted(Comparator
+                .comparing(FlavorGroup::isPublic).reversed() // public (true) first
+                .thenComparing(FlavorGroup::getDisplayName, String.CASE_INSENSITIVE_ORDER))
+            .collect(Collectors.toList());
+
+        // Pass accessible groups for the dropdown filter
+        model.addAttribute("availableGroups", sortedGroups);
 
         // Parse category filter
         FlavorCategory catFilter = null;
@@ -62,39 +99,107 @@ public class FlavorsController {
             catFilter = FlavorCategory.fromString(category);
         }
 
-        // Get flavors based on filters
-        List<FlavorDto> flavors;
-        if (search != null && !search.isBlank()) {
-            // Search mode
-            flavors = flavorService.search(search, catFilter, null, 100).stream()
-                .map(summary -> flavorService.findById(summary.getId()).orElse(null))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        } else if (catFilter != null) {
-            flavors = flavorService.findByCategory(catFilter);
+        // Check if filtering by specific group
+        if (groupId != null) {
+            // Filter by specific group - show only flavors from this group
+            FlavorGroup selectedGroup = sortedGroups.stream()
+                .filter(g -> g.getId().equals(groupId))
+                .findFirst()
+                .orElse(null);
+
+            if (selectedGroup != null) {
+                // Get flavors from the selected group using service method (avoids lazy loading issues)
+                List<FlavorDto> groupFlavors = flavorGroupService.getFlavorsInGroupById(groupId).stream()
+                    .map(f -> flavorService.findById(f.getId()).orElse(null))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+                // Apply additional filters (category, active, search)
+                if (catFilter != null) {
+                    final FlavorCategory finalCatFilter = catFilter;
+                    groupFlavors = groupFlavors.stream()
+                        .filter(f -> f.getCategory() == finalCatFilter)
+                        .collect(Collectors.toList());
+                }
+                if (active != null) {
+                    final Boolean activeFilter = active;
+                    groupFlavors = groupFlavors.stream()
+                        .filter(f -> Objects.equals(f.getIsActive(), activeFilter))
+                        .collect(Collectors.toList());
+                }
+                if (search != null && !search.isBlank()) {
+                    final String searchLower = search.toLowerCase();
+                    groupFlavors = groupFlavors.stream()
+                        .filter(f -> f.getDisplayName().toLowerCase().contains(searchLower) ||
+                                     f.getUniqueName().toLowerCase().contains(searchLower) ||
+                                     (f.getDescription() != null && f.getDescription().toLowerCase().contains(searchLower)))
+                        .collect(Collectors.toList());
+                }
+
+                // When filtering by group, don't show expandable groups section
+                model.addAttribute("groups", List.of());
+                model.addAttribute("flavors", groupFlavors);
+                model.addAttribute("selectedGroupName", selectedGroup.getDisplayName());
+            } else {
+                // Group not accessible or not found
+                model.addAttribute("groups", List.of());
+                model.addAttribute("flavors", List.of());
+            }
         } else {
-            flavors = flavorService.findAll();
-        }
+            // Normal view - show expandable groups and ungrouped flavors
 
-        // Filter by active status if specified
-        if (active != null) {
-            final Boolean activeFilter = active;
-            flavors = flavors.stream()
-                .filter(f -> Objects.equals(f.getIsActive(), activeFilter))
+            // Get IDs of flavors that are in groups (to exclude from ungrouped list)
+            Set<Long> groupedFlavorIds = sortedGroups.stream()
+                .flatMap(g -> g.getGroupFlavors().stream())
+                .map(gf -> gf.getFlavor().getId())
+                .collect(Collectors.toSet());
+
+            // Get flavors based on filters
+            List<FlavorDto> allFlavors;
+            if (search != null && !search.isBlank()) {
+                // Search mode
+                allFlavors = flavorService.search(search, catFilter, null, 100).stream()
+                    .map(summary -> flavorService.findById(summary.getId()).orElse(null))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            } else if (catFilter != null) {
+                allFlavors = flavorService.findByCategory(catFilter);
+            } else {
+                allFlavors = flavorService.findAll();
+            }
+
+            // Filter by active status if specified
+            if (active != null) {
+                final Boolean activeFilter = active;
+                allFlavors = allFlavors.stream()
+                    .filter(f -> Objects.equals(f.getIsActive(), activeFilter))
+                    .collect(Collectors.toList());
+            }
+
+            // Separate ungrouped flavors (not in any accessible group)
+            List<FlavorDto> ungroupedFlavors = allFlavors.stream()
+                .filter(f -> !groupedFlavorIds.contains(f.getId()))
                 .collect(Collectors.toList());
+
+            model.addAttribute("groups", sortedGroups);
+            model.addAttribute("flavors", ungroupedFlavors); // Now only ungrouped flavors
         }
 
-        model.addAttribute("flavors", flavors);
         model.addAttribute("categories", FlavorCategory.values());
 
         // Statistics
         CategoryStatsDto stats = flavorService.getStatistics();
         model.addAttribute("stats", stats);
 
+        // Group statistics
+        FlavorGroupService.GroupStatistics groupStats = flavorGroupService.getGroupStatistics();
+        model.addAttribute("groupStats", groupStats);
+
         // Current filter values
         model.addAttribute("selectedCategory", category);
         model.addAttribute("selectedActive", active);
         model.addAttribute("searchTerm", search);
+        model.addAttribute("selectedGroupId", groupId);
 
         return "flavors/list";
     }
@@ -128,6 +233,15 @@ public class FlavorsController {
         model.addAttribute("categories", FlavorCategory.values());
         model.addAttribute("isNew", true);
 
+        // Available groups for assignment
+        List<FlavorGroup> availableGroups = flavorGroupService.findAllActiveGroups().stream()
+            .sorted(Comparator
+                .comparing(FlavorGroup::isPublic).reversed()
+                .thenComparing(FlavorGroup::getDisplayName, String.CASE_INSENSITIVE_ORDER))
+            .collect(Collectors.toList());
+        model.addAttribute("availableGroups", availableGroups);
+        model.addAttribute("selectedGroupIds", List.of());
+
         return "flavors/form";
     }
 
@@ -146,6 +260,22 @@ public class FlavorsController {
         model.addAttribute("flavor", flavor);
         model.addAttribute("categories", FlavorCategory.values());
         model.addAttribute("isNew", false);
+
+        // Available groups for assignment
+        List<FlavorGroup> availableGroups = flavorGroupService.findAllActiveGroups().stream()
+            .sorted(Comparator
+                .comparing(FlavorGroup::isPublic).reversed()
+                .thenComparing(FlavorGroup::getDisplayName, String.CASE_INSENSITIVE_ORDER))
+            .collect(Collectors.toList());
+        model.addAttribute("availableGroups", availableGroups);
+
+        // Get IDs of groups this flavor is currently in
+        List<Long> selectedGroupIds = availableGroups.stream()
+            .filter(g -> g.getGroupFlavors().stream()
+                .anyMatch(gf -> gf.getFlavor().getId().equals(id)))
+            .map(FlavorGroup::getId)
+            .collect(Collectors.toList());
+        model.addAttribute("selectedGroupIds", selectedGroupIds);
 
         return "flavors/form";
     }
@@ -175,6 +305,7 @@ public class FlavorsController {
     public String createFlavor(
             @ModelAttribute FlavorDto flavor,
             @RequestParam(required = false) String tagsInput,
+            @RequestParam(required = false) List<Long> groupIds,
             @AuthenticationPrincipal UserDetails user,
             RedirectAttributes redirectAttributes,
             Model model) {
@@ -192,6 +323,18 @@ public class FlavorsController {
             }
 
             FlavorDto created = flavorService.create(flavor, user.getUsername());
+
+            // Add to selected groups
+            if (groupIds != null && !groupIds.isEmpty()) {
+                for (Long groupId : groupIds) {
+                    try {
+                        flavorGroupService.addFlavorToGroup(groupId, created.getId(), user.getUsername());
+                    } catch (Exception e) {
+                        log.warn("Failed to add flavor {} to group {}: {}", created.getId(), groupId, e.getMessage());
+                    }
+                }
+            }
+
             redirectAttributes.addFlashAttribute("successMessage",
                 "Flavor '" + created.getDisplayName() + "' created successfully!");
             return "redirect:/flavors";
@@ -203,6 +346,16 @@ public class FlavorsController {
             model.addAttribute("categories", FlavorCategory.values());
             model.addAttribute("isNew", true);
             model.addAttribute("tagsInput", tagsInput);
+
+            // Re-populate groups for form
+            List<FlavorGroup> availableGroups = flavorGroupService.findAllActiveGroups().stream()
+                .sorted(Comparator
+                    .comparing(FlavorGroup::isPublic).reversed()
+                    .thenComparing(FlavorGroup::getDisplayName, String.CASE_INSENSITIVE_ORDER))
+                .collect(Collectors.toList());
+            model.addAttribute("availableGroups", availableGroups);
+            model.addAttribute("selectedGroupIds", groupIds != null ? groupIds : List.of());
+
             return "flavors/form";
         }
     }
@@ -216,6 +369,7 @@ public class FlavorsController {
             @PathVariable Long id,
             @ModelAttribute FlavorDto flavor,
             @RequestParam(required = false) String tagsInput,
+            @RequestParam(required = false) List<Long> groupIds,
             @AuthenticationPrincipal UserDetails user,
             RedirectAttributes redirectAttributes,
             Model model) {
@@ -235,6 +389,10 @@ public class FlavorsController {
             }
 
             FlavorDto updated = flavorService.update(id, flavor, user.getUsername());
+
+            // Update group assignments
+            updateFlavorGroups(id, groupIds, user.getUsername());
+
             redirectAttributes.addFlashAttribute("successMessage",
                 "Flavor '" + updated.getDisplayName() + "' updated successfully!");
             return "redirect:/flavors";
@@ -247,7 +405,56 @@ public class FlavorsController {
             model.addAttribute("categories", FlavorCategory.values());
             model.addAttribute("isNew", false);
             model.addAttribute("tagsInput", tagsInput);
+
+            // Re-populate groups for form
+            List<FlavorGroup> availableGroups = flavorGroupService.findAllActiveGroups().stream()
+                .sorted(Comparator
+                    .comparing(FlavorGroup::isPublic).reversed()
+                    .thenComparing(FlavorGroup::getDisplayName, String.CASE_INSENSITIVE_ORDER))
+                .collect(Collectors.toList());
+            model.addAttribute("availableGroups", availableGroups);
+            model.addAttribute("selectedGroupIds", groupIds != null ? groupIds : List.of());
+
             return "flavors/form";
+        }
+    }
+
+    /**
+     * Helper method to update flavor group assignments.
+     */
+    private void updateFlavorGroups(Long flavorId, List<Long> newGroupIds, String updatedBy) {
+        // Get all active groups
+        List<FlavorGroup> allGroups = flavorGroupService.findAllActiveGroups();
+
+        // Find current group IDs for this flavor
+        List<Long> currentGroupIds = allGroups.stream()
+            .filter(g -> g.getGroupFlavors().stream()
+                .anyMatch(gf -> gf.getFlavor().getId().equals(flavorId)))
+            .map(FlavorGroup::getId)
+            .collect(Collectors.toList());
+
+        // Remove from groups not in new list
+        for (Long currentGroupId : currentGroupIds) {
+            if (newGroupIds == null || !newGroupIds.contains(currentGroupId)) {
+                try {
+                    flavorGroupService.removeFlavorFromGroup(currentGroupId, flavorId);
+                } catch (Exception e) {
+                    log.warn("Failed to remove flavor {} from group {}: {}", flavorId, currentGroupId, e.getMessage());
+                }
+            }
+        }
+
+        // Add to new groups
+        if (newGroupIds != null) {
+            for (Long newGroupId : newGroupIds) {
+                if (!currentGroupIds.contains(newGroupId)) {
+                    try {
+                        flavorGroupService.addFlavorToGroup(newGroupId, flavorId, updatedBy);
+                    } catch (Exception e) {
+                        log.warn("Failed to add flavor {} to group {}: {}", flavorId, newGroupId, e.getMessage());
+                    }
+                }
+            }
         }
     }
 

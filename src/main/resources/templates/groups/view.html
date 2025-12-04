@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title th:text="${group.displayName} + ' - Spring MCP Server'">Flavor Group - Spring MCP Server</title>
+    <style>
+        /* Group visibility colors */
+        .group-public { color: #22d3ee; }
+        .group-private { color: #f472b6; }
+
+        .badge-group-public {
+            background-color: #22d3ee;
+            color: #0f172a;
+        }
+        .badge-group-private {
+            background-color: #f472b6;
+            color: #0f172a;
+        }
+
+        .member-card {
+            background-color: var(--bs-dark);
+            border: 1px solid var(--bs-gray-700);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .flavor-card {
+            background-color: var(--bs-dark);
+            border: 1px solid var(--bs-gray-700);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .flavor-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* Category colors */
+        .flavor-purple { color: #a78bfa; }
+        .flavor-pink { color: #f472b6; }
+        .flavor-cyan { color: #22d3d8; }
+        .flavor-green { color: #6db33f; }
+        .flavor-amber { color: #fbbf24; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="bi bi-collection" style="color: #a78bfa;"></i>
+            <span th:text="${group.displayName}">Flavor Group</span>
+            <span th:if="${group.isPublic()}" class="badge badge-group-public ms-2">
+                <i class="bi bi-globe"></i> Public
+            </span>
+            <span th:unless="${group.isPublic()}" class="badge badge-group-private ms-2">
+                <i class="bi bi-lock"></i> Private
+            </span>
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a th:href="@{/groups/{id}/edit(id=${group.id})}" class="btn btn-sm btn-outline-light me-2">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            <a th:href="@{/groups}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Groups
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Alert for Inactive -->
+    <div th:if="${!group.isActive}" class="alert alert-warning" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <strong>Inactive Group</strong> - This group and all its flavors are hidden from UI and MCP tools.
+    </div>
+
+    <!-- Group Info Card -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-1">Unique Name</h6>
+                    <p class="mb-3"><code th:text="${group.uniqueName}">unique-name</code></p>
+
+                    <h6 class="text-muted mb-1">Description</h6>
+                    <p class="mb-0" th:text="${group.description ?: 'No description provided'}">Description</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-6">
+                            <h6 class="text-muted mb-1">Status</h6>
+                            <span th:if="${group.isActive}" class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> Active
+                            </span>
+                            <span th:unless="${group.isActive}" class="badge bg-secondary">
+                                <i class="bi bi-pause-circle"></i> Inactive
+                            </span>
+                        </div>
+                        <div class="col-6">
+                            <h6 class="text-muted mb-1">Created</h6>
+                            <small th:text="${#temporals.format(group.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</small>
+                            <br>
+                            <small class="text-muted" th:text="'by ' + ${group.createdBy ?: 'system'}">by admin</small>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-6">
+                            <h6 class="text-muted mb-1">Visibility</h6>
+                            <span th:if="${group.isPublic()}" class="group-public">
+                                <i class="bi bi-globe me-1"></i> Public (visible to all)
+                            </span>
+                            <span th:unless="${group.isPublic()}" class="group-private">
+                                <i class="bi bi-lock me-1"></i> Private (members only)
+                            </span>
+                        </div>
+                        <div class="col-6">
+                            <h6 class="text-muted mb-1">Last Updated</h6>
+                            <small th:text="${#temporals.format(group.updatedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</small>
+                            <br>
+                            <small class="text-muted" th:text="'by ' + ${group.updatedBy ?: 'system'}">by admin</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Members Section -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-bottom">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people me-2 text-spring-green"></i>Members
+                        <span class="badge bg-secondary ms-2" th:text="${group.totalMemberCount}">0</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- User Members -->
+                    <h6 class="mb-3">
+                        <i class="bi bi-person me-1"></i> Users
+                        <span class="badge bg-secondary ms-1"
+                              th:text="${group.userMembers != null ? group.userMembers.size() : 0}">0</span>
+                    </h6>
+                    <div th:if="${group.userMembers != null and !group.userMembers.isEmpty()}">
+                        <div th:each="member : ${group.userMembers}" class="member-card">
+                            <div>
+                                <i class="bi bi-person-circle me-2"></i>
+                                <span th:text="${member.user.username}">username</span>
+                                <span class="badge ms-2"
+                                      th:classappend="${member.user.role.name() == 'ADMIN'} ? 'bg-danger' : 'bg-secondary'"
+                                      th:text="${member.user.role}">ROLE</span>
+                            </div>
+                            <small class="text-muted"
+                                   th:text="'Added ' + ${#temporals.format(member.addedAt, 'yyyy-MM-dd')}">
+                                Added 2024-01-01
+                            </small>
+                        </div>
+                    </div>
+                    <p th:if="${group.userMembers == null or group.userMembers.isEmpty()}"
+                       class="text-muted mb-3">
+                        No user members
+                    </p>
+
+                    <!-- API Key Members -->
+                    <h6 class="mb-3 mt-4">
+                        <i class="bi bi-key me-1"></i> API Keys
+                        <span class="badge bg-secondary ms-1"
+                              th:text="${group.apiKeyMembers != null ? group.apiKeyMembers.size() : 0}">0</span>
+                    </h6>
+                    <div th:if="${group.apiKeyMembers != null and !group.apiKeyMembers.isEmpty()}">
+                        <div th:each="member : ${group.apiKeyMembers}" class="member-card">
+                            <div>
+                                <i class="bi bi-key-fill me-2"></i>
+                                <span th:text="${member.apiKey.name}">api-key-name</span>
+                                <span th:if="${member.apiKey.isActive}" class="badge bg-success ms-2">Active</span>
+                                <span th:unless="${member.apiKey.isActive}" class="badge bg-secondary ms-2">Inactive</span>
+                            </div>
+                            <small class="text-muted"
+                                   th:text="'Added ' + ${#temporals.format(member.addedAt, 'yyyy-MM-dd')}">
+                                Added 2024-01-01
+                            </small>
+                        </div>
+                    </div>
+                    <p th:if="${group.apiKeyMembers == null or group.apiKeyMembers.isEmpty()}"
+                       class="text-muted">
+                        No API key members
+                    </p>
+
+                    <!-- Visibility explanation -->
+                    <div th:if="${group.isPublic()}" class="mt-4 p-3 rounded" style="background-color: rgba(34, 211, 238, 0.1); border: 1px solid rgba(34, 211, 238, 0.2);">
+                        <small class="group-public">
+                            <i class="bi bi-info-circle me-1"></i>
+                            This is a <strong>public group</strong> because it has no members.
+                            Add users or API keys to make it private.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flavors Section -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-bottom">
+                    <h5 class="mb-0">
+                        <i class="bi bi-palette me-2" style="color: #a78bfa;"></i>Flavors
+                        <span class="badge bg-secondary ms-2" th:text="${group.flavorCount}">0</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${group.groupFlavors != null and !group.groupFlavors.isEmpty()}">
+                        <div th:each="gf : ${group.groupFlavors}" class="flavor-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <a th:href="@{/flavors/{id}(id=${gf.flavor.id})}"
+                                       class="fw-semibold text-decoration-none text-light"
+                                       th:text="${gf.flavor.displayName}">
+                                        Flavor Name
+                                    </a>
+                                    <br>
+                                    <small class="text-muted" th:text="${gf.flavor.uniqueName}">unique-name</small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge"
+                                          th:classappend="'bg-flavor-' + ${gf.flavor.category.colorClass}"
+                                          th:text="${gf.flavor.category.displayName}">Category</span>
+                                    <br>
+                                    <small class="text-muted"
+                                           th:text="'Added ' + ${#temporals.format(gf.addedAt, 'yyyy-MM-dd')}">
+                                        Added 2024-01-01
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${group.groupFlavors == null or group.groupFlavors.isEmpty()}"
+                         class="text-center py-4">
+                        <i class="bi bi-palette display-4 text-muted"></i>
+                        <p class="text-muted mt-2">No flavors in this group</p>
+                        <a th:href="@{/groups/{id}/edit(id=${group.id})}" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-plus"></i> Add Flavors
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MCP Usage Info -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-bottom">
+            <h5 class="mb-0">
+                <i class="bi bi-terminal me-2 text-spring-green"></i>MCP Usage
+            </h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">Use these MCP tools to access this group's flavors:</p>
+            <div class="bg-dark p-3 rounded">
+                <code class="text-spring-green">
+                    # List all accessible groups<br>
+                    listFlavorGroups(includePublic: true, includePrivate: true)<br><br>
+                    # Get flavors in this group<br>
+                    getFlavorsGroup(groupName: "<span th:text="${group.uniqueName}">unique-name</span>")
+                </code>
+            </div>
+            <p class="text-muted mt-3 mb-0 small">
+                <i class="bi bi-info-circle me-1"></i>
+                <span th:if="${group.isPublic()}">
+                    This is a <strong>public group</strong> - accessible to all API keys.
+                </span>
+                <span th:unless="${group.isPublic()}">
+                    This is a <strong>private group</strong> - only member API keys can access these flavors.
+                </span>
+            </p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

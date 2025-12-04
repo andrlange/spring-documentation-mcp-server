@@ -3,7 +3,7 @@
 
 spring:
   application:
-    name: spring-mcp-server-test
+    name: spring-boot-documentation-mcp-server-test
 
   # PostgreSQL configuration - will be overridden by Testcontainers
   datasource:

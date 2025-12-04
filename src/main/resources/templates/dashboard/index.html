@@ -345,6 +345,66 @@
             </div>
         </div>
 
+        <!-- Flavor Groups Statistics Row (conditional on feature flag) -->
+        <div class="row g-4 mb-4" th:if="${flavorsEnabled and groupStats != null}">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-collection" style="color: #a78bfa;"></i> Flavor Groups
+                            <a th:href="@{/groups}" class="btn btn-sm btn-outline-purple float-end">
+                                <i class="bi bi-arrow-right"></i> Manage Groups
+                            </a>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <!-- Total Groups -->
+                            <div class="col-xl-3 col-md-6 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background-color: rgba(167, 139, 250, 0.1);">
+                                        <i class="bi bi-collection-fill fs-5" style="color: #a78bfa;"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${groupStats.totalGroups()}">0</h4>
+                                    <small class="text-muted">Total Groups</small>
+                                </div>
+                            </div>
+                            <!-- Public Groups -->
+                            <div class="col-xl-3 col-md-6 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background-color: rgba(34, 211, 238, 0.1);">
+                                        <i class="bi bi-globe fs-5" style="color: #22d3ee;"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${groupStats.publicGroups()}">0</h4>
+                                    <small class="text-muted">Public Groups</small>
+                                </div>
+                            </div>
+                            <!-- Private Groups -->
+                            <div class="col-xl-3 col-md-6 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background-color: rgba(244, 114, 182, 0.1);">
+                                        <i class="bi bi-lock-fill fs-5" style="color: #f472b6;"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${groupStats.privateGroups()}">0</h4>
+                                    <small class="text-muted">Private Groups</small>
+                                </div>
+                            </div>
+                            <!-- Active Groups -->
+                            <div class="col-xl-3 col-md-6 col-6">
+                                <div class="text-center">
+                                    <div class="stat-icon-sm bg-success-light mx-auto mb-2" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                                    </div>
+                                    <h4 class="mb-0" th:text="${groupStats.activeGroups()}">0</h4>
+                                    <small class="text-muted">Active Groups</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Secondary Statistics Row -->
         <div class="row g-4 mb-4">
             <!-- Users Card -->

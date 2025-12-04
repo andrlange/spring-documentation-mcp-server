@@ -18,11 +18,31 @@ import java.util.List;
  * MCP Tools for Flavors - company guidelines, architecture patterns,
  * compliance rules, agent configurations, and project initialization templates.
  *
- * Uses @Tool annotation for Spring AI MCP Server auto-discovery.
+ * Uses @McpTool annotation for Spring AI MCP Server auto-discovery.
  * This service is only enabled when the flavors feature is enabled.
+ * <p>
+ * <strong>Note on Flavor Groups (v1.3.3+):</strong>
+ * Flavors can now be organized into groups with visibility rules:
+ * <ul>
+ *   <li>Unassigned flavors are visible to everyone</li>
+ *   <li>Flavors in PUBLIC groups (no members) are visible to everyone</li>
+ *   <li>Flavors in PRIVATE groups (has members) are visible only to group members</li>
+ *   <li>Flavors in INACTIVE groups are completely hidden</li>
+ * </ul>
+ * <p>
+ * Currently, these tools return all active unassigned and public group flavors.
+ * For group-specific filtering, use the FlavorGroupTools:
+ * <ul>
+ *   <li>{@code listFlavorGroups} - List accessible flavor groups</li>
+ *   <li>{@code getFlavorsGroup} - Get all flavors in a specific group</li>
+ *   <li>{@code getFlavorGroupStatistics} - Get group statistics</li>
+ * </ul>
+ * <p>
+ * Future enhancement: When API key context propagation is implemented,
+ * these tools will automatically filter based on group membership.
  *
  * @author Spring MCP Server
- * @version 1.2.0
+ * @version 1.3.3
  * @since 2025-11-30
  */
 @Service
