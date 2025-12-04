@@ -5,6 +5,32 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2025-12-04
+
+### Added
+- **Flavor Groups**: Team-based organization and access control for Flavors
+    - **Public Groups**: Groups without members are visible to all authenticated API keys
+    - **Private Groups**: Groups with API key members restrict visibility to members only
+    - **Active/Inactive Status**: Inactive groups are completely hidden from MCP tools
+    - Web UI for group management (`/groups`) with create, edit, delete, and member assignment
+    - Assign flavors to multiple groups via the Flavors edit form
+    - Filter flavors by group on the Flavors list page
+    - API key membership management through group edit interface
+    - 3 new MCP tools for AI assistants:
+        - `listFlavorGroups`: List accessible groups (public + private where API key is member)
+        - `getFlavorsGroup`: Get all flavors in a specific group with metadata
+        - `getFlavorGroupStatistics`: Get group counts (total, active, public, private)
+    - Security model extracts API key ID from security context for access control
+    - Database tables: `flavor_groups`, `group_api_key_members`, `group_user_members`, `group_flavors`
+
+### Changed
+- **Documentation Restructure**: Reorganized README.md for better feature discovery
+    - Feature-focused sections with inline screenshots per feature
+    - New "Using with Claude Code" section with natural language query examples
+    - Technical reference moved to ADDITIONAL_CONTENT.md
+- Total MCP tools increased from 31 to **34**
+
+
 ## [1.3.2] - 2025-12-02
 
 ### Added
@@ -126,6 +152,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.3.3 | 2025-12-04 | Flavor Groups with team-based access control (3 MCP tools) |
 | 1.3.2 | 2025-12-02 | YAML metadata headers for Flavors, Spring AI 1.1.0 MCP refactoring |
 | 1.3.1 | 2025-12-01 | GitHub documentation scanner, enhanced code examples |
 | 1.3.0 | 2025-11-30 | Flavors feature (8 MCP tools) |
@@ -139,4 +166,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **v1.0.1**: 10 documentation tools
 - **v1.1.0**: +7 migration tools = 17 total
 - **v1.2.0**: +6 language evolution tools = 23 total
-- **v1.3.0**: +8 flavors tools = **31 total**
+- **v1.3.0**: +8 flavors tools = 31 total
+- **v1.3.3**: +3 flavor groups tools = **34 total**
