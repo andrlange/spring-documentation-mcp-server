@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring Boot Documentation MCP Server
-    version: 1.3.3
+    version: 1.3.4
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.8
@@ -68,7 +68,7 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.3.3"
+        version: "1.3.4"
         instructions: |
           Spring Boot Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 

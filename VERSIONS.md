@@ -6,10 +6,10 @@ This document tracks the version configuration across all project files to ensur
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Application** | 1.3.3 | Spring MCP Server |
+| **Application** | 1.3.4 | Spring MCP Server |
 | **Java (JDK)** | 25 | LTS version |
 | **Spring Boot** | 3.5.8 | Latest stable |
-| **Spring AI** | 1.1.0 | MCP Server support |
+| **Spring AI** | 1.1.1 | MCP Server support |
 | **PostgreSQL** | 18-alpine | Docker image |
 | **Gradle** | 9.2.0 | Build tool |
 
@@ -17,7 +17,7 @@ This document tracks the version configuration across all project files to ensur
 
 ### build.gradle
 ```groovy
-version = '1.3.3'
+version = '1.3.4'
 
 java {
     toolchain {
@@ -26,7 +26,7 @@ java {
 }
 
 ext {
-    springAiVersion = '1.1.0'
+    springAiVersion = '1.1.1'
 }
 ```
 
@@ -49,7 +49,7 @@ services:
   postgres:
     image: postgres:18-alpine
   spring-boot-documentation-mcp-server:
-    image: spring-boot-documentation-mcp-server:1.3.3
+    image: spring-boot-documentation-mcp-server:1.3.4
 ```
 
 ### application.yml
@@ -58,7 +58,7 @@ services:
 info:
   app:
     name: Spring MCP Server
-    version: 1.3.3
+    version: 1.3.4
   spring-boot:
     version: 3.5.8
 
@@ -66,12 +66,12 @@ spring:
   ai:
     mcp:
       server:
-        version: "1.3.3"
+        version: "1.3.4"
 ```
 
 ### build-container.sh
 ```bash
-APP_VERSION="1.3.3"
+APP_VERSION="1.3.4"
 JAVA_VERSION="25"
 ```
 
@@ -107,9 +107,14 @@ Current: **34 tools** (10 documentation + 7 migration + 6 language evolution + 8
 Update these locations when adding/removing tools:
 - `application.yml` - `spring.ai.mcp.server.instructions`
 - `README.md` - tool documentation
+- `ADDITIONAL_CONTENT.md` - tool detailed documentation
 - `.claude/memory/project-memory.md` - MCP Tools count
 
 ## Changelog
+
+### v1.3.4 (2025-12-05)
+- Spring AI updated from 1.1.0 to 1.1.1
+- Library updates to fix CVE-2025-48924
 
 ### v1.3.3 (2025-12-04)
 - Added Flavor Groups feature (3 new MCP tools) - Team-based authorization and organization for Flavors
