@@ -5,6 +5,14 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.4] - 2025-12-05
+
+### Changed
+- **Spring AI**: Updated from 1.1.0 to 1.1.1
+- **Library Updates**: Security patches to address CVE-2025-48924
+
+---
+
 ## [1.3.3] - 2025-12-04
 
 ### Added
@@ -158,6 +166,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.3.4 | 2025-12-05 | Spring AI 1.1.1, CVE-2025-48924 security fix |
 | 1.3.3 | 2025-12-04 | Flavor Groups with team-based access control (3 MCP tools) |
 | 1.3.2 | 2025-12-02 | YAML metadata headers for Flavors, Spring AI 1.1.0 MCP refactoring |
 | 1.3.1 | 2025-12-01 | GitHub documentation scanner, enhanced code examples |

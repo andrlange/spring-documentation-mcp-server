@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
 
   spring-boot-documentation-mcp-server:
-    image: spring-boot-documentation-mcp-server:1.3.3
+    image: spring-boot-documentation-mcp-server:1.3.4
     container_name: spring-boot-documentation-mcp-server
     environment:
       DB_HOST: postgres

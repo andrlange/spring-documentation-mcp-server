@@ -82,7 +82,7 @@ In MCP Inspector:
 - **Build Tool**: Gradle 9.2.0
 
 ### MCP Protocol
-- **Spring AI MCP Server**: 1.1.0
+- **Spring AI MCP Server**: 1.1.1
 - **Protocol**: Server-Sent Events (SSE)
 - **Auto-discovery**: `@Tool` annotations
 
@@ -93,16 +93,16 @@ In MCP Inspector:
 - **Full-Text Search**: PostgreSQL tsvector + tsquery
 
 ### UI Layer
-- **Template Engine**: Thymeleaf 3.1
+- **Template Engine**: Thymeleaf 3.4
 - **Layout**: Thymeleaf Layout Dialect
 - **CSS Framework**: Bootstrap 5
 - **Security**: Spring Security 6 (Spring Security Extras for Thymeleaf)
 
 ### Documentation Fetching
 - **HTML Parsing**: JSoup 1.21.2
-- **JavaScript Support**: HtmlUnit 4.18.0
+- **JavaScript Support**: HtmlUnit 4.19.0
 - **HTML to Markdown**: Flexmark 0.64.8
-- **AsciiDoc Processing**: AsciidoctorJ 3.0.0 (for GitHub source documentation)
+- **AsciiDoc Processing**: AsciidoctorJ 3.0.1 (for GitHub source documentation)
 - **HTTP Client**: Spring WebFlux WebClient
 
 ### Security & Monitoring
@@ -224,14 +224,14 @@ Search across all Spring documentation with optional filters.
 **Parameters**:
 - `query` (required): Search term
 - `project` (optional): Project slug (e.g., `spring-boot`)
-- `version` (optional): Version string (e.g., `3.5.7`)
+- `version` (optional): Version string (e.g., `3.5.8`)
 - `docType` (optional): Documentation type (e.g., `reference`, `api`)
 
 ```json
 {
   "query": "autoconfiguration",
   "project": "spring-boot",
-  "version": "3.5.7"
+  "version": "3.5.8"
 }
 ```
 
