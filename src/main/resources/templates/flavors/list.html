@@ -319,7 +319,10 @@
                     <span th:unless="${group.isPublic()}" class="badge badge-group-private ms-2">
                         <i class="bi bi-lock"></i> Private
                     </span>
-                    <span class="badge bg-secondary ms-2" th:text="${group.flavorCount} + ' flavors'">0 flavors</span>
+                    <!-- Show filtered count when filters are applied, otherwise total count -->
+                    <span th:if="${groupFilteredCounts == null}" class="badge bg-secondary ms-2" th:text="${group.flavorCount} + ' flavors'">0 flavors</span>
+                    <span th:unless="${groupFilteredCounts == null}" class="badge bg-secondary ms-2"
+                          th:text="${groupFilteredCounts.get(group.id)} + ' matching'">0 matching</span>
                 </div>
                 <i class="bi bi-chevron-down expand-icon"></i>
             </div>
@@ -346,7 +349,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="gf : ${group.groupFlavors}" class="flavor-card">
+                            <tr th:each="gf : ${group.groupFlavors}"
+                                th:if="${filteredFlavorIds == null or filteredFlavorIds.contains(gf.flavor.id)}"
+                                class="flavor-card">
                                 <td>
                                     <div class="d-flex flex-column">
                                         <a th:href="@{/flavors/{id}(id=${gf.flavor.id})}"

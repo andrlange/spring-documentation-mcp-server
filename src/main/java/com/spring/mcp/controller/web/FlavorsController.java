@@ -176,12 +176,44 @@ public class FlavorsController {
                     .collect(Collectors.toList());
             }
 
+            // Get IDs of all matching flavors for filtering groups
+            Set<Long> matchingFlavorIds = allFlavors.stream()
+                .map(FlavorDto::getId)
+                .collect(Collectors.toSet());
+
+            // Filter groups to only include those with matching flavors (when search/filters applied)
+            List<FlavorGroup> filteredGroups;
+            Map<Long, Integer> groupFilteredCounts = new HashMap<>();
+            if (search != null && !search.isBlank() || catFilter != null || active != null) {
+                // When filters are active, filter groups to show only those with matching flavors
+                filteredGroups = sortedGroups.stream()
+                    .filter(g -> g.getGroupFlavors().stream()
+                        .anyMatch(gf -> matchingFlavorIds.contains(gf.getFlavor().getId())))
+                    .collect(Collectors.toList());
+
+                // Calculate filtered counts for each group
+                for (FlavorGroup group : filteredGroups) {
+                    int filteredCount = (int) group.getGroupFlavors().stream()
+                        .filter(gf -> matchingFlavorIds.contains(gf.getFlavor().getId()))
+                        .count();
+                    groupFilteredCounts.put(group.getId(), filteredCount);
+                }
+
+                // Also filter the flavors within each group by creating filtered view DTOs
+                model.addAttribute("filteredFlavorIds", matchingFlavorIds);
+                model.addAttribute("groupFilteredCounts", groupFilteredCounts);
+            } else {
+                filteredGroups = sortedGroups;
+                model.addAttribute("filteredFlavorIds", null);
+                model.addAttribute("groupFilteredCounts", null);
+            }
+
             // Separate ungrouped flavors (not in any accessible group)
             List<FlavorDto> ungroupedFlavors = allFlavors.stream()
                 .filter(f -> !groupedFlavorIds.contains(f.getId()))
                 .collect(Collectors.toList());
 
-            model.addAttribute("groups", sortedGroups);
+            model.addAttribute("groups", filteredGroups);
             model.addAttribute("flavors", ungroupedFlavors); // Now only ungrouped flavors
         }
 

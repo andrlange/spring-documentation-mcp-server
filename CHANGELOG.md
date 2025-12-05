@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Technical reference moved to ADDITIONAL_CONTENT.md
 - Total MCP tools increased from 31 to **34**
 
+### Fixed - Hotfix 1
+- **Flavors Search Filter**: Fixed search not filtering flavor groups
+    - Search term now correctly filters groups to only show those containing matching flavors
+    - Flavors within groups are filtered to only display matches
+    - Group badge shows "X matching" instead of total count when filters are active
+    - Category and status filters also now work correctly for grouped flavors
 
 ## [1.3.2] - 2025-12-02
 

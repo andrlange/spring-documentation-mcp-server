@@ -1,5 +1,5 @@
 # Spring Documentation MCP Server
-### (Current Version 1.3.3)
+### (Current Version 1.3.3 Hotfix 1)
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
 ## What is this?
