@@ -128,7 +128,8 @@ public class SpringBootVersionSyncService {
 
             // Parse documentation array for version info (actively documented versions)
             JsonNode documentation = fields.path("documentation");
-            Map<String, VersionData> versionMap = new HashMap<>();
+            // Use a multi-map to store ALL versions per major.minor (not just the last one)
+            Map<String, List<VersionData>> versionsByMajorMinor = new HashMap<>();
 
             if (documentation.isArray()) {
                 for (JsonNode versionNode : documentation) {
@@ -144,10 +145,10 @@ public class SpringBootVersionSyncService {
                             .build();
 
                         versionDataList.add(versionData);
-                        // Store by major.minor for matching
+                        // Store by major.minor for matching - collect ALL versions per major.minor
                         VersionParser.ParsedVersion parsed = VersionParser.parse(version);
                         String key = parsed.getMajorVersion() + "." + parsed.getMinorVersion();
-                        versionMap.put(key, versionData);
+                        versionsByMajorMinor.computeIfAbsent(key, k -> new ArrayList<>()).add(versionData);
                         log.trace("Parsed version: {} (current: {})", version, versionData.isCurrent());
                     }
                 }
@@ -169,15 +170,18 @@ public class SpringBootVersionSyncService {
                     VersionParser.ParsedVersion genParsed = VersionParser.parse(gen);
                     String key = genParsed.getMajorVersion() + "." + genParsed.getMinorVersion();
 
-                    // Check if we already have a documented version for this generation
-                    VersionData existingVersion = versionMap.get(key);
+                    // Get ALL versions for this generation (e.g., both 3.5.8 and 3.5.9-SNAPSHOT)
+                    List<VersionData> versionsForGen = versionsByMajorMinor.get(key);
 
-                    if (existingVersion != null) {
-                        // Update support dates for existing version
-                        existingVersion.setInitialRelease(initialRelease);
-                        existingVersion.setOssSupportEnd(ossSupportEnd);
-                        existingVersion.setEnterpriseSupportEnd(enterpriseSupportEnd);
-                        log.trace("Matched generation {} to version {}", gen, existingVersion.getVersion());
+                    if (versionsForGen != null && !versionsForGen.isEmpty()) {
+                        // Update support dates for ALL versions in this generation
+                        for (VersionData versionData : versionsForGen) {
+                            versionData.setInitialRelease(initialRelease);
+                            versionData.setOssSupportEnd(ossSupportEnd);
+                            versionData.setEnterpriseSupportEnd(enterpriseSupportEnd);
+                            log.trace("Matched generation {} to version {}", gen, versionData.getVersion());
+                        }
+                        log.debug("Applied support dates from {} to {} versions", gen, versionsForGen.size());
                     } else if (enterpriseEnabled && enterpriseSupportEnd != null && enterpriseSupportEnd.isAfter(today)) {
                         // No documented version, but enterprise support is still active
                         // Create an enterprise-only version entry using the generation pattern
@@ -195,7 +199,7 @@ public class SpringBootVersionSyncService {
                             .build();
 
                         versionDataList.add(enterpriseVersion);
-                        versionMap.put(key, enterpriseVersion);
+                        versionsByMajorMinor.computeIfAbsent(key, k -> new ArrayList<>()).add(enterpriseVersion);
                     } else if (enterpriseSupportEnd != null) {
                         log.debug("Skipping generation {} - enterprise support ended {} (enterprise mode: {})",
                             gen, enterpriseSupportEnd, enterpriseEnabled ? "enabled" : "disabled");

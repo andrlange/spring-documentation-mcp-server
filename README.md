@@ -2,6 +2,10 @@
 ### (Current Version 1.4.0)
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
+> Thanks to Dan Vega - https://github.com/danvega/sb4 providing Spring Boot 4 architecture examples - 
+> flavors/architecture/danvega-sb4
+
+
 ## What is this?
 
 This MCP server enables AI assistants (like Claude) to search, browse, and retrieve Spring Framework documentation, code examples, and API references. It includes:
@@ -836,3 +840,7 @@ For detailed technical reference including:
 - All 34 MCP Tool Parameters with JSON Examples
 
 See [ADDITIONAL_CONTENT.md](ADDITIONAL_CONTENT.md)
+
+---
+
+Happy coding: Andreas Lange
