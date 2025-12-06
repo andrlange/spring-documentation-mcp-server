@@ -734,6 +734,70 @@
         </div>
     </div>
 
+    <!-- Spring Boot Initializr Configuration -->
+    <div class="card border-0 shadow-sm mb-4" th:if="${initializrEnabled}">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0">
+                <i class="bi bi-box-seam" style="color: #6ee7b7;"></i> Spring Boot Initializr
+            </h5>
+            <small class="text-muted">Configure Spring Initializr integration for project generation</small>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">
+                        <i class="bi bi-toggle-on"></i> Feature Status
+                    </label>
+                    <div>
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle"></i> Enabled
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">
+                        <i class="bi bi-link-45deg"></i> Initializr URL
+                    </label>
+                    <div>
+                        <a th:href="${initializrBaseUrl}" target="_blank" class="text-info">
+                            <code th:text="${initializrBaseUrl}">https://start.spring.io</code>
+                            <i class="bi bi-box-arrow-up-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">
+                        <i class="bi bi-speedometer2"></i> Quick Actions
+                    </label>
+                    <div>
+                        <a th:href="@{/initializr}" class="btn btn-sm btn-outline-success me-2">
+                            <i class="bi bi-box-seam"></i> Open Initializr
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label text-muted">
+                        <i class="bi bi-tools"></i> MCP Tools
+                    </label>
+                    <div class="small">
+                        <code>initializrGetDependency</code>,
+                        <code>initializrSearchDependencies</code>,
+                        <code>initializrCheckCompatibility</code>,
+                        <code>initializrGetBootVersions</code>,
+                        <code>initializrGetDependencyCategories</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-3 mb-0">
+                <i class="bi bi-info-circle"></i>
+                <strong>Configuration:</strong> Initializr settings are managed via
+                <code>application.yml</code> under <code>mcp.features.initializr</code>.
+                Modify <code>base-url</code> to point to a self-hosted Initializr instance if needed.
+            </div>
+        </div>
+    </div>
+
     <!-- System Information -->
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom">

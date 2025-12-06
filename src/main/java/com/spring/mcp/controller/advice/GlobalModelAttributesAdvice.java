@@ -1,6 +1,7 @@
 package com.spring.mcp.controller.advice;
 
 import com.spring.mcp.config.FlavorsFeatureConfig;
+import com.spring.mcp.config.InitializrProperties;
 import com.spring.mcp.config.LanguageEvolutionFeatureConfig;
 import com.spring.mcp.config.OpenRewriteFeatureConfig;
 import com.spring.mcp.service.SettingsService;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
  * and feature toggles.
  *
  * @author Spring MCP Server
- * @version 1.1
+ * @version 1.4.0
  * @since 2025-01-10
  */
 @ControllerAdvice
@@ -26,6 +27,7 @@ public class GlobalModelAttributesAdvice {
     private final OpenRewriteFeatureConfig openRewriteFeatureConfig;
     private final LanguageEvolutionFeatureConfig languageEvolutionFeatureConfig;
     private final FlavorsFeatureConfig flavorsFeatureConfig;
+    private final InitializrProperties initializrProperties;
 
     @Value("${info.app.name:Spring MCP Server}")
     private String appName;
@@ -100,6 +102,28 @@ public class GlobalModelAttributesAdvice {
     @ModelAttribute("flavorsEnabled")
     public boolean addFlavorsEnabled() {
         return flavorsFeatureConfig.isEnabled();
+    }
+
+    /**
+     * Adds the Initializr feature flag to all models.
+     * This controls visibility of Spring Initializr integration navigation and features.
+     *
+     * @return true if Initializr feature is enabled, false otherwise
+     */
+    @ModelAttribute("initializrEnabled")
+    public boolean addInitializrEnabled() {
+        return initializrProperties.isEnabled();
+    }
+
+    /**
+     * Adds the Initializr base URL to all models.
+     * This allows templates to link directly to the configured Initializr instance.
+     *
+     * @return the Initializr base URL
+     */
+    @ModelAttribute("initializrBaseUrl")
+    public String addInitializrBaseUrl() {
+        return initializrProperties.getBaseUrl();
     }
 
     /**

@@ -1,0 +1,22 @@
+-- V11: Initializr Feature Settings
+-- Part of release 1.4.0
+--
+-- Note: Initializr settings are managed via application.yml (InitializrProperties)
+-- rather than database settings. This migration is kept for version tracking purposes.
+--
+-- Configuration is done in application.yml:
+--   mcp:
+--     features:
+--       initializr:
+--         enabled: true
+--         base-url: https://start.spring.io
+--         defaults:
+--           boot-version: "3.5.8"
+--           java-version: "21"
+--           language: "java"
+--           ...
+--
+-- No schema changes required for this feature.
+
+-- Placeholder to mark migration as applied
+SELECT 1;

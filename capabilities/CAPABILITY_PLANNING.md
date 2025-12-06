@@ -8,13 +8,15 @@
 
 ## Executive Summary
 
-The Spring MCP Server provides **23+ specialized tools** for accessing Spring ecosystem documentation, migration knowledge, language evolution tracking, and organizational context, covering **55 Spring projects** with comprehensive version management for both **Spring Boot 3.x** (production) and **Spring Boot 4.x** (latest GA). This server is ideal for AI-assisted Spring Boot development with Java and Kotlin.
+The Spring MCP Server provides **34+ specialized tools** for accessing Spring ecosystem documentation, migration knowledge, language evolution tracking, organizational context, and project initialization, covering **55 Spring projects** with comprehensive version management for both **Spring Boot 3.x** (production) and **Spring Boot 4.x** (latest GA). This server is ideal for AI-assisted Spring Boot development with Java and Kotlin.
 
 **Tool Categories**:
 - **Documentation Tools (10)**: Search, browse, and retrieve Spring documentation
 - **Migration Tools (7)**: OpenRewrite-inspired migration knowledge for version upgrades (optional)
 - **Language Evolution Tools (6)**: Java and Kotlin version features and patterns (optional)
-- **Flavors Tools (8+)**: Company guidelines, architecture patterns, compliance rules (planned)
+- **Flavors Tools (8)**: Company guidelines, architecture patterns, compliance rules
+- **Flavor Groups Tools (3)**: Team-based flavor organization and access control
+- **Initializr Tools (6)**: Spring Boot project generation and dependency management (planned)
 
 ---
 
@@ -484,7 +486,8 @@ When disabled, only 10 documentation tools are available.
 | Documentation | 3 | `searchSpringDocs`, `getDocumentationByVersion`, `getCodeExamples` |
 | Migration (Optional) | 7 | `getSpringMigrationGuide`, `getBreakingChanges`, `searchMigrationKnowledge` |
 | Language Evolution (Optional) | 6 | `getLanguageFeatures`, `getModernPatterns`, `getLanguageVersionDiff` |
-| Flavors (Planned) | 8+ | `searchFlavors`, `getFlavorByName`, `getArchitecturePatterns` |
+| Flavors | 8+ | `searchFlavors`, `getFlavorByName`, `getArchitecturePatterns` |
+| Initializr (Planned) | 6 | `initializrGetDependency`, `initializrSearchDependencies`, `initializrGetBuildFile` |
 
 ---
 
@@ -554,6 +557,57 @@ mcp:
 
 ---
 
+## 14. Planned Feature: Spring Boot Initializr Integration
+
+> **Status**: PLANNED | **Evaluation Document**: [INITIALIZR_EVALUATION.md](release-1.4.0/INITIALIZR_EVALUATION.md)
+
+### 14.1 Overview
+
+The Initializr integration will provide direct access to Spring Boot project generation capabilities, enabling LLMs to generate accurate, version-specific dependencies and complete project scaffolding. This addresses a critical limitation: LLMs often generate outdated or incorrect Maven/Gradle dependencies.
+
+### 14.2 Key Features
+
+| Feature | Purpose | Benefit |
+|---------|---------|---------|
+| **Dependency Lookup** | Get correct starter for Spring Boot version | Always version-accurate |
+| **Compatibility Check** | Verify dependency works with version | Prevent build failures |
+| **Build File Generation** | Complete pom.xml/build.gradle | Ready-to-use configs |
+| **Project Generation** | Full project ZIP | One-click project setup |
+| **Catalog Browsing** | Search 187+ dependencies | Discover new starters |
+
+### 14.3 Planned MCP Tools
+
+| Tool | Purpose | Key Parameters |
+|------|---------|----------------|
+| `initializrGetDependency` | Get correct dependency snippet | `bootVersion`, `dependency`, `format` |
+| `initializrSearchDependencies` | Search dependency catalog | `query`, `bootVersion`, `category` |
+| `initializrGetBuildFile` | Generate complete build file | `bootVersion`, `dependencies`, `buildType` |
+| `initializrCheckCompatibility` | Check dependency compatibility | `dependencyId`, `bootVersion` |
+| `initializrListCategories` | List all dependency categories | `bootVersion` |
+| `initializrGetProjectZip` | Generate full project | `bootVersion`, `dependencies`, `metadata` |
+
+### 14.4 Configuration
+
+```yaml
+mcp:
+  features:
+    initializr:
+      enabled: true
+      base-url: https://start.spring.io
+      # Or self-hosted: https://initializr.example.com
+```
+
+### 14.5 Expected Impact
+
+| Scenario | Without Initializr | With Initializr | Improvement |
+|----------|-------------------|-----------------|-------------|
+| Find correct dependency | 2-5 min research | Instant lookup | **60-80%** |
+| Check compatibility | 1-3 iterations | First attempt | **65-85%** |
+| Generate build file | 5-10 min | Instant | **70-85%** |
+| New project setup | 15-40 min | < 2 min | **70-90%** |
+
+---
+
 ## Appendix A: Complete Project List
 
 | # | Project | Slug | GitHub |
@@ -587,5 +641,5 @@ mcp:
 ---
 
 *Document generated from live MCP server analysis*
-*Last updated: 2025-11-30*
-*Server version: 1.2.0 with 23 MCP tools (10 documentation + 7 migration + 6 language evolution) + 8 planned Flavors tools*
+*Last updated: 2025-12-06*
+*Server version: 1.3.3 with 34 MCP tools (10 documentation + 7 migration + 6 language evolution + 8 flavors + 3 flavor groups) + 6 planned Initializr tools*

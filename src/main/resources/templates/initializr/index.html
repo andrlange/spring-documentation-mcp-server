@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title>Spring Initializr - Spring MCP Server</title>
+    <style>
+        /* Initializr-specific styles */
+        .initializr-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .action-buttons .btn-generate {
+            background-color: #6db33f;
+            border-color: #6db33f;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+        }
+
+        .action-buttons .btn-generate:hover {
+            background-color: #5a9a34;
+            border-color: #5a9a34;
+        }
+
+        .action-buttons .btn-explore {
+            background-color: transparent;
+            border: 2px solid #6db33f;
+            color: #6db33f;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+        }
+
+        .action-buttons .btn-explore:hover {
+            background-color: rgba(109, 179, 63, 0.1);
+        }
+
+        .tab-content-area {
+            background-color: #1e1e2e;
+            border-radius: 0 0 12px 12px;
+            padding: 2rem;
+            min-height: 500px;
+        }
+
+        .nav-tabs-custom {
+            border-bottom: none;
+            gap: 0.5rem;
+        }
+
+        .nav-tabs-custom .nav-link {
+            background-color: #2d2d3d;
+            border: none;
+            border-radius: 12px 12px 0 0;
+            color: #a0a0a0;
+            padding: 1rem 2rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .nav-tabs-custom .nav-link:hover {
+            background-color: #3d3d4d;
+            color: #fff;
+        }
+
+        .nav-tabs-custom .nav-link.active {
+            background-color: #1e1e2e;
+            color: #6db33f;
+            border-bottom: 3px solid #6db33f;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section-title {
+            color: #6db33f;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #3d3d4d;
+        }
+
+        .radio-option {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .radio-option input[type="radio"] {
+            display: none;
+        }
+
+        .radio-option label {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: #2d2d3d;
+            border: 1px solid #3d3d4d;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #a0a0a0;
+        }
+
+        .radio-option input[type="radio"]:checked + label {
+            background-color: rgba(109, 179, 63, 0.15);
+            border-color: #6db33f;
+            color: #6db33f;
+        }
+
+        .radio-option label:hover {
+            background-color: #3d3d4d;
+            color: #fff;
+        }
+
+        .version-badge {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.4rem;
+            margin-left: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .version-badge-snapshot {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .version-badge-rc {
+            background-color: rgba(23, 162, 184, 0.2);
+            color: #17a2b8;
+        }
+
+        .version-badge-m {
+            background-color: rgba(108, 117, 125, 0.2);
+            color: #6c757d;
+        }
+
+        .dependency-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            background-color: rgba(109, 179, 63, 0.15);
+            border: 1px solid rgba(109, 179, 63, 0.3);
+            border-radius: 8px;
+            margin: 0.25rem;
+            font-size: 0.875rem;
+            color: #6db33f;
+        }
+
+        .dependency-badge .remove-btn {
+            margin-left: 0.5rem;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .dependency-badge .remove-btn:hover {
+            opacity: 1;
+        }
+
+        .add-deps-btn {
+            border: 2px dashed #3d3d4d;
+            background: transparent;
+            color: #6db33f;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .add-deps-btn:hover {
+            border-color: #6db33f;
+            background-color: rgba(109, 179, 63, 0.1);
+        }
+
+        .selected-deps-area {
+            min-height: 100px;
+            padding: 1rem;
+            background-color: #2d2d3d;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .cache-status {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .cache-status .badge {
+            font-size: 0.65rem;
+        }
+
+        /* Dependency checkbox styling - always have border to prevent layout shift */
+        .dep-checkbox {
+            border: 1px solid transparent;
+            transition: border-color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+            margin: 8px;
+        }
+
+        .dep-checkbox.selected {
+            background-color: rgba(25, 135, 84, 0.1) !important;
+            border-color: #198754 !important;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Alpine.js State Management -->
+        <div x-data="initializrApp()" x-init="init()">
+
+            <!-- Header with Action Buttons -->
+            <div class="initializr-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-1 text-light">
+                            <i class="bi bi-box-seam" style="color: #6ee7b7;"></i>
+                            Spring Initializr
+                        </h1>
+                        <p class="text-muted mb-0 small">
+                            <span th:text="${totalDependencies}">0</span> dependencies available
+                            <span class="mx-2">|</span>
+                            <span th:text="${#lists.size(bootVersions)}">0</span> Spring Boot versions
+                            <span class="mx-2">|</span>
+                            Source: <a th:href="${initializrBaseUrl}" target="_blank" class="text-info" th:text="${initializrBaseUrl}">start.spring.io</a>
+                        </p>
+                    </div>
+                    <div class="action-buttons d-flex gap-3">
+                        <button type="button" class="btn btn-explore" @click="showPreview()">
+                            <i class="bi bi-eye me-2"></i> EXPLORE
+                        </button>
+                        <button type="button" class="btn btn-generate" @click="generateProject()">
+                            <i class="bi bi-download me-2"></i> GENERATE
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-tabs nav-tabs-custom" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="project-tab" data-bs-toggle="tab"
+                            data-bs-target="#project-config" type="button" role="tab"
+                            aria-controls="project-config" aria-selected="true">
+                        <i class="bi bi-gear me-2"></i> Project
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="deps-tab" data-bs-toggle="tab"
+                            data-bs-target="#dependencies" type="button" role="tab"
+                            aria-controls="dependencies" aria-selected="false">
+                        <i class="bi bi-puzzle me-2"></i> Dependencies
+                        <span class="badge bg-spring ms-2" x-show="selectedDeps.length > 0" x-text="selectedDeps.length"></span>
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content tab-content-area">
+
+                <!-- Tab 1: Project Configuration -->
+                <div class="tab-pane fade show active" id="project-config" role="tabpanel" aria-labelledby="project-tab">
+                    <div class="row">
+                        <!-- Left Column -->
+                        <div class="col-lg-6">
+
+                            <!-- Spring Boot Version -->
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <i class="bi bi-rocket-takeoff me-1"></i> Spring Boot
+                                </div>
+                                <div class="d-flex flex-wrap">
+                                    <th:block th:each="version : ${bootVersions}">
+                                        <div class="radio-option">
+                                            <input type="radio" name="bootVersion"
+                                                   th:id="'boot-' + ${version.id}"
+                                                   th:value="${version.id}"
+                                                   x-model="config.bootVersion"
+                                                   th:checked="${version.defaultVersion}">
+                                            <label th:for="'boot-' + ${version.id}">
+                                                <span th:text="${version.name}">3.5.8</span>
+                                                <span th:if="${version.versionType == 'SNAPSHOT'}" class="version-badge version-badge-snapshot">SNAPSHOT</span>
+                                                <span th:if="${version.versionType == 'RC'}" class="version-badge version-badge-rc">RC</span>
+                                                <span th:if="${version.versionType == 'MILESTONE'}" class="version-badge version-badge-m">M</span>
+                                            </label>
+                                        </div>
+                                    </th:block>
+                                </div>
+                            </div>
+
+                            <!-- Language -->
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <i class="bi bi-code-slash me-1"></i> Language
+                                </div>
+                                <div class="d-flex flex-wrap">
+                                    <th:block th:each="lang : ${languages}">
+                                        <div class="radio-option">
+                                            <input type="radio" name="language"
+                                                   th:id="'lang-' + ${lang.id}"
+                                                   th:value="${lang.id}"
+                                                   x-model="config.language"
+                                                   th:checked="${lang.id == defaults.language}">
+                                            <label th:for="'lang-' + ${lang.id}" th:text="${lang.name}">Java</label>
+                                        </div>
+                                    </th:block>
+                                </div>
+                            </div>
+
+                            <!-- Build Management -->
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <i class="bi bi-tools me-1"></i> Build
+                                </div>
+                                <div class="d-flex flex-wrap">
+                                    <th:block th:each="type : ${projectTypes}">
+                                        <div class="radio-option">
+                                            <input type="radio" name="type"
+                                                   th:id="'type-' + ${type.id}"
+                                                   th:value="${type.id}"
+                                                   x-model="config.type"
+                                                   th:checked="${type.id == defaults.buildType}">
+                                            <label th:for="'type-' + ${type.id}">
+                                                <i th:if="${type.id.contains('maven')}" class="bi bi-filetype-xml me-1"></i>
+                                                <i th:if="${type.id.contains('gradle')}" class="bi bi-filetype-java me-1"></i>
+                                                <span th:text="${type.name}">Gradle - Groovy</span>
+                                            </label>
+                                        </div>
+                                    </th:block>
+                                </div>
+                            </div>
+
+                            <!-- Java Version -->
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <i class="bi bi-cup-hot me-1"></i> Java Version
+                                </div>
+                                <div class="d-flex flex-wrap">
+                                    <th:block th:each="java : ${javaVersions}">
+                                        <div class="radio-option">
+                                            <input type="radio" name="javaVersion"
+                                                   th:id="'java-' + ${java.id}"
+                                                   th:value="${java.id}"
+                                                   x-model="config.javaVersion"
+                                                   th:checked="${java.id == defaults.javaVersion}">
+                                            <label th:for="'java-' + ${java.id}" th:text="${java.name}">21</label>
+                                        </div>
+                                    </th:block>
+                                </div>
+                            </div>
+
+                            <!-- Packaging -->
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <i class="bi bi-archive me-1"></i> Packaging
+                                </div>
+                                <div class="d-flex flex-wrap">
+                                    <th:block th:each="pkg : ${packagingTypes}">
+                                        <div class="radio-option">
+                                            <input type="radio" name="packaging"
+                                                   th:id="'pkg-' + ${pkg.id}"
+                                                   th:value="${pkg.id}"
+                                                   x-model="config.packaging"
+                                                   th:checked="${pkg.id == defaults.packaging}">
+                                            <label th:for="'pkg-' + ${pkg.id}" th:text="${pkg.name}">Jar</label>
+                                        </div>
+                                    </th:block>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Project Metadata -->
+                        <div class="col-lg-6">
+                            <div class="form-section">
+                                <div class="form-section-title">
+                                    <i class="bi bi-info-circle me-1"></i> Project Metadata
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">Group</label>
+                                    <input type="text" class="form-control bg-dark text-light border-secondary"
+                                           x-model="config.groupId"
+                                           th:value="${defaults.groupId}"
+                                           placeholder="com.example">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">Artifact</label>
+                                    <input type="text" class="form-control bg-dark text-light border-secondary"
+                                           x-model="config.artifactId"
+                                           th:value="${defaults.artifactId}"
+                                           placeholder="demo">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">Name</label>
+                                    <input type="text" class="form-control bg-dark text-light border-secondary"
+                                           x-model="config.name"
+                                           th:value="${defaults.name}"
+                                           placeholder="demo">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">Description</label>
+                                    <input type="text" class="form-control bg-dark text-light border-secondary"
+                                           x-model="config.description"
+                                           th:value="${defaults.description}"
+                                           placeholder="Demo project for Spring Boot">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small">Package name</label>
+                                    <input type="text" class="form-control bg-dark text-light border-secondary"
+                                           x-model="config.packageName"
+                                           @input="packageNameManuallyEdited = true"
+                                           :placeholder="config.groupId + '.' + config.artifactId.replace(/-/g, '')">
+                                    <small class="text-muted">Auto-generated from Group + Artifact</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Dependencies -->
+                <div class="tab-pane fade" id="dependencies" role="tabpanel" aria-labelledby="deps-tab">
+                    <div class="row">
+                        <div class="col-12">
+                            <!-- Search Input -->
+                            <div class="input-group mb-4">
+                                <span class="input-group-text bg-dark border-secondary">
+                                    <i class="bi bi-search text-muted"></i>
+                                </span>
+                                <input type="text" class="form-control bg-dark text-light border-secondary"
+                                       placeholder="Search dependencies... (e.g., web, security, jpa)"
+                                       x-model="searchQuery"
+                                       @input="filterDependencies()">
+                                <button class="btn btn-outline-secondary" type="button" @click="searchQuery = ''" x-show="searchQuery.length > 0">
+                                    <i class="bi bi-x-lg"></i> Clear
+                                </button>
+                            </div>
+
+                            <!-- Search Results Info -->
+                            <div x-show="searchQuery.length > 0" class="alert alert-info py-2 mb-3" x-cloak>
+                                <i class="bi bi-info-circle me-2"></i>
+                                Filtering dependencies for "<strong x-text="searchQuery"></strong>"
+                            </div>
+
+                            <!-- Selected Dependencies -->
+                            <div class="form-section">
+                                <div class="form-section-title d-flex justify-content-between align-items-center">
+                                    <span><i class="bi bi-check-circle me-1"></i> Selected Dependencies (<span x-text="selectedDeps.length">0</span>)</span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" @click="clearAllDependencies()" x-show="selectedDeps.length > 0">
+                                        <i class="bi bi-trash me-1"></i> Clear All
+                                    </button>
+                                </div>
+
+                                <div class="selected-deps-area">
+                                    <template x-if="selectedDeps.length === 0">
+                                        <div class="text-center text-muted py-4">
+                                            <i class="bi bi-puzzle display-6 mb-2"></i>
+                                            <p class="mb-0">No dependencies selected yet</p>
+                                            <p class="small">Browse categories below or use search to find dependencies</p>
+                                        </div>
+                                    </template>
+
+                                    <template x-for="dep in selectedDeps" :key="dep.id">
+                                        <span class="dependency-badge">
+                                            <span x-text="dep.name"></span>
+                                            <i class="bi bi-x remove-btn" @click="removeDependency(dep.id)"></i>
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Dependency Categories (collapsible with filtering) -->
+                            <div class="form-section mt-4">
+                                <div class="form-section-title">
+                                    <i class="bi bi-collection me-1"></i> Browse by Category
+                                </div>
+
+                                <div class="accordion" id="categoryAccordion">
+                                    <th:block th:each="category, catStat : ${dependencyCategories}" th:if="${category.content != null and !category.content.isEmpty()}">
+                                        <div class="accordion-item bg-dark border-secondary category-item"
+                                             th:data-category-name="${category.name}"
+                                             th:data-category-index="${catStat.index}"
+                                             th:data-original-count="${#lists.size(category.content)}"
+                                             x-show="(categoryHitCounts[$el.dataset.categoryIndex] || 0) > 0"
+                                             x-transition>
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed bg-dark text-light"
+                                                        type="button" data-bs-toggle="collapse"
+                                                        th:data-bs-target="'#cat-' + ${catStat.index}"
+                                                        th:id="'cat-btn-' + ${catStat.index}"
+                                                        aria-expanded="false">
+                                                    <span th:text="${category.name}">Web</span>
+                                                    <span class="badge ms-2"
+                                                          :class="searchQuery.length > 0 && (categoryHitCounts[$el.closest('.category-item').dataset.categoryIndex] || 0) > 0 ? 'bg-warning text-dark' : 'bg-secondary'"
+                                                          x-text="categoryHitCounts[$el.closest('.category-item').dataset.categoryIndex] || 0">0</span>
+                                                </button>
+                                            </h2>
+                                            <div th:id="'cat-' + ${catStat.index}" class="accordion-collapse collapse"
+                                                 th:data-cat-index="${catStat.index}">
+                                                <div class="accordion-body">
+                                                    <div class="row g-2">
+                                                        <th:block th:each="dep : ${category.content}">
+                                                            <div class="col-md-6 col-lg-4 dep-item"
+                                                                 th:data-id="${dep.id}"
+                                                                 th:data-name="${dep.name}"
+                                                                 th:data-desc="${dep.description}"
+                                                                 th:data-category-index="${catStat.index}"
+                                                                 th:data-version-range="${dep.versionRange}"
+                                                                 x-show="isDependencyVisible($el.dataset.id, $el.dataset.name, $el.dataset.desc, $el.dataset.versionRange)"
+                                                                 x-transition>
+                                                                <div class="form-check p-2 rounded dep-checkbox"
+                                                                     style="cursor: pointer;"
+                                                                     th:data-id="${dep.id}"
+                                                                     th:data-name="${dep.name}"
+                                                                     th:data-desc="${dep.description}"
+                                                                     @click.prevent="toggleDependency($el.dataset.id, $el.dataset.name, $el.dataset.desc)"
+                                                                     :class="{'selected': isSelected($el.dataset.id)}">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                           th:id="'dep-' + ${dep.id}"
+                                                                           th:data-id="${dep.id}"
+                                                                           th:data-name="${dep.name}"
+                                                                           th:data-desc="${dep.description}"
+                                                                           :checked="isSelected($el.dataset.id)"
+                                                                           @click.stop="toggleDependency($el.dataset.id, $el.dataset.name, $el.dataset.desc)">
+                                                                    <label class="form-check-label w-100" th:for="'dep-' + ${dep.id}" style="cursor: pointer;">
+                                                                        <span class="text-light dep-name" th:text="${dep.name}">Spring Web</span>
+                                                                        <br>
+                                                                        <small class="text-muted dep-desc" th:text="${dep.description}">Build web applications</small>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </th:block>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </th:block>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Modal -->
+            <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content bg-dark text-light">
+                        <div class="modal-header border-secondary">
+                            <h5 class="modal-title" id="previewModalLabel">
+                                <i class="bi bi-eye text-spring"></i>
+                                <span x-text="previewFilename">build.gradle</span>
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div x-show="previewLoading" class="text-center py-5">
+                                <div class="spinner-border text-spring" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-3 text-muted">Generating preview...</p>
+                            </div>
+                            <pre x-show="!previewLoading && previewContent"
+                                 class="bg-secondary bg-opacity-25 p-3 rounded overflow-auto"
+                                 style="max-height: 60vh;"><code x-text="previewContent"></code></pre>
+                            <div x-show="!previewLoading && previewError" class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <span x-text="previewError"></span>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-secondary">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="bi bi-x-lg"></i> Close
+                            </button>
+                            <button type="button" class="btn btn-success" @click="copyPreview()" x-show="previewContent">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Incompatibility Warning Modal -->
+            <div class="modal fade" id="incompatibilityModal" tabindex="-1" aria-labelledby="incompatibilityModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content bg-dark text-light border-warning">
+                        <div class="modal-header border-warning">
+                            <h5 class="modal-title text-warning" id="incompatibilityModalLabel">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Version Compatibility Warning
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-3">
+                                The following dependencies are <strong>not compatible</strong> with
+                                <span class="badge bg-info" x-text="'Spring Boot ' + config.bootVersion">Spring Boot 4.0.0</span>:
+                            </p>
+                            <ul class="list-group list-group-flush bg-transparent">
+                                <template x-for="dep in incompatibleDeps" :key="dep">
+                                    <li class="list-group-item bg-transparent border-secondary text-light">
+                                        <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                                        <span x-text="dep"></span>
+                                    </li>
+                                </template>
+                            </ul>
+                            <div class="alert alert-warning mt-3 mb-0">
+                                <small>
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    These dependencies may not be included in the generated project or may cause compatibility issues.
+                                    Consider selecting a different Spring Boot version or removing these dependencies.
+                                </small>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-secondary">
+                            <button type="button" class="btn btn-outline-warning" @click="removeIncompatibleDeps()">
+                                <i class="bi bi-trash me-1"></i> Remove Incompatible
+                            </button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="bi bi-x-lg me-1"></i> Keep Anyway
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden form for project generation -->
+            <form id="generateForm" method="POST" th:action="@{/initializr/generate}" style="display: none;">
+                <input type="hidden" name="type" x-bind:value="config.type">
+                <input type="hidden" name="bootVersion" x-bind:value="config.bootVersion">
+                <input type="hidden" name="groupId" x-bind:value="config.groupId">
+                <input type="hidden" name="artifactId" x-bind:value="config.artifactId">
+                <input type="hidden" name="name" x-bind:value="config.name">
+                <input type="hidden" name="description" x-bind:value="config.description">
+                <input type="hidden" name="packageName" x-bind:value="config.packageName || (config.groupId + '.' + config.artifactId.replace(/-/g, ''))">
+                <input type="hidden" name="packaging" x-bind:value="config.packaging">
+                <input type="hidden" name="javaVersion" x-bind:value="config.javaVersion">
+                <input type="hidden" name="language" x-bind:value="config.language">
+                <input type="hidden" name="dependencies" x-bind:value="selectedDeps.map(d => d.id).join(',')">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            </form>
+
+            <!-- Cache Status (admin only) -->
+            <div sec:authorize="hasRole('ADMIN')" class="cache-status mt-4 p-3 bg-dark rounded">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="bi bi-database me-1"></i> Cache Status:
+                        <span th:if="${cacheStatus.totalEntries > 0}" class="badge bg-success">Metadata Cached</span>
+                        <span th:unless="${cacheStatus.totalEntries > 0}" class="badge bg-warning">No Cache</span>
+                        <span class="ms-2" th:if="${cacheStatus.totalHits > 0}">
+                            Hits: <span th:text="${cacheStatus.totalHits}">0</span>
+                        </span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" @click="refreshCache()">
+                        <i class="bi bi-arrow-repeat"></i> Refresh Cache
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page-specific scripts -->
+    <th:block layout:fragment="scripts">
+        <script th:inline="javascript">
+            function initializrApp() {
+                return {
+                    // Configuration state
+                    config: {
+                        type: /*[[${defaults.buildType}]]*/ 'gradle-project',
+                        bootVersion: /*[[${defaultBootVersion}]]*/ '3.5.8',
+                        groupId: /*[[${defaults.groupId}]]*/ 'com.example',
+                        artifactId: /*[[${defaults.artifactId}]]*/ 'demo',
+                        name: /*[[${defaults.name}]]*/ 'demo',
+                        description: /*[[${defaults.description}]]*/ 'Demo project for Spring Boot',
+                        packageName: '',
+                        packaging: /*[[${defaults.packaging}]]*/ 'jar',
+                        javaVersion: /*[[${defaults.javaVersion}]]*/ '21',
+                        language: /*[[${defaults.language}]]*/ 'java'
+                    },
+
+                    // Dependencies
+                    selectedDeps: [],
+                    searchQuery: '',
+                    searchResults: [],
+                    searchResultCount: 0,
+                    categoryHitCounts: {},  // Reactive hit counts per category
+                    allDependencies: [],    // All dependencies loaded from DOM
+                    incompatibleDeps: [],   // List of incompatible dependency names for modal
+                    incompatibilityModal: null,  // Bootstrap modal instance
+
+                    // Package name tracking
+                    packageNameManuallyEdited: false,
+
+                    // Preview
+                    previewFilename: 'build.gradle',
+                    previewContent: '',
+                    previewError: '',
+                    previewLoading: false,
+                    previewModal: null,
+
+                    init() {
+                        // Initialize Bootstrap modals
+                        const previewModalEl = document.getElementById('previewModal');
+                        if (previewModalEl) {
+                            this.previewModal = new bootstrap.Modal(previewModalEl);
+                        }
+                        const incompatibilityModalEl = document.getElementById('incompatibilityModal');
+                        if (incompatibilityModalEl) {
+                            this.incompatibilityModal = new bootstrap.Modal(incompatibilityModalEl);
+                        }
+                        // Set initial package name
+                        this.config.packageName = this.computePackageName();
+
+                        // Load all dependencies from DOM for reactive filtering
+                        this.loadDependenciesFromDOM();
+                        // Initial version compatibility filter
+                        this.updateCategoryHitCounts();
+
+                        // Watch for groupId/artifactId changes to auto-update packageName
+                        this.$watch('config.groupId', () => {
+                            if (!this.packageNameManuallyEdited) {
+                                this.config.packageName = this.computePackageName();
+                            }
+                        });
+                        this.$watch('config.artifactId', () => {
+                            if (!this.packageNameManuallyEdited) {
+                                this.config.packageName = this.computePackageName();
+                            }
+                        });
+
+                        // Watch search query for filtering - update hit counts reactively
+                        this.$watch('searchQuery', (value) => {
+                            this.updateCategoryHitCounts();
+                            this.$nextTick(() => {
+                                this.expandCategoriesWithHits();
+                            });
+                        });
+
+                        // Watch Spring Boot version changes to re-filter dependencies
+                        this.$watch('config.bootVersion', (newVersion) => {
+                            // Check if any selected dependencies become incompatible
+                            this.checkSelectedDependencyCompatibility();
+                            // Update category hit counts with new version filter
+                            this.updateCategoryHitCounts();
+                        });
+                    },
+
+                    // Check Maven version range compatibility
+                    // Format: [3.0.0,4.0.0) means 3.0.0 <= version < 4.0.0
+                    // [3.2.0,) means version >= 3.2.0
+                    // (,3.5.0] means version <= 3.5.0
+                    // Also handles simple minimum versions like "4.0.0.M1"
+                    isVersionCompatible(versionRange, bootVersion) {
+                        // If no version range, compatible with all
+                        if (!versionRange || versionRange.trim() === '') return true;
+                        if (!bootVersion) return true;
+
+                        // Qualifier order: SNAPSHOT < M (Milestone) < RC (Release Candidate) < RELEASE/GA/empty
+                        const getQualifierOrder = (v) => {
+                            const upper = v.toUpperCase();
+                            if (upper.includes('SNAPSHOT')) return 0;
+                            if (upper.match(/\.M\d+$/) || upper.match(/M\d+$/)) return 1;
+                            if (upper.match(/\.RC\d+$/) || upper.match(/RC\d+$/)) return 2;
+                            // RELEASE, GA, or no qualifier = final release
+                            return 3;
+                        };
+
+                        // Parse version into comparable parts
+                        const parseVersion = (v) => {
+                            // Extract numeric parts (e.g., "4.0.0" from "4.0.0.RELEASE" or "4.0.0.M1")
+                            const numericMatch = v.match(/^(\d+)\.(\d+)\.(\d+)/);
+                            if (!numericMatch) return { major: 0, minor: 0, patch: 0, qualifier: 3, raw: v };
+
+                            return {
+                                major: parseInt(numericMatch[1]) || 0,
+                                minor: parseInt(numericMatch[2]) || 0,
+                                patch: parseInt(numericMatch[3]) || 0,
+                                qualifier: getQualifierOrder(v),
+                                raw: v
+                            };
+                        };
+
+                        // Compare two versions: returns negative, 0, or positive
+                        const compareVersions = (v1, v2) => {
+                            if (v1.major !== v2.major) return v1.major - v2.major;
+                            if (v1.minor !== v2.minor) return v1.minor - v2.minor;
+                            if (v1.patch !== v2.patch) return v1.patch - v2.patch;
+                            return v1.qualifier - v2.qualifier;
+                        };
+
+                        const boot = parseVersion(bootVersion);
+                        const range = versionRange.trim();
+
+                        // Check if it's a simple minimum version (no brackets)
+                        if (!range.startsWith('[') && !range.startsWith('(')) {
+                            // Simple minimum version format: e.g., "4.0.0.M1"
+                            const minVersion = parseVersion(range);
+                            return compareVersions(boot, minVersion) >= 0;
+                        }
+
+                        // Parse bracket-style version range
+                        const lowerInclusive = range.startsWith('[');
+                        const upperInclusive = range.endsWith(']');
+
+                        // Extract the versions from range
+                        const inner = range.slice(1, -1);
+                        const parts = inner.split(',');
+
+                        if (parts.length !== 2) return true; // Invalid format, allow
+
+                        const lowerBound = parts[0].trim();
+                        const upperBound = parts[1].trim();
+
+                        // Check lower bound
+                        if (lowerBound !== '') {
+                            const lower = parseVersion(lowerBound);
+                            const cmp = compareVersions(boot, lower);
+                            if (lowerInclusive) {
+                                if (cmp < 0) return false; // boot < lower
+                            } else {
+                                if (cmp <= 0) return false; // boot <= lower
+                            }
+                        }
+
+                        // Check upper bound
+                        if (upperBound !== '') {
+                            const upper = parseVersion(upperBound);
+                            const cmp = compareVersions(boot, upper);
+                            if (upperInclusive) {
+                                if (cmp > 0) return false; // boot > upper
+                            } else {
+                                if (cmp >= 0) return false; // boot >= upper
+                            }
+                        }
+
+                        return true;
+                    },
+
+                    // Check if selected dependencies are still compatible with current Spring Boot version
+                    checkSelectedDependencyCompatibility() {
+                        const incompatible = [];
+                        this.selectedDeps.forEach(dep => {
+                            // Find the dependency in allDependencies to get its version range
+                            const fullDep = this.allDependencies.find(d => d.id === dep.id);
+                            if (fullDep && fullDep.versionRange) {
+                                if (!this.isVersionCompatible(fullDep.versionRange, this.config.bootVersion)) {
+                                    incompatible.push(dep.name);
+                                }
+                            }
+                        });
+
+                        if (incompatible.length > 0) {
+                            // Show warning modal
+                            this.showIncompatibilityWarning(incompatible);
+                        }
+                    },
+
+                    showIncompatibilityWarning(incompatibleDepNames) {
+                        this.incompatibleDeps = incompatibleDepNames;
+                        if (this.incompatibilityModal) {
+                            this.incompatibilityModal.show();
+                        }
+                    },
+
+                    removeIncompatibleDeps() {
+                        // Remove all incompatible dependencies from selection
+                        this.incompatibleDeps.forEach(depName => {
+                            const idx = this.selectedDeps.findIndex(d => d.name === depName);
+                            if (idx >= 0) {
+                                this.selectedDeps.splice(idx, 1);
+                            }
+                        });
+                        this.incompatibleDeps = [];
+                        if (this.incompatibilityModal) {
+                            this.incompatibilityModal.hide();
+                        }
+                    },
+
+                    loadDependenciesFromDOM() {
+                        // Load all dependencies and category info from the DOM once
+                        const deps = [];
+                        document.querySelectorAll('.dep-item').forEach(item => {
+                            deps.push({
+                                id: item.dataset.id || '',
+                                name: item.dataset.name || '',
+                                desc: item.dataset.desc || '',
+                                categoryIndex: item.dataset.categoryIndex || '',
+                                versionRange: item.dataset.versionRange || ''
+                            });
+                        });
+                        this.allDependencies = deps;
+
+                        // Initialize category hit counts with original counts
+                        document.querySelectorAll('.category-item').forEach(item => {
+                            const idx = item.dataset.categoryIndex;
+                            const originalCount = parseInt(item.dataset.originalCount) || 0;
+                            this.categoryHitCounts[idx] = originalCount;
+                        });
+                    },
+
+                    updateCategoryHitCounts() {
+                        const query = (this.searchQuery || '').toLowerCase().trim();
+
+                        // Reset all counts
+                        const newCounts = {};
+                        document.querySelectorAll('.category-item').forEach(item => {
+                            const idx = item.dataset.categoryIndex;
+                            newCounts[idx] = 0;
+                        });
+
+                        // Count dependencies per category, filtering by version compatibility
+                        this.allDependencies.forEach(dep => {
+                            // First check version compatibility
+                            if (!this.isVersionCompatible(dep.versionRange, this.config.bootVersion)) {
+                                return; // Skip incompatible dependencies
+                            }
+
+                            if (query.length === 0) {
+                                // No search - count all compatible dependencies
+                                newCounts[dep.categoryIndex] = (newCounts[dep.categoryIndex] || 0) + 1;
+                            } else {
+                                // Search active - count matching compatible dependencies
+                                const id = dep.id.toLowerCase();
+                                const name = dep.name.toLowerCase();
+                                const desc = dep.desc.toLowerCase();
+                                if (id.includes(query) || name.includes(query) || desc.includes(query)) {
+                                    newCounts[dep.categoryIndex] = (newCounts[dep.categoryIndex] || 0) + 1;
+                                }
+                            }
+                        });
+
+                        // Update reactive counts
+                        this.categoryHitCounts = { ...newCounts };
+                    },
+
+                    expandCategoriesWithHits() {
+                        const query = (this.searchQuery || '').trim();
+
+                        document.querySelectorAll('.category-item').forEach(categoryItem => {
+                            const categoryIndex = categoryItem.dataset.categoryIndex;
+                            const collapseEl = categoryItem.querySelector('.accordion-collapse');
+                            const buttonEl = categoryItem.querySelector('.accordion-button');
+
+                            if (!collapseEl || !buttonEl) return;
+
+                            const hitCount = this.categoryHitCounts[categoryIndex] || 0;
+                            const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
+
+                            if (query.length > 0 && hitCount > 0) {
+                                // Expand categories with hits
+                                bsCollapse.show();
+                                buttonEl.classList.remove('collapsed');
+                                buttonEl.setAttribute('aria-expanded', 'true');
+                            } else if (query.length === 0) {
+                                // Collapse all when search is cleared
+                                bsCollapse.hide();
+                                buttonEl.classList.add('collapsed');
+                                buttonEl.setAttribute('aria-expanded', 'false');
+                            }
+                        });
+                    },
+
+                    computePackageName() {
+                        // Create package name from groupId and artifactId
+                        // Remove hyphens and convert to lowercase
+                        const group = (this.config.groupId || 'com.example').toLowerCase();
+                        const artifact = (this.config.artifactId || 'demo').toLowerCase().replace(/-/g, '');
+                        return group + '.' + artifact;
+                    },
+
+                    toggleDependency(id, name, description) {
+                        const idx = this.selectedDeps.findIndex(d => d.id === id);
+                        if (idx >= 0) {
+                            this.selectedDeps.splice(idx, 1);
+                        } else {
+                            this.selectedDeps.push({ id, name, description });
+                        }
+                    },
+
+                    handleDepClick(event) {
+                        // Prevent double-toggle from checkbox native behavior
+                        event.preventDefault();
+                        const depItem = event.currentTarget.closest('.dep-item');
+                        if (depItem) {
+                            const id = depItem.dataset.id;
+                            const name = depItem.dataset.name;
+                            const desc = depItem.dataset.desc;
+                            this.toggleDependency(id, name, desc);
+                        }
+                    },
+
+                    removeDependency(id) {
+                        const idx = this.selectedDeps.findIndex(d => d.id === id);
+                        if (idx >= 0) {
+                            this.selectedDeps.splice(idx, 1);
+                        }
+                    },
+
+                    clearAllDependencies() {
+                        this.selectedDeps = [];
+                    },
+
+                    isSelected(id) {
+                        return this.selectedDeps.some(d => d.id === id);
+                    },
+
+                    // Search/filter functions
+                    filterDependencies() {
+                        // This just triggers Alpine reactivity for x-show bindings
+                        // The actual filtering is done by isDependencyVisible
+                    },
+
+                    isDependencyVisible(id, name, description, versionRange) {
+                        // First check version compatibility - hide incompatible dependencies
+                        if (!this.isVersionCompatible(versionRange, this.config.bootVersion)) {
+                            return false;
+                        }
+
+                        // Then check search filter
+                        if (!this.searchQuery || this.searchQuery.length < 1) return true;
+                        const query = this.searchQuery.toLowerCase();
+                        return (id && id.toLowerCase().includes(query)) ||
+                               (name && name.toLowerCase().includes(query)) ||
+                               (description && description.toLowerCase().includes(query));
+                    },
+
+                    isSearchMatch(id, name, description, versionRange) {
+                        // Check version compatibility first
+                        if (!this.isVersionCompatible(versionRange, this.config.bootVersion)) {
+                            return false;
+                        }
+                        if (!this.searchQuery || this.searchQuery.length < 1) return false;
+                        return this.isDependencyVisible(id, name, description, versionRange);
+                    },
+
+                    showDependencyModal() {
+                        // Switch to dependencies tab
+                        const depsTab = document.getElementById('deps-tab');
+                        if (depsTab) {
+                            const tab = new bootstrap.Tab(depsTab);
+                            tab.show();
+                        }
+                    },
+
+                    async showPreview() {
+                        this.previewLoading = true;
+                        this.previewContent = '';
+                        this.previewError = '';
+
+                        // Determine filename based on build type
+                        if (this.config.type === 'maven-project') {
+                            this.previewFilename = 'pom.xml';
+                        } else if (this.config.type === 'gradle-project-kotlin') {
+                            this.previewFilename = 'build.gradle.kts';
+                        } else {
+                            this.previewFilename = 'build.gradle';
+                        }
+
+                        // Show modal
+                        if (this.previewModal) {
+                            this.previewModal.show();
+                        }
+
+                        try {
+                            const params = new URLSearchParams({
+                                type: this.config.type,
+                                bootVersion: this.config.bootVersion,
+                                groupId: this.config.groupId,
+                                artifactId: this.config.artifactId,
+                                name: this.config.name,
+                                description: this.config.description,
+                                packaging: this.config.packaging,
+                                javaVersion: this.config.javaVersion,
+                                language: this.config.language
+                            });
+
+                            if (this.config.packageName) {
+                                params.append('packageName', this.config.packageName);
+                            }
+
+                            if (this.selectedDeps.length > 0) {
+                                params.append('dependencies', this.selectedDeps.map(d => d.id).join(','));
+                            }
+
+                            const response = await fetch(`/initializr/preview?${params.toString()}`);
+                            const data = await response.json();
+
+                            if (data.success) {
+                                this.previewContent = data.content;
+                            } else {
+                                this.previewError = data.error || 'Failed to generate preview';
+                            }
+                        } catch (error) {
+                            console.error('Preview error:', error);
+                            this.previewError = 'Failed to load preview: ' + error.message;
+                        } finally {
+                            this.previewLoading = false;
+                        }
+                    },
+
+                    copyPreview() {
+                        if (this.previewContent) {
+                            navigator.clipboard.writeText(this.previewContent).then(() => {
+                                // Show toast or feedback
+                                alert('Copied to clipboard!');
+                            }).catch(err => {
+                                console.error('Copy failed:', err);
+                            });
+                        }
+                    },
+
+                    generateProject() {
+                        // Submit the hidden form to download the project
+                        document.getElementById('generateForm').submit();
+                    },
+
+                    async refreshCache() {
+                        try {
+                            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+                            const response = await fetch('/initializr/cache/refresh', {
+                                method: 'POST',
+                                headers: {
+                                    [csrfHeader]: csrfToken
+                                }
+                            });
+
+                            const data = await response.json();
+                            if (data.success) {
+                                alert('Cache refreshed successfully!');
+                                location.reload();
+                            } else {
+                                alert('Failed to refresh cache: ' + (data.error || 'Unknown error'));
+                            }
+                        } catch (error) {
+                            console.error('Cache refresh error:', error);
+                            alert('Failed to refresh cache');
+                        }
+                    }
+                };
+            }
+        </script>
+    </th:block>
+</body>
+</html>
