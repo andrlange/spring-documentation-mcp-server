@@ -19,6 +19,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - **Language Evolution**: Java (8+) and Kotlin (1.6+) feature tracking with deprecations and code patterns
 - **Flavors**: Company-specific guidelines, architecture patterns, compliance rules, and AI agent configurations
 - **Flavor Groups**: Team-based access control with API key membership for secure guideline sharing
+- **Boot Initializr**: Spring Initializr integration for dependency search, compatibility checks, and formatted snippets
 
 ## Table of Contents
 
