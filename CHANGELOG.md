@@ -5,6 +5,35 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-12-06
+
+### Added
+- **Boot Initializr Integration**: Direct integration with [start.spring.io](https://start.spring.io) for project generation
+    - **Two-Tab UI**: Project configuration and dependency selection in organized tabs
+    - **Live Dependency Search**: Real-time search across all Spring Boot starters
+    - **Build File Preview**: Preview generated pom.xml or build.gradle before download
+    - **Version Selection**: Choose from stable, RC, and snapshot Spring Boot versions
+    - **Caffeine Caching**: High-performance caching with configurable TTL for metadata
+    - Web UI at `/initializr` with Generate and Explore buttons
+    - Settings integration showing Initializr status and MCP tools
+    - 5 new MCP tools for AI assistants:
+        - `initializrGetDependency`: Get dependency with Maven/Gradle snippet
+        - `initializrSearchDependencies`: Search dependencies by name/description
+        - `initializrCheckCompatibility`: Check dependency version compatibility
+        - `initializrGetBootVersions`: List available Spring Boot versions
+        - `initializrGetDependencyCategories`: Browse dependencies by category
+    - Configurable via `mcp.features.initializr.enabled` (default: true)
+- **Caffeine Cache Architecture**: Introduced Caffeine as the caching solution for the project
+    - High-performance, near-optimal caching using Window TinyLfu eviction policy
+    - Configurable TTL per cache (metadata: 60m, dependencies: 30m)
+    - Cache statistics available via management endpoints
+    - Automatic warm-up at application startup
+
+### Changed
+- Total MCP tools increased from 34 to **39**
+
+---
+
 ## [1.3.4] - 2025-12-05
 
 ### Changed
@@ -166,6 +195,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.4.0 | 2025-12-06 | Boot Initializr integration, Caffeine caching (5 MCP tools) |
 | 1.3.4 | 2025-12-05 | Spring AI 1.1.1, CVE-2025-48924 security fix |
 | 1.3.3 | 2025-12-04 | Flavor Groups with team-based access control (3 MCP tools) |
 | 1.3.2 | 2025-12-02 | YAML metadata headers for Flavors, Spring AI 1.1.0 MCP refactoring |
@@ -182,4 +212,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **v1.1.0**: +7 migration tools = 17 total
 - **v1.2.0**: +6 language evolution tools = 23 total
 - **v1.3.0**: +8 flavors tools = 31 total
-- **v1.3.3**: +3 flavor groups tools = **34 total**
+- **v1.3.3**: +3 flavor groups tools = 34 total
+- **v1.4.0**: +5 initializr tools = **39 total**

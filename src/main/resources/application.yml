@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring Boot Documentation MCP Server
-    version: 1.3.4
+    version: 1.4.0
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.8
@@ -51,6 +51,10 @@ spring:
     mode: HTML
     encoding: UTF-8
 
+  # Caffeine Cache Configuration (see CacheConfig.java for details)
+  cache:
+    type: caffeine
+
   web:
     resources:
       cache:
@@ -68,11 +72,11 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.3.4"
+        version: "1.4.0"
         instructions: |
           Spring Boot Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 
-          Total: 34 tools available (10 documentation + 7 migration + 6 language evolution + 8 flavors + 3 flavor groups)
+          Total: 39 tools available (10 documentation + 7 migration + 6 language evolution + 8 flavors + 3 flavor groups + 5 initializr)
 
           Documentation Tools (10):
           1. searchSpringDocs: Search across all Spring documentation
@@ -117,6 +121,13 @@ spring:
           32. listFlavorGroups: List accessible flavor groups (public + member private)
           33. getFlavorsGroup: Get all flavors in a specific group
           34. getFlavorGroupStatistics: Get group statistics
+
+          Initializr Tools (5) - Spring Boot project generation:
+          35. initializrGetDependency: Get dependency with Maven/Gradle snippet
+          36. initializrSearchDependencies: Search dependencies by name/description
+          37. initializrCheckCompatibility: Check dependency version compatibility
+          38. initializrGetBootVersions: List available Spring Boot versions
+          39. initializrGetDependencyCategories: Browse dependencies by category
 
           SSE endpoint: /mcp/spring/sse
           Message endpoint: /mcp/spring/messages
@@ -268,6 +279,25 @@ mcp:
         spell-checker: true
         min-height: "400px"
         max-height: "600px"
+
+    # Boot Initializr Feature Configuration (Release 1.4.0)
+    initializr:
+      enabled: ${INITIALIZR_ENABLED:true}
+      base-url: ${INITIALIZR_BASE_URL:https://start.spring.io}
+      # Cache settings (actual TTL managed in CacheConfig.java)
+      cache:
+        enabled: true
+        # initializr-metadata: 60 min TTL, max 10 entries
+        # initializr-dependencies: 30 min TTL, max 500 entries
+        # initializr-categories: 60 min TTL, max 50 entries
+      defaults:
+        boot-version: "3.5.8"
+        java-version: "21"
+        language: "java"
+        packaging: "jar"
+        build-type: "gradle-project"
+        group-id: "com.example"
+        artifact-id: "demo"
 
 # GitHub Configuration for Documentation Fetching
 github:

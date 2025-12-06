@@ -1,5 +1,5 @@
 # Spring Documentation MCP Server
-### (Current Version 1.3.4)
+### (Current Version 1.4.0)
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
 ## What is this?
@@ -30,12 +30,14 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
   - [Language Evolution](#language-evolution)
   - [Flavors - Company Guidelines](#flavors---company-guidelines)
   - [Flavor Groups - Team Access Control](#flavor-groups---team-access-control)
+  - [Boot Initializr Integration](#boot-initializr-integration)
 - [Using with Claude Code](#using-with-claude-code)
   - [Configuration](#mcp-configuration)
   - [Documentation Queries](#documentation-queries)
   - [Migration Planning](#migration-planning)
   - [Language Evolution Queries](#language-evolution-queries)
   - [Company Guidelines & Flavors](#company-guidelines--flavors)
+  - [Boot Initializr Queries](#boot-initializr-queries)
 - [Configuration](#configuration)
 - [Troubleshooting](#troubleshooting)
 - [Roadmap](#roadmap)
@@ -51,6 +53,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
+| **1.4.0** | 2025-12-06 | Boot Initializr integration, Caffeine caching (5 MCP tools)  |
 | **1.3.4** | 2025-12-05 | Spring AI 1.1.1, CVE-2025-48924 security fix                 |
 | **1.3.3** | 2025-12-04 | Flavor Groups with team-based access control (3 MCP tools)   |
 | **1.3.2** | 2025-12-02 | YAML metadata headers for Flavors import/export, new example |
@@ -61,7 +64,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 | **1.0.2** | 2025-11-27 | Spring Boot 3.5.8, example app                               |
 | **1.0.1** | 2025-11-26 | Initial release (10 MCP tools)                               |
 
-**MCP Tools**: 10 (docs) + 7 (migration) + 6 (language) + 8 (flavors) + 3 (flavor groups) = **34 total**
+**MCP Tools**: 10 (docs) + 7 (migration) + 6 (language) + 8 (flavors) + 3 (groups) + 5 (initializr) = **39 total**
 
 ## Quick Start
 
@@ -87,7 +90,7 @@ docker-compose up -d postgres
 ### 2. Build and Run
 ```bash
 ./gradlew clean build
-java -jar build/libs/spring-boot-documentation-mcp-server-1.3.4.jar
+java -jar build/libs/spring-boot-documentation-mcp-server-1.4.0.jar
 ```
 
 Or using Gradle:
@@ -413,6 +416,59 @@ MCP Request → API Key Validation → Security Context → Group Membership Che
 
 ---
 
+### Boot Initializr Integration
+
+Direct integration with [start.spring.io](https://start.spring.io) for project generation and dependency management.
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="assets/screen-22.png" alt="Boot Initializr" />
+      <p align="center"><b>Boot Initializr</b> - Project generation with two-tab design for configuration and dependencies</p>
+    </td>
+    <td width="50%">
+      <img src="assets/screen-23.png" alt="Spring AI Compatibility Check" />
+      <p align="center"><b>Compatibility Check</b> - Claude verifying Spring AI MCP compatibility with Spring Boot 4.0</p>
+    </td>
+  </tr>
+</table>
+
+**Features**:
+- **Two-Tab Interface**: Project configuration and dependency selection in organized tabs
+- **Live Dependency Search**: Real-time search across all Spring Boot starters
+- **Build File Preview**: Preview generated pom.xml or build.gradle before download
+- **Version Selection**: Choose from stable, RC, and snapshot Spring Boot versions
+- **Caffeine Caching**: High-performance caching with configurable TTL
+- **Version Compatibility Filtering**: Automatically filters incompatible dependencies based on Spring Boot version
+- **Incompatibility Warnings**: Modal alerts when selected dependencies become incompatible after version change
+- **5 MCP Tools**: AI assistants can search dependencies, check compatibility, and more
+
+**MCP Tools**:
+- `initializrGetDependency` - Get dependency with Maven/Gradle snippet (checks version compatibility)
+- `initializrSearchDependencies` - Search dependencies by name/description (filters by bootVersion)
+- `initializrCheckCompatibility` - Check dependency version compatibility
+- `initializrGetBootVersions` - List available Spring Boot versions
+- `initializrGetDependencyCategories` - Browse dependencies by category (filters by bootVersion)
+
+**Configuration**:
+```yaml
+mcp:
+  features:
+    initializr:
+      enabled: true              # Set to false to disable
+      base-url: https://start.spring.io
+      cache:
+        enabled: true
+        metadata-ttl: 60m        # Metadata cache TTL
+        dependencies-ttl: 30m    # Dependencies cache TTL
+      defaults:
+        boot-version: "3.5.8"
+        java-version: "21"
+        language: "java"
+```
+
+---
+
 ## Using with Claude Code
 
 Configure Claude Code to use the Spring Documentation MCP Server for AI-assisted development.
@@ -545,6 +601,39 @@ Access company-specific guidelines and patterns:
 - List accessible flavor groups
 - Get all flavors in a specific group
 
+### Boot Initializr Queries
+
+Get dependency information and project setup assistance:
+
+```
+> use spring to search for database dependencies in Spring Boot
+
+> use spring to get the spring-data-jpa dependency for my Gradle project
+
+> use spring to check if graphql is compatible with Spring Boot 3.3.0
+
+> use spring to list all available Spring Boot versions
+
+> use spring to show all dependencies in the Security category
+
+> use spring to show AI dependencies compatible with Spring Boot 3.5.8
+
+> use spring to list all dependency categories for Spring Boot 4.0.0
+```
+
+**Available Initializr Tools**:
+- Get dependencies with formatted Maven/Gradle snippets
+- Search dependencies by name or description (with version filtering)
+- Check compatibility with specific Spring Boot versions
+- List available Spring Boot versions (stable, RC, snapshot)
+- Browse dependency categories (with version-based filtering)
+
+**Version Compatibility**:
+The Initializr tools automatically filter dependencies based on Spring Boot version compatibility:
+- AI dependencies (Spring AI) require Spring Boot 3.x (not compatible with 4.0 until Spring AI 2.0 GA)
+- Some cloud dependencies have specific version requirements
+- Use `initializrCheckCompatibility` to verify before adding dependencies
+
 **Team Configuration Example**:
 
 Different teams can use different API keys to access their specific groups:
@@ -623,6 +712,8 @@ mcp:
       enabled: true       # Java/Kotlin tracking
     flavors:
       enabled: true       # Company guidelines & groups
+    initializr:
+      enabled: true       # Boot Initializr integration
 
   documentation:
     fetch:
@@ -686,7 +777,7 @@ lsof -ti :8080 | xargs kill -9
 ### Completed
 - [x] Spring Boot 3.5.8 with Spring AI 1.1.1 MCP Server
 - [x] PostgreSQL database with full-text search
-- [x] 34 MCP tools (documentation, migration, language, flavors, groups)
+- [x] 39 MCP tools (documentation, migration, language, flavors, groups, initializr)
 - [x] Web management UI with all features
 - [x] API Key authentication with BCrypt encryption
 - [x] Documentation sync from spring.io and GitHub
@@ -695,6 +786,7 @@ lsof -ti :8080 | xargs kill -9
 - [x] Language Evolution tracking (Java/Kotlin)
 - [x] Flavors with YAML import/export
 - [x] Flavor Groups with team-based access control
+- [x] Boot Initializr integration with Caffeine caching
 
 ### Planned
 - [ ] Semantic search using embeddings

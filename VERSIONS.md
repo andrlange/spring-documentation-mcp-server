@@ -6,7 +6,7 @@ This document tracks the version configuration across all project files to ensur
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Application** | 1.3.4 | Spring MCP Server |
+| **Application** | 1.4.0 | Spring MCP Server |
 | **Java (JDK)** | 25 | LTS version |
 | **Spring Boot** | 3.5.8 | Latest stable |
 | **Spring AI** | 1.1.1 | MCP Server support |
@@ -17,7 +17,7 @@ This document tracks the version configuration across all project files to ensur
 
 ### build.gradle
 ```groovy
-version = '1.3.4'
+version = '1.4.0'
 
 java {
     toolchain {
@@ -49,7 +49,7 @@ services:
   postgres:
     image: postgres:18-alpine
   spring-boot-documentation-mcp-server:
-    image: spring-boot-documentation-mcp-server:1.3.4
+    image: spring-boot-documentation-mcp-server:1.4.0
 ```
 
 ### application.yml
@@ -58,7 +58,7 @@ services:
 info:
   app:
     name: Spring MCP Server
-    version: 1.3.4
+    version: 1.4.0
   spring-boot:
     version: 3.5.8
 
@@ -66,12 +66,12 @@ spring:
   ai:
     mcp:
       server:
-        version: "1.3.4"
+        version: "1.4.0"
 ```
 
 ### build-container.sh
 ```bash
-APP_VERSION="1.3.4"
+APP_VERSION="1.4.0"
 JAVA_VERSION="25"
 ```
 
@@ -102,7 +102,7 @@ When updating versions, ensure all files listed above are updated consistently:
 
 ## MCP Tools Count
 
-Current: **34 tools** (10 documentation + 7 migration + 6 language evolution + 8 flavors + 3 flavor groups)
+Current: **39 tools** (10 documentation + 7 migration + 6 language evolution + 8 flavors + 3 flavor groups + 5 initializr)
 
 Update these locations when adding/removing tools:
 - `application.yml` - `spring.ai.mcp.server.instructions`
@@ -111,6 +111,14 @@ Update these locations when adding/removing tools:
 - `.claude/memory/project-memory.md` - MCP Tools count
 
 ## Changelog
+
+### v1.4.0 (2025-12-06)
+- Boot Initializr integration with start.spring.io
+- Caffeine caching architecture for high-performance metadata caching
+- 5 new MCP tools for dependency search and project generation
+- Two-tab UI design for project configuration and dependencies
+- Build file preview (pom.xml/build.gradle) modal
+- Total MCP tools: 39
 
 ### v1.3.4 (2025-12-05)
 - Spring AI updated from 1.1.0 to 1.1.1

@@ -48,6 +48,8 @@ logs/
 /postgres_data/
 .env
 .env.local
+playground/
+IMPLEMENTATION.md
 
 ### AI
 PHASE*.md

@@ -52,6 +52,12 @@
                     <i class="bi bi-palette" style="color: #a78bfa;"></i> Flavors
                 </a>
             </li>
+            <!-- Spring Initializr (conditional) -->
+            <li class="nav-item" th:if="${initializrEnabled}">
+                <a class="nav-link" th:href="@{/initializr}" th:classappend="${activePage == 'initializr'} ? 'active' : ''">
+                    <i class="bi bi-box-seam" style="color: #6ee7b7;"></i> Initializr
+                </a>
+            </li>
 
             <hr class="my-3">
 
