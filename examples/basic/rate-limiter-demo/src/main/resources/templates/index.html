@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate Limiter Demo - Spring Boot 4</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Rate Limiter Demo</h1>
+            <p class="subtitle">Spring Boot 4 - Token Bucket Algorithm</p>
+            <p class="badge">No External Libraries!</p>
+        </header>
+
+        <section class="info-card">
+            <h2>Configuration</h2>
+            <p class="highlight-box">
+                Token bucket rate limiter: <strong>8 requests per second</strong>.
+                <br>Excess requests are <strong>REJECTED</strong> with HTTP 429 (Too Many Requests).
+            </p>
+            <div class="config-details">
+                <div class="config-item">
+                    <span class="label">Rate Limit:</span>
+                    <span class="value highlight">8 req/sec</span>
+                </div>
+                <div class="config-item">
+                    <span class="label">Algorithm:</span>
+                    <span class="value">Token Bucket</span>
+                </div>
+                <div class="config-item">
+                    <span class="label">Excess Requests:</span>
+                    <span class="value rejected-text">REJECTED (429)</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="stats-card">
+            <h2>Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value" id="totalRequests">0</span>
+                    <span class="stat-label">Total Requests</span>
+                </div>
+                <div class="stat-item success">
+                    <span class="stat-value" id="successfulRequests">0</span>
+                    <span class="stat-label">Successful (200)</span>
+                </div>
+                <div class="stat-item rejected">
+                    <span class="stat-value" id="rejectedRequests">0</span>
+                    <span class="stat-label">Rejected (429)</span>
+                </div>
+            </div>
+            <div class="stats-actions">
+                <span class="tokens-display">Available tokens: <strong id="availableTokens">8</strong></span>
+                <button class="btn btn-secondary btn-sm" onclick="resetStats()">Reset Stats</button>
+            </div>
+        </section>
+
+        <section class="test-section">
+            <h2>Test Rate Limiting</h2>
+            <p class="description">
+                Click a button to send requests simultaneously.
+                <br>With limit of 8/sec: <strong>5 requests</strong> = all pass, <strong>15 requests</strong> = 7 rejected!
+            </p>
+
+            <div class="button-grid">
+                <button class="btn btn-primary" onclick="sendRequests(5)" id="btn5">
+                    <span class="rate">5</span>
+                    <span class="unit">requests</span>
+                    <span class="status success-text">All Pass</span>
+                </button>
+                <button class="btn btn-primary" onclick="sendRequests(8)" id="btn8">
+                    <span class="rate">8</span>
+                    <span class="unit">requests</span>
+                    <span class="status success-text">All Pass</span>
+                </button>
+                <button class="btn btn-warning" onclick="sendRequests(15)" id="btn15">
+                    <span class="rate">15</span>
+                    <span class="unit">requests</span>
+                    <span class="status rejected-text">7 Rejected!</span>
+                </button>
+            </div>
+        </section>
+
+        <section class="code-section">
+            <h2>Implementation</h2>
+            <pre><code>// Token Bucket Rate Limiter - Pure Java, No External Libraries
+@Service
+public class RateLimiterService {
+    private final int limitPerSecond = 8;
+    private final AtomicInteger availableTokens;
+
+    public synchronized boolean tryAcquire() {
+        refillTokens();  // Refill at start of each second
+        if (availableTokens.get() > 0) {
+            availableTokens.decrementAndGet();
+            return true;  // Request allowed
+        }
+        return false;  // Request REJECTED
+    }
+}</code></pre>
+        </section>
+
+        <section class="log-section">
+            <h2>Request Log</h2>
+            <div class="log-controls">
+                <button class="btn btn-secondary btn-sm" onclick="clearLog()">Clear Log</button>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="autoScroll" checked>
+                    Auto-scroll
+                </label>
+            </div>
+            <div class="log-container" id="logContainer">
+                <div class="log-placeholder">Requests will appear here...</div>
+            </div>
+        </section>
+
+        <footer>
+            <p>Spring Boot 4.0 - Rate Limiter Demo</p>
+            <p class="mcp-note">Created with Spring Documentation MCP Server</p>
+        </footer>
+    </div>
+
+    <script>
+        let isRunning = false;
+
+        async function sendRequests(count) {
+            if (isRunning) return;
+
+            isRunning = true;
+            disableButtons(true);
+
+            logInfo(`Sending ${count} requests simultaneously (limit: 8/sec)`);
+
+            // Send all requests at once
+            const promises = [];
+            for (let i = 0; i < count; i++) {
+                promises.push(sendSingleRequest());
+            }
+
+            // Wait for all to complete
+            await Promise.all(promises);
+
+            // Update stats and re-enable buttons
+            await updateStats();
+            isRunning = false;
+            disableButtons(false);
+
+            // Log summary
+            const stats = await fetch('/api/stats').then(r => r.json());
+            logInfo(`Completed: ${stats.successfulRequests} successful, ${stats.rejectedRequests} rejected`);
+        }
+
+        async function sendSingleRequest() {
+            try {
+                const response = await fetch('/api/request', { method: 'POST' });
+                const data = await response.json();
+                logRequest(data, response.status);
+            } catch (error) {
+                logError(error.message);
+            }
+        }
+
+        function disableButtons(disabled) {
+            document.querySelectorAll('.test-section .btn').forEach(btn => {
+                btn.disabled = disabled;
+                if (disabled) {
+                    btn.classList.add('loading');
+                } else {
+                    btn.classList.remove('loading');
+                }
+            });
+        }
+
+        async function updateStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+
+                document.getElementById('totalRequests').textContent = stats.totalRequests;
+                document.getElementById('successfulRequests').textContent = stats.successfulRequests;
+                document.getElementById('rejectedRequests').textContent = stats.rejectedRequests;
+                document.getElementById('availableTokens').textContent = stats.availableTokens;
+            } catch (error) {
+                console.error('Failed to fetch stats:', error);
+            }
+        }
+
+        async function resetStats() {
+            try {
+                await fetch('/api/reset', { method: 'POST' });
+                await updateStats();
+                logInfo('Statistics reset');
+            } catch (error) {
+                logError('Failed to reset stats: ' + error.message);
+            }
+        }
+
+        function logRequest(data, status) {
+            const logContainer = document.getElementById('logContainer');
+            const placeholder = logContainer.querySelector('.log-placeholder');
+            if (placeholder) placeholder.remove();
+
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${data.success ? 'success' : 'rejected'}`;
+
+            const time = new Date().toLocaleTimeString();
+            logEntry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-id">#${data.requestId}</span>
+                <span class="log-status">${status}</span>
+                <span class="log-message">${data.message}</span>
+            `;
+
+            logContainer.appendChild(logEntry);
+
+            if (document.getElementById('autoScroll').checked) {
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+
+            // Limit log entries
+            while (logContainer.children.length > 100) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+
+        function logInfo(message) {
+            const logContainer = document.getElementById('logContainer');
+            const placeholder = logContainer.querySelector('.log-placeholder');
+            if (placeholder) placeholder.remove();
+
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry info';
+
+            const time = new Date().toLocaleTimeString();
+            logEntry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-message">${message}</span>
+            `;
+
+            logContainer.appendChild(logEntry);
+
+            if (document.getElementById('autoScroll').checked) {
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+        }
+
+        function logError(message) {
+            const logContainer = document.getElementById('logContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry error';
+
+            const time = new Date().toLocaleTimeString();
+            logEntry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-message">Error: ${message}</span>
+            `;
+
+            logContainer.appendChild(logEntry);
+        }
+
+        function clearLog() {
+            const logContainer = document.getElementById('logContainer');
+            logContainer.innerHTML = '<div class="log-placeholder">Requests will appear here...</div>';
+        }
+
+        // Initial stats load
+        updateStats();
+
+        // Refresh tokens display every 500ms
+        setInterval(updateStats, 500);
+    </script>
+</body>
+</html>

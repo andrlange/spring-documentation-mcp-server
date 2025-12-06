@@ -1,0 +1,41 @@
+# Rate Limiter Demo Application Configuration
+info:
+  app:
+    name: Rate Limiter Demo
+    version: 1.0.0
+    description: Demonstrates Resilience4j Rate Limiting with Spring Boot 4
+
+spring:
+  application:
+    name: rate-limiter-demo
+
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+
+  web:
+    resources:
+      cache:
+        period: 0
+
+server:
+  port: ${SERVER_PORT:8089}
+
+# Actuator endpoints for monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.example.ratelimiter: DEBUG
+    io.github.resilience4j: DEBUG

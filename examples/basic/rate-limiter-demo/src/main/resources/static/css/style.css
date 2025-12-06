@@ -1,0 +1,523 @@
+/* Rate Limiter Demo - Dark Theme */
+/* Inspired by Spring.io dark theme */
+
+:root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-card: #0f3460;
+    --bg-input: #1a1a2e;
+    --text-primary: #eaeaea;
+    --text-secondary: #a0a0a0;
+    --text-muted: #6c6c6c;
+    --accent-primary: #6c63ff;
+    --accent-secondary: #00d9ff;
+    --success: #00c853;
+    --warning: #ffc107;
+    --danger: #ff5252;
+    --border-color: #2a2a4a;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+section {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--accent-secondary);
+}
+
+/* Config Card */
+.config-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.config-item {
+    flex: 1;
+    min-width: 150px;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.config-item .label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.config-item .value {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.config-item .value.highlight {
+    color: var(--accent-secondary);
+}
+
+/* Stats Card */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stat-item.success .stat-value {
+    color: var(--success);
+}
+
+.stat-item.rejected .stat-value {
+    color: var(--danger);
+}
+
+.stat-item.pending .stat-value {
+    color: var(--warning);
+}
+
+/* Text colors */
+.success-text {
+    color: var(--success) !important;
+}
+
+.rejected-text {
+    color: var(--danger) !important;
+}
+
+/* Stats actions row */
+.stats-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.tokens-display {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.tokens-display strong {
+    color: var(--accent-secondary);
+    font-size: 1.1rem;
+}
+
+/* Button loading state */
+.btn.loading {
+    opacity: 0.6;
+    cursor: wait;
+    position: relative;
+}
+
+.btn.loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid transparent;
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.stat-label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+/* Test Section */
+.test-section .description {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.button-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Buttons */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-primary), #5a52e0);
+    color: white;
+    min-height: 100px;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(108, 99, 255, 0.4);
+}
+
+.btn-primary.active {
+    background: linear-gradient(135deg, var(--success), #00a843);
+    animation: pulse 1s infinite;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, var(--warning), #e6a800);
+    color: #1a1a2e;
+    min-height: 100px;
+}
+
+.btn-warning:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+}
+
+.btn-warning.active {
+    background: linear-gradient(135deg, var(--danger), #cc4545);
+    color: white;
+    animation: pulse 1s infinite;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger), #cc4545);
+    color: white;
+    width: 100%;
+    padding: 1rem;
+}
+
+.btn-danger:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 82, 82, 0.4);
+}
+
+.btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--border-color);
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.btn .rate {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.btn .unit {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.btn .status {
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+    opacity: 0.7;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* Log Section */
+.log-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-primary);
+}
+
+.log-container {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 1rem;
+    height: 300px;
+    overflow-y: auto;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.85rem;
+}
+
+.log-placeholder {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 2rem;
+}
+
+.log-entry {
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.log-entry.success {
+    background: rgba(0, 200, 83, 0.1);
+    border-left: 3px solid var(--success);
+}
+
+.log-entry.rejected {
+    background: rgba(255, 82, 82, 0.1);
+    border-left: 3px solid var(--danger);
+}
+
+.log-entry.info {
+    background: rgba(108, 99, 255, 0.1);
+    border-left: 3px solid var(--accent-primary);
+}
+
+.log-entry.error {
+    background: rgba(255, 82, 82, 0.2);
+    border-left: 3px solid var(--danger);
+}
+
+.log-time {
+    color: var(--text-muted);
+    min-width: 80px;
+}
+
+.log-id {
+    color: var(--accent-secondary);
+    min-width: 50px;
+}
+
+.log-status {
+    min-width: 40px;
+    font-weight: 600;
+}
+
+.log-entry.success .log-status {
+    color: var(--success);
+}
+
+.log-entry.rejected .log-status {
+    color: var(--danger);
+}
+
+.log-message {
+    color: var(--text-secondary);
+    flex: 1;
+}
+
+/* Badge */
+.badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--success), #00a843);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+/* Highlight Box */
+.highlight-box {
+    background: var(--bg-secondary);
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-secondary);
+    margin-bottom: 1rem;
+    line-height: 1.8;
+}
+
+.highlight-box code {
+    background: var(--bg-primary);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    color: var(--accent-secondary);
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+/* Code Section */
+.code-section pre {
+    background: var(--bg-primary);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+}
+
+.code-section code {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+/* Log Duration */
+.log-duration {
+    color: var(--accent-primary);
+    min-width: 60px;
+    font-weight: 500;
+}
+
+/* MCP Note */
+.mcp-note {
+    color: var(--accent-secondary);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 1rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .container {
+        padding: 1rem;
+    }
+
+    header h1 {
+        font-size: 1.75rem;
+    }
+
+    .stats-grid,
+    .button-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .config-details {
+        flex-direction: column;
+    }
+}
+
+/* Scrollbar styling */
+.log-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.log-container::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.log-container::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary);
+}
