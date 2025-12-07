@@ -110,19 +110,42 @@ public class DocumentationSyncService {
                 return;
             }
 
-            // Get the latest version or create a generic documentation link
+            // Get the latest GA version (is_latest=true), or any version with CURRENT status,
+            // or fall back to the most recent GA version
             ProjectVersion latestVersion = projectVersionRepository.findByProjectAndIsLatestTrue(project)
-                .orElseGet(() -> projectVersionRepository.findByProject(project).stream()
-                    .findFirst()
-                    .orElse(null));
+                .orElseGet(() -> projectVersionRepository.findByProjectAndStatusOrderByVersionDesc(project, "CURRENT")
+                    .stream().findFirst()
+                    .orElseGet(() -> projectVersionRepository.findByProject(project).stream()
+                        .filter(v -> v.getState() == com.spring.mcp.model.enums.VersionState.GA)
+                        .max((v1, v2) -> {
+                            // Compare by major, minor, patch
+                            int majorCmp = Integer.compare(v1.getMajorVersion(), v2.getMajorVersion());
+                            if (majorCmp != 0) return majorCmp;
+                            int minorCmp = Integer.compare(v1.getMinorVersion(), v2.getMinorVersion());
+                            if (minorCmp != 0) return minorCmp;
+                            return Integer.compare(
+                                v1.getPatchVersion() != null ? v1.getPatchVersion() : 0,
+                                v2.getPatchVersion() != null ? v2.getPatchVersion() : 0
+                            );
+                        })
+                        .orElse(null)));
 
             if (latestVersion == null) {
                 log.warn("No versions found for project: {}, skipping documentation", project.getSlug());
                 return;
             }
 
-            // Create or update documentation link
-            String docUrl = "https://docs.spring.io/" + project.getSlug() + "/index.html";
+            log.debug("Using version {} for project {} documentation", latestVersion.getVersion(), project.getSlug());
+
+            // Use reference doc URL from version if available, otherwise construct from spring.io
+            final String docUrl;
+            String referenceUrl = latestVersion.getReferenceDocUrl();
+            if (referenceUrl != null && !referenceUrl.isBlank()) {
+                docUrl = referenceUrl;
+            } else {
+                // Fallback: use spring.io project overview page as the doc URL
+                docUrl = "https://spring.io/projects/" + project.getSlug();
+            }
             DocumentationLink link = documentationLinkRepository.findByUrl(docUrl)
                 .orElseGet(() -> {
                     log.info("Creating documentation link for: {}", project.getSlug());
@@ -185,6 +208,80 @@ public class DocumentationSyncService {
                 project.getSlug(), e.getMessage(), e);
             result.addError();
         }
+    }
+
+    /**
+     * Fix documentation links that point to placeholder versions (e.g., "1.0.x") instead of actual versions.
+     * This updates the version_id to point to the latest GA version for each project.
+     *
+     * @return number of links fixed
+     */
+    @Transactional
+    public int fixPlaceholderVersionLinks() {
+        log.info("Starting fix for placeholder version documentation links...");
+        int fixedCount = 0;
+
+        List<DocumentationLink> allLinks = documentationLinkRepository.findAll();
+        log.info("Found {} documentation links to check", allLinks.size());
+
+        for (DocumentationLink link : allLinks) {
+            if (link.getVersion() == null) {
+                log.debug("Link {} has no version, skipping", link.getId());
+                continue;
+            }
+
+            String version = link.getVersion().getVersion();
+            log.debug("Checking link {} with version: {}", link.getId(), version);
+
+            // Check if it's a placeholder version (ends with .x)
+            if (version != null && version.endsWith(".x")) {
+                SpringProject project = link.getVersion().getProject();
+                if (project == null) {
+                    log.warn("Link {} has version {} but project is null, skipping", link.getId(), version);
+                    continue;
+                }
+
+                log.info("Found placeholder version link {} for project {}: {}",
+                    link.getId(), project.getSlug(), version);
+
+                // Find the actual latest version
+                ProjectVersion latestVersion = projectVersionRepository.findByProjectAndIsLatestTrue(project)
+                    .orElseGet(() -> projectVersionRepository.findByProjectAndStatusOrderByVersionDesc(project, "CURRENT")
+                        .stream().findFirst()
+                        .orElse(null));
+
+                if (latestVersion == null) {
+                    log.warn("No latest version found for project {}", project.getSlug());
+                    continue;
+                }
+
+                log.info("Found latest version for {}: {} (is_latest={}, status={})",
+                    project.getSlug(), latestVersion.getVersion(),
+                    latestVersion.getIsLatest(), latestVersion.getStatus());
+
+                if (!latestVersion.getVersion().equals(version)) {
+                    log.info("Fixing link {} for project {}: {} -> {}",
+                        link.getId(), project.getSlug(), version, latestVersion.getVersion());
+
+                    // Update version
+                    link.setVersion(latestVersion);
+
+                    // Update URL to use actual doc URL if available
+                    if (latestVersion.getReferenceDocUrl() != null && !latestVersion.getReferenceDocUrl().isBlank()) {
+                        link.setUrl(latestVersion.getReferenceDocUrl());
+                    } else {
+                        // Fallback to spring.io project page
+                        link.setUrl("https://spring.io/projects/" + project.getSlug());
+                    }
+
+                    documentationLinkRepository.save(link);
+                    fixedCount++;
+                }
+            }
+        }
+
+        log.info("Fixed {} documentation links with placeholder versions", fixedCount);
+        return fixedCount;
     }
 
     /**

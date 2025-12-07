@@ -2,6 +2,7 @@ package com.spring.mcp.controller.web;
 
 import com.spring.mcp.config.LanguageEvolutionFeatureConfig;
 import com.spring.mcp.config.OpenRewriteFeatureConfig;
+import com.spring.mcp.config.SyncFeatureConfig;
 import com.spring.mcp.service.language.LanguageSyncService;
 import com.spring.mcp.service.scheduler.LanguageSchedulerService;
 import com.spring.mcp.service.sync.CodeExamplesSyncService;
@@ -60,6 +61,9 @@ public class SyncController {
     private final LanguageEvolutionFeatureConfig languageEvolutionFeatureConfig;
     private final Optional<LanguageSchedulerService> languageSchedulerService;
 
+    // Sync feature configuration (for fix-versions button visibility)
+    private final SyncFeatureConfig syncFeatureConfig;
+
     // GitHub Documentation sync
     private final com.spring.mcp.service.github.GitHubDocumentationSyncService gitHubDocumentationSyncService;
 
@@ -79,6 +83,7 @@ public class SyncController {
         model.addAttribute("pageTitle", "Synchronize Projects & Versions");
         model.addAttribute("openRewriteEnabled", openRewriteFeatureConfig.isEnabled());
         model.addAttribute("languageEvolutionEnabled", languageEvolutionFeatureConfig.isEnabled());
+        model.addAttribute("fixVersionsEnabled", syncFeatureConfig.getFixVersions().isEnabled());
         return "sync/index";
     }
 
@@ -345,6 +350,36 @@ public class SyncController {
             }
         } catch (Exception e) {
             String errorMsg = "Error during documentation sync: " + e.getMessage();
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+            log.error(errorMsg, e);
+        }
+
+        return "redirect:/sync";
+    }
+
+    /**
+     * Fix documentation links that point to placeholder versions (e.g., "1.0.x")
+     * instead of actual versions. Updates the version_id to point to the latest GA version.
+     *
+     * @param redirectAttributes for flash messages
+     * @return redirect to sync page
+     */
+    @PostMapping("/fix-documentation-versions")
+    public String fixDocumentationVersions(RedirectAttributes redirectAttributes) {
+        log.info("Manual documentation version fix triggered");
+
+        try {
+            int fixedCount = documentationSyncService.fixPlaceholderVersionLinks();
+
+            String message = String.format(
+                "Documentation version fix completed! Fixed %d links with placeholder versions",
+                fixedCount
+            );
+            redirectAttributes.addFlashAttribute("success", message);
+            log.info(message);
+
+        } catch (Exception e) {
+            String errorMsg = "Error during documentation version fix: " + e.getMessage();
             redirectAttributes.addFlashAttribute("error", errorMsg);
             log.error(errorMsg, e);
         }

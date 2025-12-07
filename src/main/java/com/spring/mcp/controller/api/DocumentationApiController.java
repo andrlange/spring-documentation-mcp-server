@@ -203,12 +203,12 @@ public class DocumentationApiController {
             .filter(DocumentationLink::getIsActive)
             .collect(Collectors.toList());
 
-        // Filter by topic keywords (case-insensitive match in title)
+        // Filter by topic keywords (word boundary match in title to avoid false positives like "AI" matching "container")
         return allGitHubDocs.stream()
             .filter(doc -> {
                 String title = doc.getTitle().toLowerCase();
                 return finalKeywords.stream()
-                    .anyMatch(keyword -> title.contains(keyword.toLowerCase()));
+                    .anyMatch(keyword -> matchesKeyword(title, keyword.toLowerCase()));
             })
             .sorted(Comparator.comparing(DocumentationLink::getTitle, String.CASE_INSENSITIVE_ORDER))
             .collect(Collectors.toList());
@@ -281,6 +281,23 @@ public class DocumentationApiController {
             }
         }
         return normalized;
+    }
+
+    /**
+     * Check if a keyword matches in the title using word boundary matching.
+     * This prevents false positives like "AI" matching "contAIner" or "testcontAIners".
+     *
+     * @param title the title to search in (lowercase)
+     * @param keyword the keyword to find (lowercase)
+     * @return true if keyword matches as a word or phrase
+     */
+    private boolean matchesKeyword(String title, String keyword) {
+        // Build regex pattern for word boundary match
+        // Use \\b for word boundaries, but also handle phrases with spaces
+        String pattern = "\\b" + java.util.regex.Pattern.quote(keyword) + "\\b";
+        return java.util.regex.Pattern.compile(pattern, java.util.regex.Pattern.CASE_INSENSITIVE)
+            .matcher(title)
+            .find();
     }
 
     /**

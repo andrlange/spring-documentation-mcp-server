@@ -5,6 +5,26 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2025-12-07
+
+### Fixed
+- **GitHub Docs Keyword Matching**: Fixed false positive matches in topic-based GitHub documentation lookup
+    - Keywords like "AI" no longer incorrectly match substrings in words like "Container", "Testcontainers", "Email"
+    - Implemented word boundary regex matching (`\b`) for accurate keyword detection
+    - Spring AI now correctly shows 0 GitHub docs instead of 4 unrelated docs
+- **Documentation Version Links**: Fixed placeholder versions (e.g., "1.0.x") displaying instead of actual versions
+    - Documentation links now correctly show actual GA versions (e.g., "1.1.1")
+    - URLs now point to correct version-specific documentation
+
+### Added
+- **Sync Feature Configuration**: New configuration option to show/hide maintenance utilities
+    - `mcp.features.sync.fix-versions.enabled` property (default: `false`)
+    - "Fix Documentation Versions" button on sync page now hidden by default
+    - Can be enabled via environment variable `SYNC_FIX_VERSIONS_ENABLED=true`
+    - Useful for one-time cleanup of legacy placeholder version links
+
+---
+
 ## [1.4.0] - 2025-12-06
 
 ### Added
@@ -195,6 +215,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.4.1 | 2025-12-07 | GitHub docs keyword fix, configurable sync features |
 | 1.4.0 | 2025-12-06 | Boot Initializr integration, Caffeine caching (5 MCP tools) |
 | 1.3.4 | 2025-12-05 | Spring AI 1.1.1, CVE-2025-48924 security fix |
 | 1.3.3 | 2025-12-04 | Flavor Groups with team-based access control (3 MCP tools) |
