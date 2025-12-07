@@ -61,6 +61,12 @@ public interface ProjectVersionRepository extends JpaRepository<ProjectVersion, 
     List<ProjectVersion> findByProjectAndState(SpringProject project, VersionState state);
 
     /**
+     * Find versions by project and status (CURRENT, GA, etc.) ordered by version descending
+     */
+    @Query("SELECT v FROM ProjectVersion v WHERE v.project = :project AND v.status = :status ORDER BY v.majorVersion DESC, v.minorVersion DESC, v.patchVersion DESC")
+    List<ProjectVersion> findByProjectAndStatusOrderByVersionDesc(@Param("project") SpringProject project, @Param("status") String status);
+
+    /**
      * Check if a version exists for a project
      */
     boolean existsByProjectAndVersion(SpringProject project, String version);

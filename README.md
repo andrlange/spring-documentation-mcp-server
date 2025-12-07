@@ -1,5 +1,5 @@
 # Spring Documentation MCP Server
-### (Current Version 1.4.0)
+### (Current Version 1.4.1)
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
 > Thanks to Dan Vega - https://github.com/danvega/sb4 providing Spring Boot 4 architecture examples - 
@@ -58,6 +58,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
+| **1.4.1** | 2025-12-07 | GitHub docs keyword fix, configurable sync features          |
 | **1.4.0** | 2025-12-06 | Boot Initializr integration, Caffeine caching (5 MCP tools)  |
 | **1.3.4** | 2025-12-05 | Spring AI 1.1.1, CVE-2025-48924 security fix                 |
 | **1.3.3** | 2025-12-04 | Flavor Groups with team-based access control (3 MCP tools)   |
@@ -95,7 +96,7 @@ docker-compose up -d postgres
 ### 2. Build and Run
 ```bash
 ./gradlew clean build
-java -jar build/libs/spring-boot-documentation-mcp-server-1.4.0.jar
+java -jar build/libs/spring-boot-documentation-mcp-server-1.4.1.jar
 ```
 
 Or using Gradle:

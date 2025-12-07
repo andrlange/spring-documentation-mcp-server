@@ -573,6 +573,44 @@
             </div>
         </div>
 
+        <!-- Fix Documentation Versions - Only shown when enabled (one-time cleanup utility) -->
+        <div class="col-md-6 col-lg-4" th:if="${fixVersionsEnabled}">
+            <div class="card h-100 shadow-sm" style="border-color: #f59e0b;">
+                <div class="card-header text-white" style="background-color: #f59e0b;">
+                    <h6 class="card-title mb-0">
+                        <span class="badge bg-white me-2" style="color: #f59e0b;">
+                            <i class="bi bi-wrench"></i>
+                        </span>
+                        <i class="bi bi-patch-check"></i>
+                        Fix Documentation Versions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text small">
+                        Fix documentation links that point to placeholder versions (e.g., "1.0.x"). Updates links to use actual latest GA versions.
+                    </p>
+                    <form method="post" th:action="@{/sync/fix-documentation-versions}" class="mb-0 sync-form">
+                        <button type="submit" class="btn btn-sm w-100 sync-btn" style="background-color: #f59e0b; border-color: #f59e0b; color: white;">
+                            <span class="btn-text">
+                                <i class="bi bi-wrench"></i>
+                                Fix Versions
+                            </span>
+                            <span class="btn-spinner d-none">
+                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                Fixing...
+                            </span>
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer bg-light">
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i>
+                        ~5-10 seconds
+                    </small>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Sync Guide -->

@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring Boot Documentation MCP Server
-    version: 1.4.0
+    version: 1.4.1
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.8
@@ -72,7 +72,7 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.4.0"
+        version: "1.4.1"
         instructions: |
           Spring Boot Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 
@@ -279,6 +279,11 @@ mcp:
         spell-checker: true
         min-height: "400px"
         max-height: "600px"
+
+    # Sync Feature Configuration
+    sync:
+      fix-versions:
+        enabled: ${SYNC_FIX_VERSIONS_ENABLED:false}  # Disabled by default - one-time cleanup utility
 
     # Boot Initializr Feature Configuration (Release 1.4.0)
     initializr:
