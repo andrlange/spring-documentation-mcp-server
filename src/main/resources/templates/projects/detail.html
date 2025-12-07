@@ -184,7 +184,7 @@
                     <div class="mt-3">
                         <h6 class="text-muted">Quick Actions</h6>
                         <div class="d-grid gap-2">
-                            <a th:href="@{/documentation?projectId={id}(id=${project.id})}"
+                            <a th:href="@{/documentation(projectSlug=${project.slug})}"
                                class="btn btn-outline-primary">
                                 <i class="bi bi-file-text"></i> View Documentation
                             </a>
