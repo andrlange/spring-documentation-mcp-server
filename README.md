@@ -1,5 +1,5 @@
 # Spring Documentation MCP Server
-### (Current Version 1.4.1)
+### (Current Version 1.4.2)
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
 > Thanks to Dan Vega - https://github.com/danvega/sb4 providing Spring Boot 4 architecture examples - 
@@ -20,6 +20,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - **Flavors**: Company-specific guidelines, architecture patterns, compliance rules, and AI agent configurations
 - **Flavor Groups**: Team-based access control with API key membership for secure guideline sharing
 - **Boot Initializr**: Spring Initializr integration for dependency search, compatibility checks, and formatted snippets
+- **Javadoc API Docs**: Crawled and indexed Javadoc documentation for Spring projects with full-text search
 
 ## Table of Contents
 
@@ -36,6 +37,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
   - [Flavors - Company Guidelines](#flavors---company-guidelines)
   - [Flavor Groups - Team Access Control](#flavor-groups---team-access-control)
   - [Boot Initializr Integration](#boot-initializr-integration)
+  - [Javadoc API Documentation](#javadoc-api-documentation)
 - [Using with Claude Code](#using-with-claude-code)
   - [Configuration](#mcp-configuration)
   - [Documentation Queries](#documentation-queries)
@@ -43,6 +45,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
   - [Language Evolution Queries](#language-evolution-queries)
   - [Company Guidelines & Flavors](#company-guidelines--flavors)
   - [Boot Initializr Queries](#boot-initializr-queries)
+  - [Javadoc API Queries](#javadoc-api-queries)
 - [Configuration](#configuration)
 - [Troubleshooting](#troubleshooting)
 - [Roadmap](#roadmap)
@@ -58,6 +61,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
+| **1.4.2** | 2025-12-08 | Javadoc API documentation crawler and search (4 MCP tools)   |
 | **1.4.1** | 2025-12-07 | GitHub docs keyword fix, configurable sync features          |
 | **1.4.0** | 2025-12-06 | Boot Initializr integration, Caffeine caching (5 MCP tools)  |
 | **1.3.4** | 2025-12-05 | Spring AI 1.1.1, CVE-2025-48924 security fix                 |
@@ -70,7 +74,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 | **1.0.2** | 2025-11-27 | Spring Boot 3.5.8, example app                               |
 | **1.0.1** | 2025-11-26 | Initial release (10 MCP tools)                               |
 
-**MCP Tools**: 10 (docs) + 7 (migration) + 6 (language) + 8 (flavors) + 3 (groups) + 5 (initializr) = **39 total**
+**MCP Tools**: 10 (docs) + 7 (migration) + 6 (language) + 8 (flavors) + 3 (groups) + 5 (initializr) + 4 (javadocs) = **43 total**
 
 ## Quick Start
 
@@ -96,7 +100,7 @@ docker-compose up -d postgres
 ### 2. Build and Run
 ```bash
 ./gradlew clean build
-java -jar build/libs/spring-boot-documentation-mcp-server-1.4.1.jar
+java -jar build/libs/spring-boot-documentation-mcp-server-1.4.2.jar
 ```
 
 Or using Gradle:
@@ -475,6 +479,105 @@ mcp:
 
 ---
 
+### Javadoc API Documentation
+
+Comprehensive Javadoc crawling, indexing, and search for Spring project APIs. This feature downloads and parses Javadoc HTML from Spring project documentation sites, storing structured class, method, field, and constructor information.
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="assets/screen-24.png" alt="Javadoc Sync Enable" />
+      <p align="center"><b>Enable Javadoc Sync</b> - Projects page with sync toggle for Spring AI</p>
+    </td>
+    <td width="50%">
+      <img src="assets/screen-25.png" alt="Javadoc Sync Complete" />
+      <p align="center"><b>Sync Complete</b> - Javadoc viewer with indexed classes and methods</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/screen-26.png" alt="Spring Modulith API Documentation" />
+      <p align="center"><b>Spring Modulith API</b> - API Documentation of Spring Modulith 2.0.0</p>
+    </td>
+    <td width="50%">
+      <img src="assets/screen-27.png" alt="Class Details" />
+      <p align="center"><b>Class Details</b> - ApplicationModuleSource from Spring Modulith 2.0.0</p>
+    </td>
+  </tr>
+</table>
+
+**Features**:
+- **Automated Crawling**: Discovers and parses Javadoc HTML from docs.spring.io
+- **Structured Storage**: Packages, classes, methods, fields, constructors stored in PostgreSQL
+- **Full-Text Search**: PostgreSQL tsvector search across all Javadoc content
+- **Version Awareness**: Track multiple versions per library with latest version resolution
+- **Per-Project Toggle**: Enable/disable sync for each Spring project individually
+- **Project Detail Integration**: View synced Javadocs directly from the project detail page (`/projects/{id}`)
+- **Local Javadoc Viewer**: Browse packages, classes, methods, and fields with syntax highlighting
+- **Sync Page Integration**: Phase 9 card for manual Javadoc synchronization
+- **4 MCP Tools**: AI assistants can query API documentation
+
+#### Enabling Javadoc Sync for a Project
+
+To enable Javadoc synchronization for a Spring project:
+
+1. **Navigate to Projects**: Go to the Projects page (`/projects`)
+2. **Filter Projects**: Use the search filter to find the project (e.g., "Spring AI")
+3. **Enable Sync Toggle**: Click the "Enable Javadoc Sync" toggle switch in the project row
+4. **Wait for Sync**: The system will crawl and index the Javadocs for all versions with API doc URLs
+
+> ⚠️ **Important**: Javadoc synchronization is a resource-intensive operation. Each Spring project can have multiple versions, and each version contains hundreds of packages and thousands of classes. **A single project sync can take 30 minutes to over 1 hour** depending on the project size and network conditions.
+
+#### Sync Behavior
+
+- **Rate Limiting**: The crawler uses a 500ms delay between requests to avoid overwhelming the server
+- **Batch Processing**: Classes are processed in batches with configurable limits
+- **Failure Handling**: After 5 consecutive failures, sync is automatically disabled for the project
+- **Scheduled Sync**: By default, enabled projects sync weekly on Sunday at 4 AM
+- **Manual Sync**: Use the Sync page (`/sync`) → Phase 9 "Javadocs" card to trigger manual sync
+
+#### What Gets Indexed
+
+For each Spring project version with an API doc URL:
+- **Packages**: All Java packages with descriptions
+- **Classes/Interfaces/Enums**: Full class documentation including:
+  - Class description and deprecation status
+  - Inheritance hierarchy (extends/implements)
+  - Annotations
+- **Methods**: All public methods with:
+  - Signatures and return types
+  - Parameter descriptions
+  - Throws declarations
+- **Fields**: Static and instance fields with types
+- **Constructors**: All public constructors with parameters
+
+**MCP Tools**:
+- `getClassDoc`: Get full class documentation including methods, fields, constructors
+- `getPackageDoc`: Get package documentation with list of classes/interfaces
+- `searchJavadocs`: Full-text search across all Javadoc content
+- `listJavadocLibraries`: List all libraries with available versions
+
+**Configuration**:
+```yaml
+mcp:
+  features:
+    javadocs:
+      enabled: true              # Set to false to disable entire feature
+      sync:
+        enabled: true            # Enable/disable scheduled sync
+        schedule: "0 0 4 * * SUN"  # Weekly on Sunday at 4 AM
+        max-failures: 5          # Auto-disable after consecutive failures
+        rate-limit-ms: 500       # Delay between HTTP requests
+        batch-size: 50           # Classes per batch
+      parser:
+        connection-timeout-ms: 10000
+        read-timeout-ms: 30000
+        max-classes-per-package: 500
+        max-methods-per-class: 200
+```
+
+---
+
 ## Using with Claude Code
 
 Configure Claude Code to use the Spring Documentation MCP Server for AI-assisted development.
@@ -672,6 +775,28 @@ Different teams can use different API keys to access their specific groups:
 }
 ```
 
+### Javadoc API Queries
+
+Query Spring API documentation directly:
+
+```
+> use spring to get the documentation for RestTemplate class
+
+> use spring to search javadocs for WebClient
+
+> use spring to list all available javadoc libraries
+
+> use spring to get the package documentation for org.springframework.web.client
+
+> use spring to show me the methods in the JdbcTemplate class
+```
+
+**Available Javadoc Tools**:
+- Get full class documentation with methods, fields, constructors
+- Get package documentation with list of classes
+- Full-text search across all indexed Javadocs
+- List available libraries and versions
+
 ---
 
 ## Configuration
@@ -783,7 +908,7 @@ lsof -ti :8080 | xargs kill -9
 ### Completed
 - [x] Spring Boot 3.5.8 with Spring AI 1.1.1 MCP Server
 - [x] PostgreSQL database with full-text search
-- [x] 39 MCP tools (documentation, migration, language, flavors, groups, initializr)
+- [x] 43 MCP tools (documentation, migration, language, flavors, groups, initializr, javadocs)
 - [x] Web management UI with all features
 - [x] API Key authentication with BCrypt encryption
 - [x] Documentation sync from spring.io and GitHub
@@ -793,6 +918,7 @@ lsof -ti :8080 | xargs kill -9
 - [x] Flavors with YAML import/export
 - [x] Flavor Groups with team-based access control
 - [x] Boot Initializr integration with Caffeine caching
+- [x] Javadoc API documentation crawler and search
 
 ### Planned
 - [ ] Semantic search using embeddings
@@ -839,7 +965,7 @@ For detailed technical reference including:
 - Database Schema and Full-Text Search
 - Development Guide (tests, migrations, cleaning builds)
 - API Endpoints Reference
-- All 34 MCP Tool Parameters with JSON Examples
+- All 43 MCP Tool Parameters with JSON Examples
 
 See [ADDITIONAL_CONTENT.md](ADDITIONAL_CONTENT.md)
 

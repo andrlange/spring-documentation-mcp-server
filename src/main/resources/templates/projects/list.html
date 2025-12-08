@@ -132,10 +132,15 @@
                                     <th scope="col" style="width: 5%;">
                                         <i class="bi bi-box-seam text-spring-green"></i>
                                     </th>
-                                    <th scope="col" style="width: 25%;">Name</th>
-                                    <th scope="col" style="width: 15%;">Slug</th>
-                                    <th scope="col" style="width: 45%;">Description</th>
+                                    <th scope="col" th:style="${javadocsEnabled} ? 'width: 22%;' : 'width: 25%;'">Name</th>
+                                    <th scope="col" style="width: 12%;">Slug</th>
+                                    <th scope="col" th:style="${javadocsEnabled} ? 'width: 36%;' : 'width: 45%;'">Description</th>
                                     <th scope="col" style="width: 10%;" class="text-center">Versions</th>
+                                    <!-- Javadoc Sync Column (only if feature enabled) -->
+                                    <th th:if="${javadocsEnabled}" scope="col" style="width: 15%;" class="text-center">
+                                        <i class="bi bi-file-code text-spring-green" title="Javadoc Sync"></i>
+                                        Javadoc Sync
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -179,6 +184,61 @@
                                                   th:text="${version.getVersion()}">0</span>
                                         </th:block>
                                     </td>
+                                    <!-- Javadoc Sync Column (only if feature enabled) -->
+                                    <td th:if="${javadocsEnabled}" class="align-middle text-center">
+                                        <div class="d-flex align-items-center justify-content-center gap-2">
+                                            <!-- Fetch Status Indicator -->
+                                            <th:block th:with="fetchStatus=${javadocFetchStatusMap[project.id]}">
+                                                <span th:if="${fetchStatus == 'all'}"
+                                                      class="badge rounded-circle p-1"
+                                                      style="background-color: #22c55e; width: 12px; height: 12px;"
+                                                      title="All docs fetched"
+                                                      data-bs-toggle="tooltip">
+                                                </span>
+                                                <span th:if="${fetchStatus == 'partial'}"
+                                                      class="badge rounded-circle p-1"
+                                                      style="background-color: #f59e0b; width: 12px; height: 12px;"
+                                                      title="Partial docs fetched"
+                                                      data-bs-toggle="tooltip">
+                                                </span>
+                                                <span th:if="${fetchStatus == 'none'}"
+                                                      class="badge rounded-circle p-1"
+                                                      style="background-color: #ef4444; width: 12px; height: 12px;"
+                                                      title="No docs fetched"
+                                                      data-bs-toggle="tooltip">
+                                                </span>
+                                                <span th:if="${fetchStatus == 'no_urls'}"
+                                                      class="badge rounded-circle p-1"
+                                                      style="background-color: #6b7280; width: 12px; height: 12px;"
+                                                      title="No API doc URLs configured"
+                                                      data-bs-toggle="tooltip">
+                                                </span>
+                                            </th:block>
+
+                                            <!-- Toggle Switch (ADMIN only) -->
+                                            <th:block th:with="syncStatus=${javadocSyncStatusMap[project.id]},
+                                                              fetchStatus=${javadocFetchStatusMap[project.id]}">
+                                                <div class="form-check form-switch" sec:authorize="hasRole('ADMIN')">
+                                                    <input type="checkbox"
+                                                           class="form-check-input javadoc-sync-toggle"
+                                                           role="switch"
+                                                           th:id="${'javadocSync_' + project.id}"
+                                                           th:data-project-id="${project.id}"
+                                                           th:checked="${syncStatus != null && syncStatus.enabled}"
+                                                           th:disabled="${fetchStatus == 'no_urls'}"
+                                                           th:title="${fetchStatus == 'no_urls' ? 'No API doc URLs configured' : (syncStatus != null && syncStatus.enabled ? 'Sync enabled' : 'Sync disabled')}">
+                                                </div>
+
+                                                <!-- Failure Warning (if any) -->
+                                                <span th:if="${syncStatus != null && syncStatus.failureCount > 0}"
+                                                      class="text-danger"
+                                                      th:title="${'Failures: ' + syncStatus.failureCount + (syncStatus.lastError != null ? ' - ' + syncStatus.lastError : '')}"
+                                                      data-bs-toggle="tooltip">
+                                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                                </span>
+                                            </th:block>
+                                        </div>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -207,10 +267,120 @@
         .project-card-hidden {
             display: none !important;
         }
+
+        /* Javadoc sync toggle styles */
+        .javadoc-sync-toggle:checked {
+            background-color: #6db33f;
+            border-color: #6db33f;
+        }
+
+        .javadoc-sync-toggle:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 
     <!-- Page-specific JavaScript -->
     <script th:src="@{/js/projects-filter.js}"></script>
+
+    <!-- Javadoc Sync Toggle JavaScript (only if feature enabled) -->
+    <script th:if="${javadocsEnabled}">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Handle Javadoc sync toggle
+            document.querySelectorAll('.javadoc-sync-toggle').forEach(function(toggle) {
+                toggle.addEventListener('change', function(e) {
+                    const projectId = this.dataset.projectId;
+                    const checkbox = this;
+                    const originalState = !checkbox.checked;
+
+                    // Disable checkbox during request
+                    checkbox.disabled = true;
+
+                    // Get CSRF token
+                    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+
+                    const headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    if (csrfToken) {
+                        headers[csrfHeader] = csrfToken;
+                    }
+
+                    fetch(`/projects/${projectId}/javadoc-sync-toggle`, {
+                        method: 'POST',
+                        headers: headers,
+                        credentials: 'same-origin'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            checkbox.checked = data.enabled;
+                            checkbox.title = data.enabled ? 'Sync enabled' : 'Sync disabled';
+
+                            // Show success toast
+                            showToast('success', data.message);
+                        } else {
+                            checkbox.checked = originalState;
+                            showToast('error', data.message || 'Failed to toggle sync');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error toggling sync:', error);
+                        checkbox.checked = originalState;
+                        showToast('error', 'Failed to toggle sync');
+                    })
+                    .finally(() => {
+                        checkbox.disabled = false;
+                    });
+                });
+            });
+
+            // Toast notification helper
+            function showToast(type, message) {
+                // Check if toast container exists, if not create it
+                let toastContainer = document.getElementById('toastContainer');
+                if (!toastContainer) {
+                    toastContainer = document.createElement('div');
+                    toastContainer.id = 'toastContainer';
+                    toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                    document.body.appendChild(toastContainer);
+                }
+
+                const toastId = 'toast-' + Date.now();
+                const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+                const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+
+                const toastHtml = `
+                    <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi ${icon} me-2"></i>
+                                ${message}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+
+                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+                const toastEl = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+                toast.show();
+
+                // Remove toast element after it's hidden
+                toastEl.addEventListener('hidden.bs.toast', function() {
+                    toastEl.remove();
+                });
+            }
+        });
+    </script>
 </div>
 </body>
 </html>

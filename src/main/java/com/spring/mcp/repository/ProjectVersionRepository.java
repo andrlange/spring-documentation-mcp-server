@@ -215,4 +215,21 @@ public interface ProjectVersionRepository extends JpaRepository<ProjectVersion, 
         ORDER BY v.releaseDate DESC
         """)
     List<ProjectVersion> findTopByReleaseDateDesc(Pageable pageable);
+
+    /**
+     * Find all versions with API doc URLs for a project
+     *
+     * @param projectId the project ID
+     * @return list of versions with apiDocUrl set
+     */
+    @Query("SELECT v FROM ProjectVersion v WHERE v.project.id = :projectId AND v.apiDocUrl IS NOT NULL AND v.apiDocUrl <> ''")
+    List<ProjectVersion> findByProjectIdWithApiDocUrl(@Param("projectId") Long projectId);
+
+    /**
+     * Find all versions with API doc URLs
+     *
+     * @return list of versions with apiDocUrl set
+     */
+    @Query("SELECT v FROM ProjectVersion v JOIN FETCH v.project WHERE v.apiDocUrl IS NOT NULL AND v.apiDocUrl <> ''")
+    List<ProjectVersion> findAllWithApiDocUrl();
 }

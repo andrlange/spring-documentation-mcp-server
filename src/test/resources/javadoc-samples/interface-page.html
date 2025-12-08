@@ -1,0 +1,73 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <title>RestClient (Spring Framework 6.2.1 API)</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<main role="main">
+    <div class="header">
+        <div class="sub-title"><span class="package-label-in-type">Package</span>&nbsp;
+            <a href="package-summary.html">org.springframework.web.client</a></div>
+        <h1 title="Interface RestClient" class="title">Interface RestClient</h1>
+    </div>
+    <section class="class-description" id="class-description">
+        <div class="type-signature">
+            <span class="modifiers">public interface </span><span class="element-name type-name-link">RestClient</span>
+        </div>
+        <div class="block">Client to perform HTTP requests, exposing a fluent, synchronous API
+            over underlying HTTP client libraries such as the JDK HttpClient,
+            Apache HttpComponents, and others.
+
+            Use static factory methods create(), create(String), or builder() to prepare an instance.</div>
+    </section>
+
+    <!-- Method Summary -->
+    <section class="method-summary" id="method-summary">
+        <h2>Method Summary</h2>
+        <div class="caption"><span>All Methods</span></div>
+        <div class="summary-table three-column-summary">
+            <div class="table-header col-first">Modifier and Type</div>
+            <div class="table-header col-second">Method</div>
+            <div class="table-header col-last">Description</div>
+            <div class="col-first even-row-color method-summary-table">
+                <code>static RestClient</code>
+            </div>
+            <div class="col-second even-row-color method-summary-table">
+                <code><a href="#create()" class="member-name-link">create</a>()</code>
+            </div>
+            <div class="col-last even-row-color method-summary-table">
+                <div class="block">Create a new RestClient with default settings.</div>
+            </div>
+            <div class="col-first odd-row-color method-summary-table">
+                <code>static RestClient.Builder</code>
+            </div>
+            <div class="col-second odd-row-color method-summary-table">
+                <code><a href="#builder()" class="member-name-link">builder</a>()</code>
+            </div>
+            <div class="col-last odd-row-color method-summary-table">
+                <div class="block">Return a builder to create a new RestClient.</div>
+            </div>
+            <div class="col-first even-row-color method-summary-table">
+                <code>RestClient.RequestHeadersUriSpec&lt;?&gt;</code>
+            </div>
+            <div class="col-second even-row-color method-summary-table">
+                <code><a href="#get()" class="member-name-link">get</a>()</code>
+            </div>
+            <div class="col-last even-row-color method-summary-table">
+                <div class="block">Start building an HTTP GET request.</div>
+            </div>
+            <div class="col-first odd-row-color method-summary-table">
+                <code>RestClient.RequestBodyUriSpec</code>
+            </div>
+            <div class="col-second odd-row-color method-summary-table">
+                <code><a href="#post()" class="member-name-link">post</a>()</code>
+            </div>
+            <div class="col-last odd-row-color method-summary-table">
+                <div class="block">Start building an HTTP POST request.</div>
+            </div>
+        </div>
+    </section>
+</main>
+</body>
+</html>

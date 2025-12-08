@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title th:text="${pageTitle + ' - Spring MCP Server'}">Class - Spring MCP Server</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a th:href="@{/projects}" class="text-decoration-none">
+                    <i class="bi bi-folder2-open"></i> Projects
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a th:href="@{/javadoc/view/{lib}/{ver}(lib=${library}, ver=${version})}"
+                   class="text-decoration-none" th:text="${library}">
+                    spring-ai
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a th:href="@{/javadoc/view/{lib}/{ver}(lib=${library}, ver=${version})}"
+                   class="text-decoration-none" th:text="${version}">
+                    1.1.1
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a th:href="@{/javadoc/view/{lib}/{ver}/package/{pkg}(lib=${library}, ver=${version}, pkg=${package.packageName})}"
+                   class="text-decoration-none">
+                    <code th:text="${package.packageName}">org.springframework.ai.chat</code>
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <code th:text="${cls.simpleName}">ChatClient</code>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-2 mb-3 border-bottom">
+        <div>
+            <h1 class="h2">
+                <!-- Kind Icon -->
+                <i th:classappend="${cls.kind.name() == 'INTERFACE' ? 'bi-file-code' :
+                                    cls.kind.name() == 'ENUM' ? 'bi-list-ol' :
+                                    cls.kind.name() == 'ANNOTATION' ? 'bi-at' :
+                                    cls.kind.name() == 'RECORD' ? 'bi-braces' : 'bi-file-earmark-code'}"
+                   class="bi text-info"></i>
+                <!-- Kind Label -->
+                <span class="badge bg-secondary me-2" th:text="${cls.kind.name().toLowerCase()}">class</span>
+                <!-- Class Name -->
+                <code th:text="${cls.simpleName}">ChatClient</code>
+                <!-- Deprecated Badge -->
+                <span th:if="${cls.deprecated}" class="badge bg-warning text-dark ms-2">
+                    <i class="bi bi-exclamation-triangle"></i> Deprecated
+                </span>
+            </h1>
+            <p class="text-muted mb-0" th:if="${cls.modifiers}">
+                <small th:text="${cls.modifiers}">public abstract</small>
+            </p>
+        </div>
+        <div class="btn-toolbar gap-2">
+            <a th:if="${cls.sourceUrl}" th:href="${cls.sourceUrl}"
+               class="btn btn-outline-info" target="_blank" rel="noopener">
+                <i class="bi bi-box-arrow-up-right"></i> View Source
+            </a>
+            <a th:href="@{/javadoc/view/{lib}/{ver}/package/{pkg}(lib=${library}, ver=${version}, pkg=${package.packageName})}"
+               class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Package
+            </a>
+        </div>
+    </div>
+
+    <!-- Deprecation Warning -->
+    <div th:if="${cls.deprecated}" class="alert alert-warning mb-4">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <strong>Deprecated:</strong>
+        <span th:if="${cls.deprecatedMessage}" th:utext="${cls.deprecatedMessage}">Use NewClass instead.</span>
+        <span th:unless="${cls.deprecatedMessage}">This class is deprecated and may be removed in future versions.</span>
+    </div>
+
+    <!-- Class Hierarchy -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-diagram-3 text-info"></i> Type Hierarchy
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="hierarchy-tree">
+                <!-- Superclass Chain -->
+                <div th:if="${cls.superClass}" class="mb-2">
+                    <strong>Extends:</strong>
+                    <code class="ms-2" th:text="${cls.superClass}">java.lang.Object</code>
+                </div>
+                <!-- Interfaces -->
+                <div th:if="${cls.interfaces != null && !cls.interfaces.isEmpty()}" class="mb-2">
+                    <strong>Implements:</strong>
+                    <span th:each="iface, iter : ${cls.interfaces}">
+                        <code class="ms-2" th:text="${iface}">Serializable</code>
+                        <span th:if="${!iter.last}">,</span>
+                    </span>
+                </div>
+                <!-- Annotations -->
+                <div th:if="${cls.annotations != null && !cls.annotations.isEmpty()}">
+                    <strong>Annotations:</strong>
+                    <span th:each="annotation : ${cls.annotations}">
+                        <code class="ms-2 text-muted" th:text="${annotation}">@FunctionalInterface</code>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Class Description -->
+    <div th:if="${cls.description != null || cls.summary != null}" class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-info-circle text-info"></i> Description
+            </h5>
+        </div>
+        <div class="card-body javadoc-description">
+            <div th:if="${cls.description}" th:utext="${cls.description}">
+                Detailed class description...
+            </div>
+            <div th:if="${cls.description == null && cls.summary}" th:text="${cls.summary}">
+                Class summary...
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Row -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-info bg-opacity-10 border-info">
+                <div class="card-body text-center">
+                    <h3 class="mb-0" th:text="${cls.fieldCount}">0</h3>
+                    <small class="text-muted">Fields</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success bg-opacity-10 border-success">
+                <div class="card-body text-center">
+                    <h3 class="mb-0" th:text="${cls.constructorCount}">0</h3>
+                    <small class="text-muted">Constructors</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-primary bg-opacity-10 border-primary">
+                <div class="card-body text-center">
+                    <h3 class="mb-0" th:text="${cls.methodCount}">0</h3>
+                    <small class="text-muted">Methods</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fields Section -->
+    <div th:if="${cls.fields != null && !cls.fields.isEmpty()}" class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center"
+             data-bs-toggle="collapse" data-bs-target="#fieldsSection"
+             aria-expanded="true" aria-controls="fieldsSection" style="cursor: pointer;">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-braces text-info"></i> Fields
+                <span class="badge bg-secondary ms-2" th:text="${cls.fieldCount}">0</span>
+            </h5>
+            <i class="bi bi-chevron-down collapse-icon"></i>
+        </div>
+        <div id="fieldsSection" class="collapse show">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" style="width: 30%;">Field</th>
+                                <th scope="col" style="width: 20%;">Type</th>
+                                <th scope="col">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="field : ${cls.fields}">
+                                <td>
+                                    <code class="fw-semibold" th:text="${field.name}">fieldName</code>
+                                    <span th:if="${field.deprecated}" class="badge bg-warning text-dark ms-1">
+                                        Deprecated
+                                    </span>
+                                    <br/>
+                                    <small class="text-muted" th:if="${field.modifiers}" th:text="${field.modifiers}">
+                                        public static final
+                                    </small>
+                                </td>
+                                <td>
+                                    <code th:text="${field.type}">String</code>
+                                    <span th:if="${field.constantValue}" class="text-muted">
+                                        = <code th:text="${field.constantValue}">value</code>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${field.summary}" th:text="${field.summary}">
+                                        Field description...
+                                    </span>
+                                    <span th:unless="${field.summary}" class="text-muted fst-italic">
+                                        No description
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Constructors Section -->
+    <div th:if="${cls.constructors != null && !cls.constructors.isEmpty()}" class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center"
+             data-bs-toggle="collapse" data-bs-target="#constructorsSection"
+             aria-expanded="true" aria-controls="constructorsSection" style="cursor: pointer;">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-hammer text-success"></i> Constructors
+                <span class="badge bg-secondary ms-2" th:text="${cls.constructorCount}">0</span>
+            </h5>
+            <i class="bi bi-chevron-down collapse-icon"></i>
+        </div>
+        <div id="constructorsSection" class="collapse show">
+            <div class="list-group list-group-flush">
+                <div th:each="ctor : ${cls.constructors}" class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="member-signature">
+                            <code class="signature-code" th:text="${ctor.signature}">ClassName()</code>
+                            <span th:if="${ctor.deprecated}" class="badge bg-warning text-dark ms-2">
+                                Deprecated
+                            </span>
+                        </div>
+                    </div>
+                    <!-- Annotations -->
+                    <div th:if="${ctor.annotations != null && !ctor.annotations.isEmpty()}" class="mt-1">
+                        <span th:each="ann : ${ctor.annotations}">
+                            <small class="text-muted" th:text="${ann}">@Autowired</small>
+                        </span>
+                    </div>
+                    <!-- Summary -->
+                    <p th:if="${ctor.summary}" class="mb-1 mt-2 text-muted" th:text="${ctor.summary}">
+                        Constructor description...
+                    </p>
+                    <!-- Parameters -->
+                    <div th:if="${ctor.parameters != null && !ctor.parameters.isEmpty()}" class="mt-2">
+                        <small class="text-muted fw-semibold">Parameters:</small>
+                        <ul class="mb-0 ps-3">
+                            <li th:each="p : ${ctor.parameters}" class="small">
+                                <code th:text="${p['name']}">paramName</code>
+                                (<span th:text="${p['type']}">Type</span>)
+                                <span th:if="${p['description']}" class="text-muted" th:text="' - ' + ${p['description']}">
+                                    - description
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- Throws -->
+                    <div th:if="${ctor.throwsList != null && !ctor.throwsList.isEmpty()}" class="mt-2">
+                        <small class="text-danger fw-semibold">Throws:</small>
+                        <span th:each="ex, iter : ${ctor.throwsList}">
+                            <code class="text-danger" th:text="${ex}">Exception</code>
+                            <span th:if="${!iter.last}">, </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Methods Section -->
+    <div th:if="${cls.methods != null && !cls.methods.isEmpty()}" class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center"
+             data-bs-toggle="collapse" data-bs-target="#methodsSection"
+             aria-expanded="true" aria-controls="methodsSection" style="cursor: pointer;">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-code-slash text-primary"></i> Methods
+                <span class="badge bg-secondary ms-2" th:text="${cls.methodCount}">0</span>
+            </h5>
+            <i class="bi bi-chevron-down collapse-icon"></i>
+        </div>
+        <div id="methodsSection" class="collapse show">
+            <div class="list-group list-group-flush">
+                <div th:each="method : ${cls.methods}" class="list-group-item method-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="member-signature">
+                            <!-- Method Signature -->
+                            <code class="signature-code" th:text="${method.signature}">void doSomething()</code>
+                            <span th:if="${method.deprecated}" class="badge bg-warning text-dark ms-2">
+                                Deprecated
+                            </span>
+                        </div>
+                        <div>
+                            <span th:if="${method.returnType}" class="badge bg-info bg-opacity-75">
+                                <i class="bi bi-arrow-return-right"></i>
+                                <span th:text="${method.returnType}">void</span>
+                            </span>
+                        </div>
+                    </div>
+                    <!-- Annotations -->
+                    <div th:if="${method.annotations != null && !method.annotations.isEmpty()}" class="mt-1">
+                        <span th:each="ann : ${method.annotations}">
+                            <small class="text-muted" th:text="${ann}">@Override</small>
+                        </span>
+                    </div>
+                    <!-- Summary -->
+                    <p th:if="${method.summary}" class="mb-1 mt-2" th:text="${method.summary}">
+                        Method description...
+                    </p>
+                    <!-- Full Description (collapsed) -->
+                    <div th:if="${method.description != null && method.description != method.summary}">
+                        <a class="small text-info" data-bs-toggle="collapse"
+                           th:href="'#methodDesc' + ${method.id}" role="button" aria-expanded="false">
+                            <i class="bi bi-chevron-down"></i> Show details
+                        </a>
+                        <div class="collapse mt-2" th:id="'methodDesc' + ${method.id}">
+                            <div class="small text-muted javadoc-description" th:utext="${method.description}">
+                                Detailed method description...
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Parameters -->
+                    <div th:if="${method.parameters != null && !method.parameters.isEmpty()}" class="mt-2">
+                        <small class="text-muted fw-semibold">Parameters:</small>
+                        <ul class="mb-0 ps-3">
+                            <li th:each="p : ${method.parameters}" class="small">
+                                <code th:text="${p['name']}">paramName</code>
+                                (<span th:text="${p['type']}">Type</span>)
+                                <span th:if="${p['description']}" class="text-muted" th:text="' - ' + ${p['description']}">
+                                    - description
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- Throws -->
+                    <div th:if="${method.throwsList != null && !method.throwsList.isEmpty()}" class="mt-2">
+                        <small class="text-danger fw-semibold">Throws:</small>
+                        <span th:each="ex, iter : ${method.throwsList}">
+                            <code class="text-danger" th:text="${ex}">Exception</code>
+                            <span th:if="${!iter.last}">, </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${(cls.fields == null || cls.fields.isEmpty()) &&
+                  (cls.constructors == null || cls.constructors.isEmpty()) &&
+                  (cls.methods == null || cls.methods.isEmpty())}" class="text-center py-5">
+        <i class="bi bi-file-earmark-x display-1 text-muted"></i>
+        <p class="text-muted mt-3">No members found for this class.</p>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<th:block layout:fragment="scripts">
+    <style>
+        .breadcrumb-item.active {
+            color: #17a2b8;
+        }
+        .member-signature {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+        }
+        .signature-code {
+            font-size: 0.95rem;
+            word-break: break-word;
+        }
+        .method-item:hover {
+            background-color: rgba(23, 162, 184, 0.05);
+        }
+        .collapse-icon {
+            transition: transform 0.2s ease-in-out;
+        }
+        [aria-expanded="false"] .collapse-icon {
+            transform: rotate(-90deg);
+        }
+        .javadoc-description pre {
+            background-color: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            overflow-x: auto;
+        }
+        .javadoc-description code {
+            color: #e83e8c;
+        }
+        .hierarchy-tree {
+            font-family: monospace;
+        }
+    </style>
+</th:block>
+</body>
+</html>

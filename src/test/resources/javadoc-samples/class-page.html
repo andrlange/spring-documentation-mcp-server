@@ -1,0 +1,103 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <title>RestTemplate (Spring Framework 6.2.1 API)</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<main role="main">
+    <div class="header">
+        <div class="sub-title"><span class="package-label-in-type">Package</span>&nbsp;
+            <a href="package-summary.html">org.springframework.web.client</a></div>
+        <h1 title="Class RestTemplate" class="title">Class RestTemplate</h1>
+    </div>
+    <section class="class-description" id="class-description">
+        <div class="type-signature">
+            <span class="annotations">@Deprecated(since="6.1", forRemoval=false)</span>
+            <span class="modifiers">public class </span><span class="element-name type-name-label">RestTemplate</span>
+        </div>
+        <div class="extends-implements">extends Object implements RestOperations</div>
+        <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span>
+            <div class="deprecation-comment">since 6.1, in favor of RestClient</div>
+        </div>
+        <div class="block">Synchronous client to perform HTTP requests, exposing a simple, template
+            method API over underlying HTTP client libraries such as the JDK HttpClient,
+            Apache HttpComponents, and others.
+
+            The RestTemplate offers templates for common scenarios by HTTP method,
+            in addition to the generalized exchange and execute methods that
+            support less frequent cases.</div>
+    </section>
+
+    <!-- Field Detail -->
+    <section class="field-details" id="field-detail">
+        <h2>Field Details</h2>
+        <ul class="member-list">
+            <li>
+                <section class="detail" id="logger">
+                    <h3>logger</h3>
+                    <div class="member-signature"><span class="modifiers">protected static final</span>&nbsp;<span class="return-type">Log</span>&nbsp;<span class="element-name">logger</span></div>
+                    <div class="block">Logger available to subclasses.</div>
+                </section>
+            </li>
+        </ul>
+    </section>
+
+    <!-- Constructor Detail -->
+    <section class="constructor-details" id="constructor-detail">
+        <h2>Constructor Details</h2>
+        <ul class="member-list">
+            <li>
+                <section class="detail" id="RestTemplate()">
+                    <h3>RestTemplate</h3>
+                    <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">RestTemplate</span>()</div>
+                    <div class="block">Create a new instance of the RestTemplate using default settings.</div>
+                </section>
+            </li>
+            <li>
+                <section class="detail" id="RestTemplate(ClientHttpRequestFactory)">
+                    <h3>RestTemplate</h3>
+                    <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">RestTemplate</span>(<span class="parameters">ClientHttpRequestFactory requestFactory</span>)</div>
+                    <div class="block">Create a new instance with the given request factory.</div>
+                </section>
+            </li>
+        </ul>
+    </section>
+
+    <!-- Method Detail -->
+    <section class="method-details" id="method-detail">
+        <h2>Method Details</h2>
+        <ul class="member-list">
+            <li>
+                <section class="detail" id="getForObject(String,Class,Object...)">
+                    <h3>getForObject</h3>
+                    <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">&lt;T&gt; T</span>&nbsp;<span class="element-name">getForObject</span>(<span class="parameters">String url, Class&lt;T&gt; responseType, Object... uriVariables</span>)</div>
+                    <div class="block">Retrieve a representation by doing a GET on the specified URL.</div>
+                </section>
+            </li>
+            <li>
+                <section class="detail" id="getForEntity(String,Class,Object...)">
+                    <h3>getForEntity</h3>
+                    <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">&lt;T&gt; ResponseEntity&lt;T&gt;</span>&nbsp;<span class="element-name">getForEntity</span>(<span class="parameters">String url, Class&lt;T&gt; responseType, Object... uriVariables</span>)</div>
+                    <div class="block">Retrieve an entity by doing a GET on the specified URL.</div>
+                </section>
+            </li>
+            <li>
+                <section class="detail" id="delete(String,Object...)">
+                    <h3>delete</h3>
+                    <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">delete</span>(<span class="parameters">String url, Object... uriVariables</span>)</div>
+                    <div class="block">Delete the resources at the specified URI.</div>
+                </section>
+            </li>
+            <li>
+                <section class="detail" id="postForLocation(String,Object,Object...)">
+                    <h3>postForLocation</h3>
+                    <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">URI</span>&nbsp;<span class="element-name">postForLocation</span>(<span class="parameters">String url, Object request, Object... uriVariables</span>)</div>
+                    <div class="block">Create a new resource by POSTing the given object to the URI template.</div>
+                </section>
+            </li>
+        </ul>
+    </section>
+</main>
+</body>
+</html>
