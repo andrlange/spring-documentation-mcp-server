@@ -241,6 +241,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.4.2 | 2025-12-08 | Javadoc API Documentation feature (4 MCP tools) |
 | 1.4.1 | 2025-12-07 | GitHub docs keyword fix, configurable sync features |
 | 1.4.0 | 2025-12-06 | Boot Initializr integration, Caffeine caching (5 MCP tools) |
 | 1.3.4 | 2025-12-05 | Spring AI 1.1.1, CVE-2025-48924 security fix |
@@ -260,4 +261,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **v1.2.0**: +6 language evolution tools = 23 total
 - **v1.3.0**: +8 flavors tools = 31 total
 - **v1.3.3**: +3 flavor groups tools = 34 total
-- **v1.4.0**: +5 initializr tools = **39 total**
+- **v1.4.0**: +5 initializr tools = 39 total
+- **v1.4.2**: +4 javadoc tools = **43 total**
