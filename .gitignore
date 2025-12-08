@@ -50,7 +50,7 @@ logs/
 .env.local
 playground/
 IMPLEMENTATION.md
-IMPLEMENTATION_JAVADOCS.md
+docs/IMPLEMENTATION_JAVADOCS.md
 
 ### AI
 PHASE*.md
@@ -65,4 +65,4 @@ docs/
 
 /prompts/
 /node_modules/
-/IMPLEMENTATION_INITIALIZR.md
+/docs/IMPLEMENTATION_INITIALIZR.md
