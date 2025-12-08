@@ -49,7 +49,7 @@ http://localhost:6274/?MCP_PROXY_AUTH_TOKEN=3c672c3389d66786f32ffe2f90d6d2116634
 5. Click **"Connect"**
 
 Once connected, you can:
-- **List Tools**: View all 34 available MCP tools
+- **List Tools**: View all 43 available MCP tools
 - **Test Tools**: Execute tools with parameters and see responses
 - **View Logs**: See real-time communication between client and server
 - **Debug Issues**: Inspect request/response payloads
@@ -680,6 +680,132 @@ Get statistics about flavor groups.
 
 ---
 
+### Boot Initializr Tools (5 tools)
+
+#### 35. initializrGetDependency
+Get dependency with formatted Maven or Gradle snippet.
+
+**Parameters**:
+- `dependencyId` (required): Dependency ID (e.g., 'web', 'data-jpa', 'security')
+- `bootVersion` (optional): Spring Boot version for compatibility check
+- `format` (optional): Output format ('maven', 'gradle', 'gradle-kotlin')
+
+```json
+{
+  "dependencyId": "data-jpa",
+  "bootVersion": "3.5.8",
+  "format": "gradle"
+}
+```
+
+#### 36. initializrSearchDependencies
+Search dependencies by name or description.
+
+**Parameters**:
+- `query` (required): Search term
+- `bootVersion` (optional): Spring Boot version filter
+- `category` (optional): Category filter (e.g., 'Web', 'SQL', 'Security')
+- `limit` (optional): Maximum results (default: 20, max: 50)
+
+```json
+{
+  "query": "database",
+  "bootVersion": "3.5.8",
+  "limit": 10
+}
+```
+
+#### 37. initializrCheckCompatibility
+Check dependency compatibility with Spring Boot version.
+
+**Parameters**:
+- `dependencyId` (required): Dependency ID to check
+- `bootVersion` (required): Spring Boot version
+
+```json
+{
+  "dependencyId": "spring-ai",
+  "bootVersion": "4.0.0"
+}
+```
+
+#### 38. initializrGetBootVersions
+List available Spring Boot versions.
+
+**No parameters required**.
+
+#### 39. initializrGetDependencyCategories
+Browse dependencies by category.
+
+**Parameters**:
+- `bootVersion` (optional): Filter by Spring Boot version compatibility
+
+```json
+{
+  "bootVersion": "3.5.8"
+}
+```
+
+---
+
+### Javadoc Tools (4 tools)
+
+#### 40. getClassDoc
+Get full class documentation including methods, fields, and constructors.
+
+**Parameters**:
+- `className` (required): Fully qualified class name or simple class name (e.g., 'RestTemplate', 'org.springframework.web.client.RestTemplate')
+- `library` (optional): Library name filter (e.g., 'spring-boot', 'spring-framework')
+- `version` (optional): Version filter (e.g., '3.5.8')
+
+```json
+{
+  "className": "RestTemplate",
+  "library": "spring-framework",
+  "version": "6.2.1"
+}
+```
+
+#### 41. getPackageDoc
+Get package documentation with list of classes/interfaces.
+
+**Parameters**:
+- `packageName` (required): Package name (e.g., 'org.springframework.web.client')
+- `library` (optional): Library name filter
+- `version` (optional): Version filter
+
+```json
+{
+  "packageName": "org.springframework.web.client",
+  "library": "spring-framework"
+}
+```
+
+#### 42. searchJavadocs
+Full-text search across all Javadoc content.
+
+**Parameters**:
+- `query` (required): Search term
+- `library` (optional): Library name filter
+- `version` (optional): Version filter
+- `kind` (optional): Filter by kind ('CLASS', 'INTERFACE', 'ENUM', 'ANNOTATION', 'RECORD')
+- `limit` (optional): Maximum results (default: 10, max: 50)
+
+```json
+{
+  "query": "WebClient",
+  "library": "spring-framework",
+  "limit": 10
+}
+```
+
+#### 43. listJavadocLibraries
+List all libraries with available Javadoc versions.
+
+**No parameters required**.
+
+---
+
 ## Troubleshooting
 
 ### Java Version Issues
@@ -746,5 +872,5 @@ lsof -ti :8080 | xargs kill -9
 5. **Check registered tools**:
    ```bash
    grep "Registered tools" logs/spring-boot-documentation-mcp-server.log
-   # Should show: Registered tools: 34
+   # Should show: Registered tools: 43
    ```

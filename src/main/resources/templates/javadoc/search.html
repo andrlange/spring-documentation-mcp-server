@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title th:text="${pageTitle + ' - Spring MCP Server'}">Search Javadocs - Spring MCP Server</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a th:href="@{/projects}" class="text-decoration-none">
+                    <i class="bi bi-folder2-open"></i> Projects
+                </a>
+            </li>
+            <li class="breadcrumb-item" th:if="${library}">
+                <a th:href="@{/javadoc/view/{lib}/{ver}(lib=${library}, ver=${version ?: 'latest'})}"
+                   class="text-decoration-none" th:text="${library}">
+                    spring-ai
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="bi bi-search"></i> Search
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-2 mb-4 border-bottom">
+        <h1 class="h2">
+            <i class="bi bi-search text-info"></i> Search Javadocs
+        </h1>
+    </div>
+
+    <!-- Search Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form th:action="@{/javadoc/search}" method="get" class="row g-3">
+                <!-- Search Query -->
+                <div class="col-md-6">
+                    <label for="query" class="form-label">Search Query</label>
+                    <input type="text" class="form-control" id="query" name="q"
+                           th:value="${query}" placeholder="Enter class name, method, or keywords...">
+                </div>
+                <!-- Library Filter -->
+                <div class="col-md-3">
+                    <label for="library" class="form-label">Library</label>
+                    <select class="form-select" id="library" name="library">
+                        <option value="">All Libraries</option>
+                        <option th:each="lib : ${availableLibraries}"
+                                th:value="${lib}"
+                                th:text="${lib}"
+                                th:selected="${lib == library}">
+                            spring-ai
+                        </option>
+                    </select>
+                </div>
+                <!-- Version Filter -->
+                <div class="col-md-2">
+                    <label for="version" class="form-label">Version</label>
+                    <input type="text" class="form-control" id="version" name="version"
+                           th:value="${version}" placeholder="e.g., 1.1.1">
+                </div>
+                <!-- Search Button -->
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-info w-100">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Search Results -->
+    <div th:if="${query != null && !#strings.isEmpty(query)}">
+        <!-- Results Header -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">
+                <span th:text="${totalResults}">0</span> results for
+                <code th:text="${query}">search term</code>
+                <span th:if="${library}" class="text-muted">
+                    in <span th:text="${library}">library</span>
+                    <span th:if="${version}" th:text="' v' + ${version}">v1.0</span>
+                </span>
+            </h5>
+        </div>
+
+        <!-- Results List -->
+        <div th:if="${results != null && !results.isEmpty()}" class="list-group">
+            <a th:each="result : ${results}"
+               th:href="@{/javadoc/view/{lib}/{ver}/class/{fqcn}(lib=${result.libraryName}, ver=${result.version}, fqcn=${result.fqcn})}"
+               class="list-group-item list-group-item-action">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <!-- Class Kind Icon -->
+                        <span class="badge me-2"
+                              th:classappend="${result.kind.name() == 'INTERFACE' ? 'bg-primary' :
+                                              result.kind.name() == 'ENUM' ? 'bg-success' :
+                                              result.kind.name() == 'ANNOTATION' ? 'bg-warning text-dark' :
+                                              result.kind.name() == 'RECORD' ? 'bg-secondary' : 'bg-info'}"
+                              th:text="${result.kind.name().toLowerCase()}">
+                            class
+                        </span>
+                        <!-- Class Name -->
+                        <span class="fw-bold" th:text="${result.simpleName}">ClassName</span>
+                        <!-- Deprecated -->
+                        <span th:if="${result.deprecated}" class="badge bg-warning text-dark ms-1">
+                            Deprecated
+                        </span>
+                        <!-- Package -->
+                        <br/>
+                        <small class="text-muted">
+                            <code th:text="${result.fqcn}">org.springframework.ai.chat.ChatClient</code>
+                        </small>
+                    </div>
+                    <div class="text-end">
+                        <!-- Library & Version Badge -->
+                        <span class="badge bg-secondary">
+                            <span th:text="${result.libraryName}">spring-ai</span>
+                            <span th:text="${result.version}">1.1.1</span>
+                        </span>
+                    </div>
+                </div>
+                <!-- Summary -->
+                <p th:if="${result.summary}" class="mb-0 mt-2 text-muted small"
+                   th:text="${#strings.abbreviate(result.summary, 200)}">
+                    Class summary...
+                </p>
+            </a>
+        </div>
+
+        <!-- No Results -->
+        <div th:if="${results == null || results.isEmpty()}" class="text-center py-5">
+            <i class="bi bi-search display-1 text-muted"></i>
+            <p class="text-muted mt-3">No results found for your search.</p>
+            <p class="text-muted">Try adjusting your search terms or filters.</p>
+        </div>
+    </div>
+
+    <!-- Initial State (no search yet) -->
+    <div th:if="${query == null || #strings.isEmpty(query)}" class="text-center py-5">
+        <i class="bi bi-file-code display-1 text-muted"></i>
+        <p class="text-muted mt-3">Enter a search term to find classes, interfaces, and methods.</p>
+        <p class="text-muted small">
+            Search across all Javadoc documentation stored in the system.<br/>
+            You can filter by library and version for more specific results.
+        </p>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<th:block layout:fragment="scripts">
+    <style>
+        .breadcrumb-item.active {
+            color: #17a2b8;
+        }
+        .list-group-item:hover {
+            background-color: rgba(23, 162, 184, 0.05);
+        }
+    </style>
+</th:block>
+</body>
+</html>

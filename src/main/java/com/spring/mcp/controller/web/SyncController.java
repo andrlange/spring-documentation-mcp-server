@@ -1,9 +1,11 @@
 package com.spring.mcp.controller.web;
 
+import com.spring.mcp.config.JavadocsFeatureConfig;
 import com.spring.mcp.config.LanguageEvolutionFeatureConfig;
 import com.spring.mcp.config.OpenRewriteFeatureConfig;
 import com.spring.mcp.config.SyncFeatureConfig;
 import com.spring.mcp.service.language.LanguageSyncService;
+import com.spring.mcp.service.sync.JavadocSyncService;
 import com.spring.mcp.service.scheduler.LanguageSchedulerService;
 import com.spring.mcp.service.sync.CodeExamplesSyncService;
 import com.spring.mcp.service.sync.ComprehensiveSyncService;
@@ -64,6 +66,10 @@ public class SyncController {
     // Sync feature configuration (for fix-versions button visibility)
     private final SyncFeatureConfig syncFeatureConfig;
 
+    // Javadocs sync (optional - depends on feature being enabled)
+    private final JavadocsFeatureConfig javadocsFeatureConfig;
+    private final Optional<JavadocSyncService> javadocSyncService;
+
     // GitHub Documentation sync
     private final com.spring.mcp.service.github.GitHubDocumentationSyncService gitHubDocumentationSyncService;
 
@@ -84,6 +90,7 @@ public class SyncController {
         model.addAttribute("openRewriteEnabled", openRewriteFeatureConfig.isEnabled());
         model.addAttribute("languageEvolutionEnabled", languageEvolutionFeatureConfig.isEnabled());
         model.addAttribute("fixVersionsEnabled", syncFeatureConfig.getFixVersions().isEnabled());
+        model.addAttribute("javadocsEnabled", javadocsFeatureConfig.isEnabled());
         return "sync/index";
     }
 
@@ -510,6 +517,56 @@ public class SyncController {
 
         } catch (Exception e) {
             String errorMsg = "Error during GitHub documentation sync: " + e.getMessage();
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+            log.error(errorMsg, e);
+        }
+
+        return "redirect:/sync";
+    }
+
+    /**
+     * Trigger manual sync of Javadoc documentation for enabled projects.
+     * Only available when Javadocs feature is enabled.
+     *
+     * @param redirectAttributes for flash messages
+     * @return redirect to sync page
+     */
+    @PostMapping("/javadocs")
+    public String syncJavadocs(RedirectAttributes redirectAttributes) {
+        log.info("Manual Javadocs sync triggered");
+
+        if (!javadocsFeatureConfig.isEnabled()) {
+            redirectAttributes.addFlashAttribute("error", "Javadocs feature is disabled");
+            return "redirect:/sync";
+        }
+
+        if (javadocSyncService.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Javadoc sync service is not available");
+            return "redirect:/sync";
+        }
+
+        try {
+            JavadocSyncService.SyncResult result = javadocSyncService.get().syncAll();
+
+            if (result.isSuccess()) {
+                String message = String.format(
+                    "Javadocs sync completed successfully! Synced %d projects, %d versions, %d new classes (%d skipped/resumed), errors: %d",
+                    result.getProjectsSynced(),
+                    result.getVersionsProcessed(),
+                    result.getClassesStored(),
+                    result.getClassesSkipped(),
+                    result.getErrors().size()
+                );
+                redirectAttributes.addFlashAttribute("success", message);
+                log.info(message);
+            } else {
+                String errorMsg = "Javadocs sync completed with errors";
+                redirectAttributes.addFlashAttribute("error", errorMsg);
+                log.error(errorMsg);
+            }
+
+        } catch (Exception e) {
+            String errorMsg = "Error during Javadocs sync: " + e.getMessage();
             redirectAttributes.addFlashAttribute("error", errorMsg);
             log.error(errorMsg, e);
         }

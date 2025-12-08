@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring Boot Documentation MCP Server
-    version: 1.4.1
+    version: 1.4.2
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.8
@@ -72,11 +72,11 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.4.1"
+        version: "1.4.2"
         instructions: |
           Spring Boot Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 
-          Total: 39 tools available (10 documentation + 7 migration + 6 language evolution + 8 flavors + 3 flavor groups + 5 initializr)
+          Total: 43 tools available (10 documentation + 7 migration + 6 language evolution + 8 flavors + 3 flavor groups + 5 initializr + 4 javadoc)
 
           Documentation Tools (10):
           1. searchSpringDocs: Search across all Spring documentation
@@ -129,6 +129,12 @@ spring:
           38. initializrGetBootVersions: List available Spring Boot versions
           39. initializrGetDependencyCategories: Browse dependencies by category
 
+          Javadoc Tools (4) - API documentation access:
+          40. getClassDoc: Get full class documentation with methods, fields, constructors
+          41. getPackageDoc: Get package documentation with list of classes/interfaces
+          42. searchJavadocs: Full-text search across all Javadoc content
+          43. listJavadocLibraries: List all libraries with available versions
+
           SSE endpoint: /mcp/spring/sse
           Message endpoint: /mcp/spring/messages
 
@@ -152,6 +158,7 @@ server:
   servlet:
     session:
       timeout: 30m
+      persistent: false  # Disable session persistence to avoid deserialization errors on restart
 
 # Lifecycle configuration - limit shutdown wait time
 spring.lifecycle:
@@ -303,6 +310,39 @@ mcp:
         build-type: "gradle-project"
         group-id: "com.example"
         artifact-id: "demo"
+
+    # Javadocs Downloader Feature Configuration (Release 1.4.2)
+    javadocs:
+      enabled: ${JAVADOCS_ENABLED:true}
+      sync:
+        enabled: ${JAVADOCS_SYNC_ENABLED:true}
+        max-failures: 5
+        rate-limit-ms: 500
+        batch-size: 50
+        schedule: "0 0 4 * * SUN"  # Weekly on Sunday at 4 AM
+        on-startup: false
+      parser:
+        connection-timeout-ms: 10000
+        read-timeout-ms: 30000
+        user-agent: "Spring-MCP-Server/1.4.2 (Javadoc-Crawler)"
+        max-depth: 3
+        max-classes-per-package: 500
+        max-methods-per-class: 200
+        max-retries: 3
+        retry-delay-ms: 1000
+      cache:
+        enabled: true
+        ttl-seconds: 3600
+        max-entries: 1000
+      search:
+        default-limit: 10
+        max-limit: 50
+        full-text-search: true
+        include-methods: true
+        include-fields: false
+      attribution:
+        notice: "Javadoc content sourced from Spring projects. See individual project licenses."
+        base-url: "https://docs.spring.io"
 
 # GitHub Configuration for Documentation Fetching
 github:

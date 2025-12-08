@@ -1,6 +1,7 @@
 package com.spring.mcp.service.sync;
 
 import com.spring.mcp.config.GitHubProperties;
+import com.spring.mcp.config.JavadocsFeatureConfig;
 import com.spring.mcp.config.OpenRewriteFeatureConfig;
 import com.spring.mcp.model.entity.SpringProject;
 import com.spring.mcp.model.event.SyncProgressEvent;
@@ -45,6 +46,10 @@ public class ComprehensiveSyncService {
     private final GitHubProperties gitHubProperties;
     private final Optional<GitHubDocumentationSyncService> gitHubDocSyncService;
 
+    // Javadoc sync (API documentation from docs.spring.io)
+    private final JavadocsFeatureConfig javadocsFeatureConfig;
+    private final Optional<JavadocSyncService> javadocSyncService;
+
     /**
      * Synchronize ALL Spring projects and versions from all available sources.
      * This is the master sync method that should be called to ensure complete data.
@@ -62,8 +67,8 @@ public class ComprehensiveSyncService {
 
         try {
             // PHASE 0: Sync Spring Boot versions to spring_boot_versions table (PRIMARY TABLE)
-            log.info("Phase 0/9: Syncing Spring Boot versions to spring_boot_versions table...");
-            publishProgress(0, 9, "Syncing Spring Boot versions", "running", 0);
+            log.info("Phase 0/10: Syncing Spring Boot versions to spring_boot_versions table...");
+            publishProgress(0, 10, "Syncing Spring Boot versions", "running", 0);
             SpringBootVersionSyncService.SyncResult bootVersionsResult = springBootVersionSyncService.syncSpringBootVersions();
             result.setBootVersionsResult(bootVersionsResult);
             result.addVersionsCreated(bootVersionsResult.getVersionsCreated());
@@ -79,8 +84,8 @@ public class ComprehensiveSyncService {
             }
 
             // PHASE 1: Sync from Spring Generations API (Spring Boot with support dates)
-            log.info("Phase 1/9: Syncing from Spring Generations API...");
-            publishProgress(1, 9, "Syncing from Spring Generations API", "running", 11);
+            log.info("Phase 1/10: Syncing from Spring Generations API...");
+            publishProgress(1, 10, "Syncing from Spring Generations API", "running", 10);
             SpringGenerationsSyncService.SyncResult generationsResult = generationsSyncService.syncAllGenerations();
             result.setGenerationsResult(generationsResult);
             result.addProjectsCreated(generationsResult.getProjectsCreated());
@@ -96,8 +101,8 @@ public class ComprehensiveSyncService {
             }
 
             // PHASE 2: Sync from Spring Initializr (additional Spring Boot versions)
-            log.info("Phase 2/9: Syncing from Spring Initializr API...");
-            publishProgress(2, 9, "Syncing from Spring Initializr API", "running", 22);
+            log.info("Phase 2/10: Syncing from Spring Initializr API...");
+            publishProgress(2, 10, "Syncing from Spring Initializr API", "running", 20);
             ProjectSyncService.SyncResult initializrResult = projectSyncService.syncSpringBoot();
             result.setInitializrResult(initializrResult);
             result.addProjectsCreated(initializrResult.getProjectsCreated());
@@ -113,8 +118,8 @@ public class ComprehensiveSyncService {
             }
 
             // PHASE 3: Crawl project pages to enrich version data
-            log.info("Phase 3/9: Crawling Spring project pages for documentation links and support dates...");
-            publishProgress(3, 9, "Crawling Spring project pages", "running", 33);
+            log.info("Phase 3/10: Crawling Spring project pages for documentation links and support dates...");
+            publishProgress(3, 10, "Crawling Spring project pages", "running", 30);
             CrawlerResult crawlerResult = crawlAllProjects();
             result.setCrawlerResult(crawlerResult);
             result.addVersionsUpdated(crawlerResult.getTotalVersionsUpdated());
@@ -131,8 +136,8 @@ public class ComprehensiveSyncService {
             }
 
             // PHASE 4: Sync project relationships (parent/child hierarchies)
-            log.info("Phase 4/9: Syncing project relationships (parent/child hierarchies)...");
-            publishProgress(4, 9, "Syncing project relationships", "running", 44);
+            log.info("Phase 4/10: Syncing project relationships (parent/child hierarchies)...");
+            publishProgress(4, 10, "Syncing project relationships", "running", 40);
             ProjectRelationshipSyncService.SyncResult relationshipsResult = projectRelationshipSyncService.syncProjectRelationships();
             result.setRelationshipsResult(relationshipsResult);
             result.addRelationshipsCreated(relationshipsResult.getRelationshipsCreated());
@@ -147,8 +152,8 @@ public class ComprehensiveSyncService {
             }
 
             // PHASE 5: Sync documentation content (fetch OVERVIEW from spring.io and convert to Markdown)
-            log.info("Phase 5/9: Syncing documentation content (OVERVIEW from spring.io)...");
-            publishProgress(5, 9, "Syncing documentation content", "running", 55);
+            log.info("Phase 5/10: Syncing documentation content (OVERVIEW from spring.io)...");
+            publishProgress(5, 10, "Syncing documentation content", "running", 50);
             DocumentationSyncService.SyncResult documentationResult = documentationSyncService.syncAllDocumentation();
             result.setDocumentationResult(documentationResult);
             result.addDocumentationLinksCreated(documentationResult.getLinksCreated());
@@ -164,8 +169,8 @@ public class ComprehensiveSyncService {
             }
 
             // PHASE 6: Sync code examples (extract samples from spring.io project pages)
-            log.info("Phase 6/9: Syncing code examples (samples from spring.io)...");
-            publishProgress(6, 9, "Syncing code examples", "running", 66);
+            log.info("Phase 6/10: Syncing code examples (samples from spring.io)...");
+            publishProgress(6, 10, "Syncing code examples", "running", 60);
             CodeExamplesSyncService.SyncResult codeExamplesResult = codeExamplesSyncService.syncCodeExamples();
             result.setCodeExamplesResult(codeExamplesResult);
             result.addCodeExamplesCreated(codeExamplesResult.getExamplesCreated());
@@ -183,8 +188,8 @@ public class ComprehensiveSyncService {
             // PHASE 7: Sync OpenRewrite migration recipes (conditional on feature flag)
             RecipeSyncService.RecipeSyncResult recipeSyncResult = null;
             if (openRewriteFeatureConfig.isEnabled() && recipeSyncService.isPresent()) {
-                log.info("Phase 7/9: Syncing OpenRewrite migration recipes...");
-                publishProgress(7, 9, "Syncing migration recipes", "running", 77);
+                log.info("Phase 7/10: Syncing OpenRewrite migration recipes...");
+                publishProgress(7, 10, "Syncing migration recipes", "running", 70);
                 try {
                     recipeSyncService.get().syncRecipes();
                     RecipeSyncService.RecipeSyncStatus status = recipeSyncService.get().getSyncStatus();
@@ -205,8 +210,8 @@ public class ComprehensiveSyncService {
                     result.addErrorsEncountered(1);
                 }
             } else {
-                log.info("Phase 7/9: Skipping OpenRewrite recipe sync (feature disabled or service unavailable)");
-                publishProgress(7, 9, "Recipe sync skipped", "running", 77);
+                log.info("Phase 7/10: Skipping OpenRewrite recipe sync (feature disabled or service unavailable)");
+                publishProgress(7, 10, "Recipe sync skipped", "running", 70);
                 recipeSyncResult = new RecipeSyncService.RecipeSyncResult(true, 0, 0, 0, "Feature disabled");
                 result.setRecipeSyncResult(recipeSyncResult);
             }
@@ -214,8 +219,8 @@ public class ComprehensiveSyncService {
             // PHASE 8: Sync GitHub documentation (AsciiDoc from GitHub repositories)
             GitHubDocumentationSyncService.GitHubSyncResult gitHubSyncResult = null;
             if (gitHubProperties.getDocumentation().isEnabled() && gitHubDocSyncService.isPresent()) {
-                log.info("Phase 8/9: Syncing documentation from GitHub repositories (AsciiDoc)...");
-                publishProgress(8, 9, "Syncing GitHub documentation", "running", 88);
+                log.info("Phase 8/10: Syncing documentation from GitHub repositories (AsciiDoc)...");
+                publishProgress(8, 10, "Syncing GitHub documentation", "running", 80);
                 try {
                     gitHubSyncResult = gitHubDocSyncService.get().syncAll();
                     result.setGitHubSyncResult(gitHubSyncResult);
@@ -234,12 +239,44 @@ public class ComprehensiveSyncService {
                     result.addErrorsEncountered(1);
                 }
             } else {
-                log.info("Phase 8/9: Skipping GitHub documentation sync (feature disabled or service unavailable)");
-                publishProgress(8, 9, "GitHub sync skipped", "running", 88);
+                log.info("Phase 8/10: Skipping GitHub documentation sync (feature disabled or service unavailable)");
+                publishProgress(8, 10, "GitHub sync skipped", "running", 80);
                 gitHubSyncResult = new GitHubDocumentationSyncService.GitHubSyncResult();
                 gitHubSyncResult.setSuccess(true);
                 gitHubSyncResult.setErrorMessage("Feature disabled");
                 result.setGitHubSyncResult(gitHubSyncResult);
+            }
+
+            // PHASE 9: Sync Javadocs (API documentation from docs.spring.io)
+            JavadocSyncService.SyncResult javadocSyncResult = null;
+            if (javadocsFeatureConfig.isEnabled() && javadocSyncService.isPresent()) {
+                log.info("Phase 9/10: Syncing Javadocs from docs.spring.io...");
+                publishProgress(9, 10, "Syncing Javadocs", "running", 90);
+                try {
+                    javadocSyncResult = javadocSyncService.get().syncAll();
+                    result.setJavadocSyncResult(javadocSyncResult);
+                    result.addJavadocClassesStored(javadocSyncResult.getClassesStored());
+                    result.addJavadocMethodsStored(javadocSyncResult.getMethodsStored());
+                    if (!javadocSyncResult.getErrors().isEmpty()) {
+                        result.addErrorsEncountered(javadocSyncResult.getErrors().size());
+                    }
+                    log.info("✓ Phase 9 completed: {} projects, {} versions, {} classes synced",
+                        javadocSyncResult.getProjectsSynced(),
+                        javadocSyncResult.getVersionsProcessed(),
+                        javadocSyncResult.getClassesStored());
+                } catch (Exception e) {
+                    log.warn("✗ Phase 9 completed with errors: {}", e.getMessage());
+                    javadocSyncResult = JavadocSyncService.SyncResult.builder()
+                        .errors(List.of(e.getMessage()))
+                        .build();
+                    result.setJavadocSyncResult(javadocSyncResult);
+                    result.addErrorsEncountered(1);
+                }
+            } else {
+                log.info("Phase 9/10: Skipping Javadocs sync (feature disabled or service unavailable)");
+                publishProgress(9, 10, "Javadocs sync skipped", "running", 90);
+                javadocSyncResult = JavadocSyncService.SyncResult.builder().build();
+                result.setJavadocSyncResult(javadocSyncResult);
             }
 
             // Determine overall success
@@ -251,7 +288,8 @@ public class ComprehensiveSyncService {
                             documentationResult.isSuccess() &&
                             codeExamplesResult.isSuccess() &&
                             (recipeSyncResult == null || recipeSyncResult.success()) &&
-                            (gitHubSyncResult == null || gitHubSyncResult.isSuccess()));
+                            (gitHubSyncResult == null || gitHubSyncResult.isSuccess()) &&
+                            (javadocSyncResult == null || javadocSyncResult.isSuccess()));
 
             // Build summary message
             StringBuilder summary = new StringBuilder();
@@ -378,6 +416,8 @@ public class ComprehensiveSyncService {
         private int totalDocumentationLinksUpdated;
         private int totalCodeExamplesCreated;
         private int totalCodeExamplesUpdated;
+        private int totalJavadocClassesStored;
+        private int totalJavadocMethodsStored;
         private int totalErrors;
 
         // Individual phase results
@@ -390,6 +430,7 @@ public class ComprehensiveSyncService {
         private CodeExamplesSyncService.SyncResult codeExamplesResult;
         private RecipeSyncService.RecipeSyncResult recipeSyncResult;
         private GitHubDocumentationSyncService.GitHubSyncResult gitHubSyncResult;
+        private JavadocSyncService.SyncResult javadocSyncResult;
 
         // Helper methods to aggregate statistics
         public void addProjectsCreated(int count) {
@@ -422,6 +463,14 @@ public class ComprehensiveSyncService {
 
         public void addCodeExamplesUpdated(int count) {
             this.totalCodeExamplesUpdated += count;
+        }
+
+        public void addJavadocClassesStored(int count) {
+            this.totalJavadocClassesStored += count;
+        }
+
+        public void addJavadocMethodsStored(int count) {
+            this.totalJavadocMethodsStored += count;
         }
 
         public void addErrorsEncountered(int count) {
@@ -459,8 +508,8 @@ public class ComprehensiveSyncService {
      */
     private void publishCompletion(boolean success, String message) {
         SyncProgressEvent event = SyncProgressEvent.builder()
-            .currentPhase(9)
-            .totalPhases(9)
+            .currentPhase(10)
+            .totalPhases(10)
             .phaseDescription("Sync Complete")
             .status(success ? "completed" : "error")
             .progressPercent(100)

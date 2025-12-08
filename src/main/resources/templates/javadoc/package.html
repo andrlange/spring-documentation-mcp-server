@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title th:text="${pageTitle + ' - Spring MCP Server'}">Package - Spring MCP Server</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a th:href="@{/projects}" class="text-decoration-none">
+                    <i class="bi bi-folder2-open"></i> Projects
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a th:href="@{/javadoc/view/{lib}/{ver}(lib=${library}, ver=${version})}"
+                   class="text-decoration-none" th:text="${library}">
+                    spring-ai
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a th:href="@{/javadoc/view/{lib}/{ver}(lib=${library}, ver=${version})}"
+                   class="text-decoration-none" th:text="${version}">
+                    1.1.1
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <code th:text="${package.packageName}">org.springframework.ai.chat</code>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-2 mb-3 border-bottom">
+        <div>
+            <h1 class="h2">
+                <i class="bi bi-folder text-info"></i>
+                Package <code th:text="${package.packageName}">org.springframework.ai.chat</code>
+            </h1>
+            <p class="text-muted mb-0" th:if="${package.summary}" th:text="${package.summary}">
+                Package description...
+            </p>
+        </div>
+        <div class="btn-toolbar">
+            <a th:href="@{/javadoc/view/{lib}/{ver}(lib=${library}, ver=${version})}"
+               class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Package List
+            </a>
+        </div>
+    </div>
+
+    <!-- Package Description -->
+    <div th:if="${package.description}" class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Description</h5>
+            <div th:utext="${package.description}">
+                Detailed package description...
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-info bg-opacity-10 border-info">
+                <div class="card-body text-center">
+                    <h3 class="mb-0" th:text="${totalClasses}">0</h3>
+                    <small class="text-muted">Classes/Interfaces</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Classes by Kind -->
+    <th:block th:each="entry : ${classesByKind}">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i th:classappend="${entry.key == 'INTERFACE' ? 'bi-file-code' :
+                                        entry.key == 'ENUM' ? 'bi-list-ol' :
+                                        entry.key == 'ANNOTATION' ? 'bi-at' :
+                                        entry.key == 'RECORD' ? 'bi-braces' : 'bi-file-earmark-code'}"
+                       class="bi text-info"></i>
+                    <span th:text="${entry.key + 's'}">Classes</span>
+                    <span class="badge bg-secondary ms-2" th:text="${#lists.size(entry.value)}">0</span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" style="width: 30%;">Name</th>
+                                <th scope="col">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="cls : ${entry.value}">
+                                <td>
+                                    <a th:href="@{/javadoc/view/{lib}/{ver}/class/{fqcn}(lib=${library}, ver=${version}, fqcn=${cls.fqcn})}"
+                                       class="text-decoration-none fw-semibold">
+                                        <span th:text="${cls.simpleName}">ClassName</span>
+                                    </a>
+                                    <span th:if="${cls.deprecated}" class="badge bg-warning text-dark ms-1">
+                                        Deprecated
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${cls.summary}" th:text="${#strings.abbreviate(cls.summary, 150)}">
+                                        Class description...
+                                    </span>
+                                    <span th:unless="${cls.summary}" class="text-muted fst-italic">
+                                        No description available
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <!-- Empty State -->
+    <div th:if="${#maps.isEmpty(classesByKind)}" class="text-center py-5">
+        <i class="bi bi-folder-x display-1 text-muted"></i>
+        <p class="text-muted mt-3">No classes found in this package.</p>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<th:block layout:fragment="scripts">
+    <style>
+        .breadcrumb-item.active {
+            color: #17a2b8;
+        }
+    </style>
+</th:block>
+</body>
+</html>

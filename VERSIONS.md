@@ -6,7 +6,7 @@ This document tracks the version configuration across all project files to ensur
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Application** | 1.4.0 | Spring MCP Server |
+| **Application** | 1.4.2 | Spring MCP Server |
 | **Java (JDK)** | 25 | LTS version |
 | **Spring Boot** | 3.5.8 | Latest stable |
 | **Spring AI** | 1.1.1 | MCP Server support |
@@ -17,7 +17,7 @@ This document tracks the version configuration across all project files to ensur
 
 ### build.gradle
 ```groovy
-version = '1.4.0'
+version = '1.4.2'
 
 java {
     toolchain {
@@ -49,7 +49,7 @@ services:
   postgres:
     image: postgres:18-alpine
   spring-boot-documentation-mcp-server:
-    image: spring-boot-documentation-mcp-server:1.4.0
+    image: spring-boot-documentation-mcp-server:1.4.2
 ```
 
 ### application.yml
@@ -58,7 +58,7 @@ services:
 info:
   app:
     name: Spring MCP Server
-    version: 1.4.0
+    version: 1.4.2
   spring-boot:
     version: 3.5.8
 
@@ -66,12 +66,12 @@ spring:
   ai:
     mcp:
       server:
-        version: "1.4.0"
+        version: "1.4.2"
 ```
 
 ### build-container.sh
 ```bash
-APP_VERSION="1.4.0"
+APP_VERSION="1.4.2"
 JAVA_VERSION="25"
 ```
 

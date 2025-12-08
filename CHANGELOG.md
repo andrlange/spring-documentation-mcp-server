@@ -5,6 +5,32 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2025-12-08
+
+### Added
+- **Javadoc API Documentation**: Comprehensive Javadoc crawler, storage, and search for Spring projects
+    - **Automated Crawling**: Discovers and parses Javadoc HTML from docs.spring.io
+    - **Structured Storage**: Packages, classes, methods, fields, constructors stored in PostgreSQL
+    - **Full-Text Search**: PostgreSQL tsvector/GIN indexes for efficient search across all content
+    - **Version Awareness**: Track multiple versions per library with latest version resolution
+    - **Per-Project Toggle**: Enable/disable sync for each Spring project on the projects list
+    - **Project Detail Integration**: View synced Javadocs directly from the project detail page (`/projects/{id}`)
+    - **Local Javadoc Viewer**: Browse packages, classes, methods, and fields at `/javadoc/view/{library}/{version}/`
+    - **Sync Page Integration**: New Phase 9 card for manual Javadoc synchronization
+    - Database schema: 6 new tables (`javadoc_sync_status`, `javadoc_packages`, `javadoc_classes`, `javadoc_methods`, `javadoc_fields`, `javadoc_constructors`)
+    - 4 new MCP tools for AI assistants:
+        - `getClassDoc`: Get full class documentation including methods, fields, constructors
+        - `getPackageDoc`: Get package documentation with list of classes/interfaces
+        - `searchJavadocs`: Full-text search across all Javadoc content
+        - `listJavadocLibraries`: List all libraries with available versions
+    - Configurable via `mcp.features.javadocs.enabled` (default: true)
+    - Services: `JavadocFetcherService`, `JavadocParserService`, `JavadocCrawlService`, `JavadocStorageService`, `JavadocVersionService`
+
+### Changed
+- Total MCP tools increased from 39 to **43**
+
+---
+
 ## [1.4.1] - 2025-12-07
 
 ### Fixed
