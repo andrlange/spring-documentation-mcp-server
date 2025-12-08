@@ -82,8 +82,10 @@ public class SecurityConfig {
             .httpBasic(basic -> basic.disable())
             .csrf(csrf -> csrf
                 // Disable CSRF for MCP endpoints as they use API key authentication
+                // Also disable for AJAX endpoints in settings that use JSON responses
                 .ignoringRequestMatchers("/mcp/**", "/sse", "/message", "/mcp/spring/sse", "/mcp/spring/messages",
-                    "/api/mcp/**", "/sync/**", "/settings/api-keys/**")
+                    "/api/mcp/**", "/sync/**", "/settings/api-keys/**", "/settings/global/**",
+                    "/settings/scheduler/time-format", "/settings/language-scheduler/time-format")
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)

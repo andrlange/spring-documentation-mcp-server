@@ -189,7 +189,8 @@ mcp:
 
     fetch:
       enabled: true
-      schedule: "0 0 2 * * ?" # Daily at 2 AM
+      # Note: Schedule is managed via UI-configurable Comprehensive Sync scheduler
+      # Individual schedules removed - all sync happens through Comprehensive Sync phases
       timeout: 30000 # 30 seconds
       retry:
         max-attempts: 3
@@ -228,8 +229,8 @@ mcp:
     openrewrite:
       enabled: ${OPENREWRITE_ENABLED:true}
       sync:
-        enabled: ${OPENREWRITE_SYNC_ENABLED:true}
-        schedule: "0 0 3 * * SUN"  # Every Sunday at 3 AM
+        # Note: Runs as Phase 7 of Comprehensive Sync - schedule managed via UI
+        enabled: ${OPENREWRITE_SYNC_ENABLED:true}  # Enabled by default (runs with comprehensive sync)
       github:
         base-url: "https://raw.githubusercontent.com/openrewrite/rewrite-spring/main"
         owner: "openrewrite"
@@ -242,10 +243,12 @@ mcp:
         notice: "Recipe data sourced from OpenRewrite project. Not for commercial redistribution."
 
     # Language Evolution Feature Configuration
+    # Note: This feature has its OWN scheduler (separate from Comprehensive Sync)
+    # Configurable via UI at /settings - Language Evolution accordion
     language-evolution:
       enabled: ${LANGUAGE_EVOLUTION_ENABLED:true}
       sync:
-        enabled: ${LANGUAGE_SYNC_ENABLED:true}
+        enabled: ${LANGUAGE_SYNC_ENABLED:false}  # Disabled by default - enable via UI
         default-frequency: DAILY
         default-time: "04:00"
       sources:
@@ -315,11 +318,11 @@ mcp:
     javadocs:
       enabled: ${JAVADOCS_ENABLED:true}
       sync:
-        enabled: ${JAVADOCS_SYNC_ENABLED:true}
+        # Note: Runs as Phase 9 of Comprehensive Sync - schedule managed via UI
+        enabled: ${JAVADOCS_SYNC_ENABLED:true}  # Enabled by default (runs with comprehensive sync)
         max-failures: 5
         rate-limit-ms: 500
         batch-size: 50
-        schedule: "0 0 4 * * SUN"  # Weekly on Sunday at 4 AM
         on-startup: false
       parser:
         connection-timeout-ms: 10000
@@ -356,8 +359,8 @@ github:
     retry-delay: 1000  # 1 second
 
   documentation:
-    enabled: true
-    schedule: "0 0 4 * * ?"  # Daily at 4 AM
+    # Note: Runs as Phase 8 of Comprehensive Sync - schedule managed via UI
+    enabled: ${GITHUB_DOCS_ENABLED:true}  # Enabled by default (runs with comprehensive sync)
     max-files-per-sync: 500
     file-extensions:
       - .adoc

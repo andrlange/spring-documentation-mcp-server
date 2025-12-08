@@ -50,6 +50,7 @@ logs/
 .env.local
 playground/
 IMPLEMENTATION.md
+IMPLEMENTATION_JAVADOCS.md
 
 ### AI
 PHASE*.md

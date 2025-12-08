@@ -125,6 +125,90 @@
                 padding: 0.75rem;
             }
         }
+
+        /* Dark Theme Accordion for Schedulers */
+        .schedule-status-card .accordion-item {
+            background: transparent;
+            border-color: rgba(99, 179, 237, 0.15) !important;
+        }
+
+        .schedule-status-card .accordion-button {
+            background: rgba(255, 255, 255, 0.03);
+            color: #e2e8f0;
+            border: none;
+            box-shadow: none;
+        }
+
+        .schedule-status-card .accordion-button:not(.collapsed) {
+            background: rgba(99, 179, 237, 0.1);
+            color: #63b3ed;
+            box-shadow: none;
+        }
+
+        .schedule-status-card .accordion-button::after {
+            filter: invert(1);
+        }
+
+        .schedule-status-card .accordion-button:focus {
+            box-shadow: none;
+            border-color: rgba(99, 179, 237, 0.3);
+        }
+
+        .schedule-status-card .accordion-body {
+            background: rgba(255, 255, 255, 0.02);
+            color: #a0aec0;
+        }
+
+        .schedule-status-card .form-label {
+            color: #a0aec0;
+        }
+
+        .schedule-status-card .form-select,
+        .schedule-status-card .form-control {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: rgba(99, 179, 237, 0.2);
+            color: #e2e8f0;
+        }
+
+        .schedule-status-card .form-select:focus,
+        .schedule-status-card .form-control:focus {
+            background-color: rgba(255, 255, 255, 0.08);
+            border-color: rgba(99, 179, 237, 0.5);
+            box-shadow: 0 0 0 0.2rem rgba(99, 179, 237, 0.15);
+            color: #e2e8f0;
+        }
+
+        .schedule-status-card .form-select option {
+            background-color: #1a1f2e;
+            color: #e2e8f0;
+        }
+
+        .schedule-status-card .form-check-input {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(99, 179, 237, 0.3);
+        }
+
+        .schedule-status-card .form-check-input:checked {
+            background-color: #63b3ed;
+            border-color: #63b3ed;
+        }
+
+        .schedule-status-card .form-check-label {
+            color: #e2e8f0;
+        }
+
+        .schedule-status-card .btn-primary {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            border: none;
+        }
+
+        .schedule-status-card .btn-primary:hover {
+            background: linear-gradient(135deg, #63b3ed 0%, #4299e1 100%);
+        }
+
+        .schedule-status-card .form-text {
+            color: #718096;
+        }
     </style>
 </head>
 <body>
@@ -231,392 +315,406 @@
         </div>
     </div>
 
-    <!-- Scheduler Configuration -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white border-bottom">
-            <h5 class="mb-0">
-                <i class="bi bi-clock-history text-primary"></i> Automatic Sync Scheduler
-            </h5>
-            <small class="text-muted">Configure automatic comprehensive synchronization schedule</small>
-        </div>
-        <div class="card-body">
-            <form th:action="@{/settings/scheduler}" method="post" id="schedulerForm">
-                <div class="row mb-4">
-                    <!-- Enable/Disable Scheduling -->
-                    <div class="col-md-12 mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox"
-                                   id="syncEnabled"
-                                   name="syncEnabled"
-                                   th:checked="${schedulerSettings.syncEnabled}">
-                            <label class="form-check-label" for="syncEnabled">
-                                <strong>Enable Automatic Sync</strong>
-                            </label>
-                        </div>
-                        <small class="form-text text-muted d-block mt-1">
-                            <i class="bi bi-info-circle"></i>
-                            When enabled, comprehensive sync runs automatically at the scheduled time daily.
-                        </small>
-                    </div>
-
-                    <!-- Sync Time -->
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-clock"></i> Sync Time
-                        </label>
-
-                        <!-- Hidden input to store the final 24h format time -->
-                        <input type="hidden" id="syncTime" name="syncTime" th:value="${schedulerSettings.syncTime}">
-
-                        <!-- 24h Format Dropdowns -->
-                        <div id="time24hContainer" class="d-flex gap-2">
-                            <select class="form-select" id="hour24" style="width: 80px;">
-                                <!-- Hours 0-23 -->
-                            </select>
-                            <span class="align-self-center">:</span>
-                            <select class="form-select" id="minute24" style="width: 80px;">
-                                <!-- Minutes 0-59 -->
-                            </select>
-                        </div>
-
-                        <!-- 12h Format Dropdowns -->
-                        <div id="time12hContainer" class="d-none d-flex gap-2">
-                            <select class="form-select" id="hour12" style="width: 80px;">
-                                <!-- Hours 1-12 -->
-                            </select>
-                            <span class="align-self-center">:</span>
-                            <select class="form-select" id="minute12" style="width: 80px;">
-                                <!-- Minutes 0-59 -->
-                            </select>
-                            <select class="form-select" id="ampm" style="width: 80px;">
-                                <option value="AM">AM</option>
-                                <option value="PM">PM</option>
-                            </select>
-                        </div>
-
-                        <small class="form-text text-muted d-block mt-1">
-                            Time when automatic sync will run daily
-                        </small>
-                    </div>
-
-                    <!-- Time Format Toggle -->
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-toggle-on"></i> Time Display Format
-                        </label>
-                        <div class="btn-group w-100" role="group">
-                            <input type="radio" class="btn-check" name="timeFormatToggle" id="format24h"
-                                   value="24h" th:checked="${schedulerSettings.timeFormat == '24h'}"
-                                   onchange="updateTimeFormat('24h')">
-                            <label class="btn btn-outline-primary" for="format24h">24h</label>
-
-                            <input type="radio" class="btn-check" name="timeFormatToggle" id="format12h"
-                                   value="12h" th:checked="${schedulerSettings.timeFormat == '12h'}"
-                                   onchange="updateTimeFormat('12h')">
-                            <label class="btn btn-outline-primary" for="format12h">12h</label>
-                        </div>
-                        <small class="form-text text-muted d-block mt-1">
-                            Display preference (updates immediately)
-                        </small>
-                    </div>
+    <!-- Schedulers Section (Dark Theme) -->
+    <div class="schedule-status-card mb-4">
+        <div class="schedule-status-header d-flex justify-content-between align-items-center">
+            <div>
+                <i class="bi bi-calendar-range me-2"></i>
+                <span>Schedulers</span>
+                <small class="d-block text-muted mt-1" style="font-weight: 400; font-size: 0.8rem;">Configure automatic synchronization schedules</small>
+            </div>
+            <!-- Global Time Format Toggle -->
+            <div class="d-flex align-items-center">
+                <span class="text-muted me-2 small">Time Format:</span>
+                <div class="btn-group btn-group-sm" role="group">
+                    <input type="radio" class="btn-check" name="globalTimeFormatToggle" id="globalFormat24h"
+                           value="24h" th:checked="${globalTimeFormat == '24h'}"
+                           onchange="updateGlobalTimeFormat('24h')">
+                    <label class="btn btn-outline-info" for="globalFormat24h">24h</label>
+                    <input type="radio" class="btn-check" name="globalTimeFormatToggle" id="globalFormat12h"
+                           value="12h" th:checked="${globalTimeFormat == '12h'}"
+                           onchange="updateGlobalTimeFormat('12h')">
+                    <label class="btn btn-outline-info" for="globalFormat12h">12h</label>
                 </div>
-
-                <!-- Current Schedule Status - Beautiful Dark Theme -->
-                <div th:if="${schedulerSettings.syncEnabled}" class="schedule-status-card mb-3">
-                    <div class="schedule-status-header">
-                        <i class="bi bi-clock-history me-2"></i>
-                        <span>Current Schedule Status</span>
-                    </div>
-                    <div class="schedule-status-body">
-                        <div class="row g-3">
-                            <div class="col-md-6 col-lg-3">
-                                <div class="status-item">
-                                    <div class="status-label">
-                                        <i class="bi bi-power text-success me-1"></i>
-                                        Status
-                                    </div>
-                                    <div class="status-value">
-                                        <span class="badge-status badge-status-active">
-                                            <i class="bi bi-check-circle-fill me-1"></i>
-                                            Active
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-3">
-                                <div class="status-item">
-                                    <div class="status-label">
-                                        <i class="bi bi-alarm text-info me-1"></i>
-                                        Scheduled Time
-                                    </div>
-                                    <div class="status-value">
-                                        <code class="time-display" id="displayTimeText" th:text="${displayTime}">03:00</code>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-3">
-                                <div class="status-item">
-                                    <div class="status-label">
-                                        <i class="bi bi-clock-history text-warning me-1"></i>
-                                        Last Run
-                                    </div>
-                                    <div class="status-value">
-                                        <span th:if="${schedulerSettings.lastSyncRun}"
-                                              th:text="${#temporals.format(schedulerSettings.lastSyncRun, 'MMM dd, HH:mm')}">
-                                            Never
-                                        </span>
-                                        <span class="text-muted-custom" th:unless="${schedulerSettings.lastSyncRun}">
-                                            Never
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-3">
-                                <div class="status-item">
-                                    <div class="status-label">
-                                        <i class="bi bi-calendar-event text-primary me-1"></i>
-                                        Next Run
-                                    </div>
-                                    <div class="status-value">
-                                        <span class="text-primary-custom" th:if="${schedulerSettings.nextSyncRun}"
-                                              th:text="${#temporals.format(schedulerSettings.nextSyncRun, 'MMM dd, HH:mm')}">
-                                            Calculating...
-                                        </span>
-                                        <span class="text-muted-custom" th:unless="${schedulerSettings.nextSyncRun}">
-                                            Not scheduled
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-calendar-check"></i> Set New Schedule
-                    </button>
-                </div>
-            </form>
-
-            <div class="alert alert-info border-0 mt-3 mb-0">
-                <i class="bi bi-info-circle-fill text-warning"></i>
-                <strong>Note:</strong> The scheduler runs comprehensive sync which includes all 7 phases.
-                Changes to schedule take effect immediately after clicking "Set New Schedule".
             </div>
         </div>
-    </div>
+        <div class="schedule-status-body p-0">
+            <!-- Scheduler Accordion -->
+            <div class="accordion" id="schedulerAccordion">
+                <!-- Comprehensive Sync Scheduler -->
+                <div class="accordion-item border-0 border-bottom">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#comprehensiveSyncScheduler" aria-expanded="true">
+                            <i class="bi bi-clock-history me-2" style="color: #63b3ed;"></i>
+                            <strong>Comprehensive Sync</strong>
+                            <span th:if="${schedulerSettings != null and schedulerSettings.syncEnabled}"
+                                  class="badge bg-success ms-2">Active</span>
+                            <span th:if="${schedulerSettings == null or !schedulerSettings.syncEnabled}"
+                                  class="badge bg-secondary ms-2">Disabled</span>
+                        </button>
+                    </h2>
+                    <div id="comprehensiveSyncScheduler" class="accordion-collapse collapse show"
+                         data-bs-parent="#schedulerAccordion">
+                        <div class="accordion-body">
+                            <p class="text-muted mb-3">
+                                <i class="bi bi-info-circle"></i>
+                                Runs all 7 synchronization phases: Projects, Versions, Documentation Links, Learn sections,
+                                Code Examples, Initializr data, and GitHub documentation.
+                            </p>
+                            <form th:action="@{/settings/scheduler}" method="post" id="schedulerForm">
+                                <div class="row mb-3">
+                                    <!-- Enable/Disable -->
+                                    <div class="col-12 mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox"
+                                                   id="syncEnabled" name="syncEnabled"
+                                                   th:checked="${schedulerSettings != null and schedulerSettings.syncEnabled}">
+                                            <label class="form-check-label" for="syncEnabled">
+                                                <strong>Enable Automatic Sync</strong>
+                                            </label>
+                                        </div>
+                                    </div>
 
-    <!-- Language Sync Scheduler -->
-    <div class="card border-0 shadow-sm mb-4" th:if="${languageEvolutionEnabled}">
-        <div class="card-header bg-white border-bottom">
-            <h5 class="mb-0">
-                <i class="bi bi-braces" style="color: #fbbf24;"></i> Language Evolution Scheduler
-            </h5>
-            <small class="text-muted">Configure automatic Java/Kotlin language data synchronization</small>
-        </div>
-        <div class="card-body">
-            <form th:action="@{/settings/language-scheduler}" method="post" id="languageSchedulerForm">
-                <div class="row mb-4">
-                    <!-- Enable/Disable Scheduling -->
-                    <div class="col-md-12 mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox"
-                                   id="languageSyncEnabled"
-                                   name="syncEnabled"
-                                   th:checked="${languageSchedulerSettings.syncEnabled}">
-                            <label class="form-check-label" for="languageSyncEnabled">
-                                <strong>Enable Language Sync</strong>
-                            </label>
-                        </div>
-                        <small class="form-text text-muted d-block mt-1">
-                            <i class="bi bi-info-circle"></i>
-                            When enabled, language data (Java/Kotlin versions, features, deprecations) syncs automatically.
-                        </small>
-                    </div>
+                                    <!-- Frequency -->
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">
+                                            <i class="bi bi-calendar-range"></i> Sync Frequency
+                                        </label>
+                                        <select class="form-select" id="syncFrequency" name="frequency"
+                                                onchange="updateSyncFrequencyUI()">
+                                            <option th:each="freq : ${syncFrequencies}"
+                                                    th:value="${freq.name()}"
+                                                    th:text="${freq.displayName}"
+                                                    th:selected="${schedulerSettings != null and schedulerSettings.frequency == freq}">
+                                            </option>
+                                        </select>
+                                    </div>
 
-                    <!-- Frequency -->
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-calendar-range"></i> Sync Frequency
-                        </label>
-                        <select class="form-select" id="languageFrequency" name="frequency"
-                                onchange="updateLanguageFrequencyUI()">
-                            <option th:each="freq : ${syncFrequencies}"
-                                    th:value="${freq.name()}"
-                                    th:text="${freq.displayName}"
-                                    th:selected="${languageSchedulerSettings.frequency == freq}">
-                            </option>
-                        </select>
-                        <small class="form-text text-muted d-block mt-1">
-                            How often to sync language data
-                        </small>
-                    </div>
+                                    <!-- Weekday Selection (for WEEKLY) -->
+                                    <div class="col-md-4 mb-3 d-none" id="syncWeekdayContainer">
+                                        <label class="form-label">
+                                            <i class="bi bi-calendar-week"></i> Days of Week
+                                        </label>
+                                        <div class="btn-group-vertical w-100" role="group">
+                                            <th:block th:with="days=${ {'MON','TUE','WED','THU','FRI','SAT','SUN'} },
+                                                              labels=${ {'Mon','Tue','Wed','Thu','Fri','Sat','Sun'} }">
+                                                <div th:each="day,iter : ${days}" class="form-check form-check-inline">
+                                                    <input class="form-check-input sync-weekday-check" type="checkbox"
+                                                           th:id="'syncDay' + ${day}"
+                                                           th:value="${day}"
+                                                           th:checked="${schedulerSettings != null and schedulerSettings.weekdays != null and schedulerSettings.weekdays.contains(day)}">
+                                                    <label class="form-check-label" th:for="'syncDay' + ${day}"
+                                                           th:text="${labels[iter.index]}">Mon</label>
+                                                </div>
+                                            </th:block>
+                                        </div>
+                                        <input type="hidden" id="syncWeekdays" name="weekdays"
+                                               th:value="${schedulerSettings != null ? schedulerSettings.weekdays : 'MON,TUE,WED,THU,FRI,SAT,SUN'}">
+                                    </div>
 
-                    <!-- Weekday Selection (for WEEKLY) -->
-                    <div class="col-md-4 mb-3" id="languageWeekdayContainer">
-                        <label class="form-label">
-                            <i class="bi bi-calendar-week"></i> Days of Week
-                        </label>
-                        <div class="btn-group-vertical w-100" role="group" id="languageWeekdayGroup">
-                            <th:block th:with="days=${ {'MON','TUE','WED','THU','FRI','SAT','SUN'} },
-                                              labels=${ {'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'} }">
-                                <div th:each="day,iter : ${days}" class="form-check">
-                                    <input class="form-check-input language-weekday-check" type="checkbox"
-                                           th:id="'langDay' + ${day}"
-                                           th:value="${day}"
-                                           th:checked="${languageSchedulerSettings.weekdays != null and languageSchedulerSettings.weekdays.contains(day)}">
-                                    <label class="form-check-label" th:for="'langDay' + ${day}"
-                                           th:text="${labels[iter.index]}">Monday</label>
+                                    <!-- Day of Month (for MONTHLY) -->
+                                    <div class="col-md-4 mb-3 d-none" id="syncDayOfMonthContainer">
+                                        <label class="form-label">
+                                            <i class="bi bi-calendar-date"></i> Day of Month
+                                        </label>
+                                        <select class="form-select" id="syncDayOfMonth" name="dayOfMonth">
+                                            <option th:each="day : ${#numbers.sequence(1, 31)}"
+                                                    th:value="${day}"
+                                                    th:text="${day}"
+                                                    th:selected="${schedulerSettings != null and schedulerSettings.dayOfMonth == day}">
+                                            </option>
+                                        </select>
+                                        <small class="form-text text-muted">
+                                            Days 29-31 fallback to last day for shorter months
+                                        </small>
+                                    </div>
+
+                                    <!-- Sync Time -->
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">
+                                            <i class="bi bi-clock"></i> Sync Time
+                                        </label>
+                                        <input type="hidden" id="syncTime" name="syncTime"
+                                               th:value="${schedulerSettings != null ? schedulerSettings.syncTime : '03:00'}">
+                                        <!-- 24h Format -->
+                                        <div id="time24hContainer" class="d-flex gap-2">
+                                            <select class="form-select" id="hour24" style="width: 80px;"></select>
+                                            <span class="align-self-center">:</span>
+                                            <select class="form-select" id="minute24" style="width: 80px;"></select>
+                                        </div>
+                                        <!-- 12h Format -->
+                                        <div id="time12hContainer" class="d-none d-flex gap-2">
+                                            <select class="form-select" id="hour12" style="width: 80px;"></select>
+                                            <span class="align-self-center">:</span>
+                                            <select class="form-select" id="minute12" style="width: 80px;"></select>
+                                            <select class="form-select" id="ampm" style="width: 80px;">
+                                                <option value="AM">AM</option>
+                                                <option value="PM">PM</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
-                            </th:block>
-                        </div>
-                        <input type="hidden" id="languageWeekdays" name="weekdays"
-                               th:value="${languageSchedulerSettings.weekdays}">
-                    </div>
 
-                    <!-- Day of Month (for MONTHLY) -->
-                    <div class="col-md-4 mb-3 d-none" id="languageDayOfMonthContainer">
-                        <label class="form-label">
-                            <i class="bi bi-calendar-date"></i> Day of Month
-                        </label>
-                        <select class="form-select" id="languageDayOfMonth" name="dayOfMonth">
-                            <option th:each="day : ${#numbers.sequence(1, 31)}"
-                                    th:value="${day}"
-                                    th:text="${day}"
-                                    th:selected="${languageSchedulerSettings.dayOfMonth == day}">
-                            </option>
-                        </select>
-                        <small class="form-text text-muted d-block mt-1">
-                            Day 29-31 will fallback to last day for shorter months
-                        </small>
-                    </div>
+                                <!-- Current Status -->
+                                <div th:if="${schedulerSettings != null and schedulerSettings.syncEnabled}"
+                                     class="schedule-status-card mb-3">
+                                    <div class="schedule-status-header">
+                                        <i class="bi bi-clock-history me-2"></i>
+                                        <span>Current Schedule Status</span>
+                                    </div>
+                                    <div class="schedule-status-body">
+                                        <div class="row g-3">
+                                            <div class="col-md-6 col-lg-3">
+                                                <div class="status-item">
+                                                    <div class="status-label">
+                                                        <i class="bi bi-calendar-range text-info me-1"></i> Frequency
+                                                    </div>
+                                                    <div class="status-value">
+                                                        <span th:text="${schedulerSettings.frequency.displayName}">Daily</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-lg-3">
+                                                <div class="status-item">
+                                                    <div class="status-label">
+                                                        <i class="bi bi-alarm text-info me-1"></i> Time
+                                                    </div>
+                                                    <div class="status-value">
+                                                        <code class="time-display" id="displayTimeText"
+                                                              th:text="${displayTime}">03:00</code>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-lg-3">
+                                                <div class="status-item">
+                                                    <div class="status-label">
+                                                        <i class="bi bi-clock-history text-warning me-1"></i> Last Run
+                                                    </div>
+                                                    <div class="status-value">
+                                                        <span th:if="${schedulerSettings.lastSyncRun}"
+                                                              th:text="${#temporals.format(schedulerSettings.lastSyncRun, 'MMM dd, HH:mm')}">Never</span>
+                                                        <span class="text-muted-custom"
+                                                              th:unless="${schedulerSettings.lastSyncRun}">Never</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-lg-3">
+                                                <div class="status-item">
+                                                    <div class="status-label">
+                                                        <i class="bi bi-calendar-event text-primary me-1"></i> Next Run
+                                                    </div>
+                                                    <div class="status-value">
+                                                        <span class="text-primary-custom"
+                                                              th:if="${schedulerSettings.nextSyncRun}"
+                                                              th:text="${#temporals.format(schedulerSettings.nextSyncRun, 'MMM dd, HH:mm')}">Calculating...</span>
+                                                        <span class="text-muted-custom"
+                                                              th:unless="${schedulerSettings.nextSyncRun}">Not scheduled</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-                    <!-- Sync Time -->
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-clock"></i> Sync Time
-                        </label>
-                        <input type="hidden" id="languageSyncTime" name="syncTime"
-                               th:value="${languageSchedulerSettings.syncTime}">
-                        <!-- 24h Format -->
-                        <div id="langTime24hContainer" class="d-flex gap-2">
-                            <select class="form-select" id="langHour24" style="width: 80px;"></select>
-                            <span class="align-self-center">:</span>
-                            <select class="form-select" id="langMinute24" style="width: 80px;"></select>
-                        </div>
-                        <!-- 12h Format -->
-                        <div id="langTime12hContainer" class="d-none d-flex gap-2">
-                            <select class="form-select" id="langHour12" style="width: 80px;"></select>
-                            <span class="align-self-center">:</span>
-                            <select class="form-select" id="langMinute12" style="width: 80px;"></select>
-                            <select class="form-select" id="langAmpm" style="width: 80px;">
-                                <option value="AM">AM</option>
-                                <option value="PM">PM</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Time Format Toggle -->
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">
-                            <i class="bi bi-toggle-on"></i> Time Format
-                        </label>
-                        <div class="btn-group w-100" role="group">
-                            <input type="radio" class="btn-check" name="langTimeFormatToggle" id="langFormat24h"
-                                   value="24h" th:checked="${languageSchedulerSettings.timeFormat == '24h'}"
-                                   onchange="updateLanguageTimeFormat('24h')">
-                            <label class="btn btn-outline-primary" for="langFormat24h">24h</label>
-                            <input type="radio" class="btn-check" name="langTimeFormatToggle" id="langFormat12h"
-                                   value="12h" th:checked="${languageSchedulerSettings.timeFormat == '12h'}"
-                                   onchange="updateLanguageTimeFormat('12h')">
-                            <label class="btn btn-outline-primary" for="langFormat12h">12h</label>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-calendar-check"></i> Save Schedule
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
 
-                <!-- Current Schedule Status -->
-                <div th:if="${languageSchedulerSettings.syncEnabled}" class="schedule-status-card mb-3">
-                    <div class="schedule-status-header">
-                        <i class="bi bi-braces me-2" style="color: #fbbf24;"></i>
-                        <span>Language Sync Status</span>
-                    </div>
-                    <div class="schedule-status-body">
-                        <div class="row g-3">
-                            <div class="col-md-6 col-lg-3">
-                                <div class="status-item">
-                                    <div class="status-label">
-                                        <i class="bi bi-power text-success me-1"></i> Status
+                <!-- Language Evolution Scheduler -->
+                <div class="accordion-item border-0" th:if="${languageEvolutionEnabled}">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#languageEvolutionScheduler" aria-expanded="false">
+                            <i class="bi bi-braces me-2" style="color: #fbbf24;"></i>
+                            <strong>Language Evolution</strong>
+                            <span th:if="${languageSchedulerSettings != null and languageSchedulerSettings.syncEnabled}"
+                                  class="badge bg-success ms-2">Active</span>
+                            <span th:if="${languageSchedulerSettings == null or !languageSchedulerSettings.syncEnabled}"
+                                  class="badge bg-secondary ms-2">Disabled</span>
+                        </button>
+                    </h2>
+                    <div id="languageEvolutionScheduler" class="accordion-collapse collapse"
+                         data-bs-parent="#schedulerAccordion">
+                        <div class="accordion-body">
+                            <p class="text-muted mb-3">
+                                <i class="bi bi-info-circle"></i>
+                                Fetches Java JEP data and Kotlin KEP data from official sources.
+                                Daily sync is recommended for development environments.
+                            </p>
+                            <form th:action="@{/settings/language-scheduler}" method="post" id="languageSchedulerForm">
+                                <div class="row mb-3">
+                                    <!-- Enable/Disable -->
+                                    <div class="col-12 mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox"
+                                                   id="languageSyncEnabled" name="syncEnabled"
+                                                   th:checked="${languageSchedulerSettings != null and languageSchedulerSettings.syncEnabled}">
+                                            <label class="form-check-label" for="languageSyncEnabled">
+                                                <strong>Enable Language Sync</strong>
+                                            </label>
+                                        </div>
                                     </div>
-                                    <div class="status-value">
-                                        <span class="badge-status badge-status-active">
-                                            <i class="bi bi-check-circle-fill me-1"></i> Active
-                                        </span>
+
+                                    <!-- Frequency -->
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">
+                                            <i class="bi bi-calendar-range"></i> Sync Frequency
+                                        </label>
+                                        <select class="form-select" id="languageFrequency" name="frequency"
+                                                onchange="updateLanguageFrequencyUI()">
+                                            <option th:each="freq : ${syncFrequencies}"
+                                                    th:value="${freq.name()}"
+                                                    th:text="${freq.displayName}"
+                                                    th:selected="${languageSchedulerSettings != null and languageSchedulerSettings.frequency == freq}">
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Weekday Selection (for WEEKLY) -->
+                                    <div class="col-md-4 mb-3 d-none" id="languageWeekdayContainer">
+                                        <label class="form-label">
+                                            <i class="bi bi-calendar-week"></i> Days of Week
+                                        </label>
+                                        <div class="btn-group-vertical w-100" role="group">
+                                            <th:block th:with="days=${ {'MON','TUE','WED','THU','FRI','SAT','SUN'} },
+                                                              labels=${ {'Mon','Tue','Wed','Thu','Fri','Sat','Sun'} }">
+                                                <div th:each="day,iter : ${days}" class="form-check form-check-inline">
+                                                    <input class="form-check-input language-weekday-check" type="checkbox"
+                                                           th:id="'langDay' + ${day}"
+                                                           th:value="${day}"
+                                                           th:checked="${languageSchedulerSettings != null and languageSchedulerSettings.weekdays != null and languageSchedulerSettings.weekdays.contains(day)}">
+                                                    <label class="form-check-label" th:for="'langDay' + ${day}"
+                                                           th:text="${labels[iter.index]}">Mon</label>
+                                                </div>
+                                            </th:block>
+                                        </div>
+                                        <input type="hidden" id="languageWeekdays" name="weekdays"
+                                               th:value="${languageSchedulerSettings != null ? languageSchedulerSettings.weekdays : 'MON,TUE,WED,THU,FRI,SAT,SUN'}">
+                                    </div>
+
+                                    <!-- Day of Month (for MONTHLY) -->
+                                    <div class="col-md-4 mb-3 d-none" id="languageDayOfMonthContainer">
+                                        <label class="form-label">
+                                            <i class="bi bi-calendar-date"></i> Day of Month
+                                        </label>
+                                        <select class="form-select" id="languageDayOfMonth" name="dayOfMonth">
+                                            <option th:each="day : ${#numbers.sequence(1, 31)}"
+                                                    th:value="${day}"
+                                                    th:text="${day}"
+                                                    th:selected="${languageSchedulerSettings != null and languageSchedulerSettings.dayOfMonth == day}">
+                                            </option>
+                                        </select>
+                                        <small class="form-text text-muted">
+                                            Days 29-31 fallback to last day for shorter months
+                                        </small>
+                                    </div>
+
+                                    <!-- Sync Time -->
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">
+                                            <i class="bi bi-clock"></i> Sync Time
+                                        </label>
+                                        <input type="hidden" id="languageSyncTime" name="syncTime"
+                                               th:value="${languageSchedulerSettings != null ? languageSchedulerSettings.syncTime : '04:00'}">
+                                        <!-- 24h Format -->
+                                        <div id="langTime24hContainer" class="d-flex gap-2">
+                                            <select class="form-select" id="langHour24" style="width: 80px;"></select>
+                                            <span class="align-self-center">:</span>
+                                            <select class="form-select" id="langMinute24" style="width: 80px;"></select>
+                                        </div>
+                                        <!-- 12h Format -->
+                                        <div id="langTime12hContainer" class="d-none d-flex gap-2">
+                                            <select class="form-select" id="langHour12" style="width: 80px;"></select>
+                                            <span class="align-self-center">:</span>
+                                            <select class="form-select" id="langMinute12" style="width: 80px;"></select>
+                                            <select class="form-select" id="langAmpm" style="width: 80px;">
+                                                <option value="AM">AM</option>
+                                                <option value="PM">PM</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-md-6 col-lg-3">
-                                <div class="status-item">
-                                    <div class="status-label">
-                                        <i class="bi bi-calendar-range text-info me-1"></i> Frequency
+
+                                <!-- Current Status -->
+                                <div th:if="${languageSchedulerSettings != null and languageSchedulerSettings.syncEnabled}"
+                                     class="schedule-status-card mb-3">
+                                    <div class="schedule-status-header">
+                                        <i class="bi bi-braces me-2" style="color: #fbbf24;"></i>
+                                        <span>Language Sync Status</span>
                                     </div>
-                                    <div class="status-value">
-                                        <span th:text="${languageSchedulerSettings.frequency.displayName}">Daily</span>
+                                    <div class="schedule-status-body">
+                                        <div class="row g-3">
+                                            <div class="col-md-6 col-lg-3">
+                                                <div class="status-item">
+                                                    <div class="status-label">
+                                                        <i class="bi bi-calendar-range text-info me-1"></i> Frequency
+                                                    </div>
+                                                    <div class="status-value">
+                                                        <span th:text="${languageSchedulerSettings.frequency.displayName}">Daily</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-lg-3">
+                                                <div class="status-item">
+                                                    <div class="status-label">
+                                                        <i class="bi bi-alarm text-info me-1"></i> Time
+                                                    </div>
+                                                    <div class="status-value">
+                                                        <code class="time-display" id="languageDisplayTimeText"
+                                                              th:text="${languageDisplayTime}">04:00</code>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-lg-3">
+                                                <div class="status-item">
+                                                    <div class="status-label">
+                                                        <i class="bi bi-clock-history text-warning me-1"></i> Last Run
+                                                    </div>
+                                                    <div class="status-value">
+                                                        <span th:if="${languageSchedulerSettings.lastSyncRun}"
+                                                              th:text="${#temporals.format(languageSchedulerSettings.lastSyncRun, 'MMM dd, HH:mm')}">Never</span>
+                                                        <span class="text-muted-custom"
+                                                              th:unless="${languageSchedulerSettings.lastSyncRun}">Never</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-lg-3">
+                                                <div class="status-item">
+                                                    <div class="status-label">
+                                                        <i class="bi bi-calendar-event text-primary me-1"></i> Next Run
+                                                    </div>
+                                                    <div class="status-value">
+                                                        <span class="text-primary-custom"
+                                                              th:if="${languageSchedulerSettings.nextSyncRun}"
+                                                              th:text="${#temporals.format(languageSchedulerSettings.nextSyncRun, 'MMM dd, HH:mm')}">Calculating...</span>
+                                                        <span class="text-muted-custom"
+                                                              th:unless="${languageSchedulerSettings.nextSyncRun}">Not scheduled</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-md-6 col-lg-3">
-                                <div class="status-item">
-                                    <div class="status-label">
-                                        <i class="bi bi-clock-history text-warning me-1"></i> Last Run
-                                    </div>
-                                    <div class="status-value">
-                                        <span th:if="${languageSchedulerSettings.lastSyncRun}"
-                                              th:text="${#temporals.format(languageSchedulerSettings.lastSyncRun, 'MMM dd, HH:mm')}">
-                                            Never
-                                        </span>
-                                        <span class="text-muted-custom" th:unless="${languageSchedulerSettings.lastSyncRun}">
-                                            Never
-                                        </span>
-                                    </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-calendar-check"></i> Save Schedule
+                                    </button>
                                 </div>
-                            </div>
-                            <div class="col-md-6 col-lg-3">
-                                <div class="status-item">
-                                    <div class="status-label">
-                                        <i class="bi bi-calendar-event text-primary me-1"></i> Next Run
-                                    </div>
-                                    <div class="status-value">
-                                        <span class="text-primary-custom" th:if="${languageSchedulerSettings.nextSyncRun}"
-                                              th:text="${#temporals.format(languageSchedulerSettings.nextSyncRun, 'MMM dd, HH:mm')}">
-                                            Calculating...
-                                        </span>
-                                        <span class="text-muted-custom" th:unless="${languageSchedulerSettings.nextSyncRun}">
-                                            Not scheduled
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
                 </div>
-
-                <!-- Submit Button -->
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-calendar-check"></i> Save Language Scheduler
-                    </button>
-                </div>
-            </form>
-
-            <div class="alert alert-info border-0 mt-3 mb-0">
-                <i class="bi bi-info-circle-fill text-warning"></i>
-                <strong>Note:</strong> Language sync fetches Java JEP data and Kotlin KEP data from official sources.
-                Daily sync is recommended for development environments.
-            </div>
-        </div>
-    </div>
+                </div><!-- End accordion -->
+        </div><!-- End schedule-status-body -->
+    </div><!-- End Schedulers section -->
 
     <!-- API Key Management -->
     <div class="card border-0 shadow-sm mb-4">
@@ -1076,7 +1174,7 @@
 
         // Update hidden syncTime input when dropdowns change
         function updateHiddenTimeInput() {
-            const currentFormat = document.querySelector('input[name="timeFormatToggle"]:checked').value;
+            const currentFormat = document.querySelector('input[name="globalTimeFormatToggle"]:checked').value;
             let hours24, minutes;
 
             if (currentFormat === '24h') {
@@ -1115,67 +1213,105 @@
             updateHiddenTimeInput();
         }
 
-        // Update time format immediately (AJAX)
-        async function updateTimeFormat(format) {
+        // Update global time format (AJAX) - applies to all schedulers
+        async function updateGlobalTimeFormat(format) {
             try {
                 const formData = new FormData();
                 formData.append('timeFormat', format);
 
                 const csrfToken = getCsrfToken();
-                if (!csrfToken) {
-                    console.error('CSRF token not found');
-                    alert('Failed to update time format: Security token not found');
-                    return;
+                if (csrfToken) {
+                    formData.append('_csrf', csrfToken);
                 }
-                formData.append('_csrf', csrfToken);
 
-                console.log('Sending time format update request:', format);
-
-                const response = await fetch('/settings/scheduler/time-format', {
+                const response = await fetch('/settings/global/time-format', {
                     method: 'POST',
                     body: formData
                 });
-
-                console.log('Response status:', response.status);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const data = await response.json();
-                console.log('Response data:', data);
 
                 if (data.success) {
-                    // Update display time if element exists
+                    // Update display times for all schedulers
                     const displayTimeElement = document.getElementById('displayTimeText');
-                    if (displayTimeElement) {
+                    if (displayTimeElement && data.displayTime) {
                         displayTimeElement.textContent = data.displayTime;
-                        console.log('Updated display time to:', data.displayTime);
-                    } else {
-                        console.warn('displayTimeText element not found - skipping display update');
                     }
 
-                    // Toggle time pickers
-                    toggleTimePickers(format);
+                    const languageDisplayTimeElement = document.getElementById('languageDisplayTimeText');
+                    if (languageDisplayTimeElement && data.languageDisplayTime) {
+                        languageDisplayTimeElement.textContent = data.languageDisplayTime;
+                    }
 
-                    console.log('Time format updated successfully to:', format);
+                    // Toggle time pickers for both schedulers
+                    toggleTimePickers(format);
+                    toggleLanguageTimePickers(format);
+
+                    console.log('Global time format updated to:', format);
                 } else {
                     console.error('Server returned error:', data.error);
                     alert('Failed to update time format: ' + (data.error || 'Unknown error'));
                 }
             } catch (error) {
-                console.error('Error updating time format:', error);
+                console.error('Error updating global time format:', error);
                 alert('Failed to update time format: ' + error.message);
             }
+        }
+
+        // Legacy function - now delegates to global
+        async function updateTimeFormat(format) {
+            return updateGlobalTimeFormat(format);
+        }
+
+        // Update UI based on sync frequency selection
+        function updateSyncFrequencyUI() {
+            const frequency = document.getElementById('syncFrequency').value;
+            const weekdayContainer = document.getElementById('syncWeekdayContainer');
+            const dayOfMonthContainer = document.getElementById('syncDayOfMonthContainer');
+
+            if (frequency === 'DAILY') {
+                weekdayContainer.classList.add('d-none');
+                dayOfMonthContainer.classList.add('d-none');
+            } else if (frequency === 'WEEKLY') {
+                weekdayContainer.classList.remove('d-none');
+                dayOfMonthContainer.classList.add('d-none');
+            } else if (frequency === 'MONTHLY') {
+                weekdayContainer.classList.add('d-none');
+                dayOfMonthContainer.classList.remove('d-none');
+            }
+        }
+
+        // Update weekdays hidden input for sync scheduler
+        function updateSyncWeekdaysInput() {
+            const checked = Array.from(document.querySelectorAll('.sync-weekday-check:checked'))
+                .map(cb => cb.value);
+            document.getElementById('syncWeekdays').value = checked.join(',');
         }
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             initializeTimeDropdowns();
 
-            // Set initial time picker visibility
-            const currentFormat = document.querySelector('input[name="timeFormatToggle"]:checked').value;
-            toggleTimePickers(currentFormat);
+            // Set initial time picker visibility using global time format
+            const globalFormatEl = document.querySelector('input[name="globalTimeFormatToggle"]:checked');
+            if (globalFormatEl) {
+                toggleTimePickers(globalFormatEl.value);
+            }
+
+            // Set initial sync frequency UI
+            const syncFrequencyEl = document.getElementById('syncFrequency');
+            if (syncFrequencyEl) {
+                updateSyncFrequencyUI();
+
+                // Add weekday checkbox listeners
+                document.querySelectorAll('.sync-weekday-check').forEach(checkbox => {
+                    checkbox.addEventListener('change', updateSyncWeekdaysInput);
+                });
+            }
         });
 
         // Generate API key preview
@@ -1415,7 +1551,7 @@
 
         // Update hidden languageSyncTime input
         function updateLanguageHiddenTimeInput() {
-            const currentFormatEl = document.querySelector('input[name="langTimeFormatToggle"]:checked');
+            const currentFormatEl = document.querySelector('input[name="globalTimeFormatToggle"]:checked');
             if (!currentFormatEl) return;
             const currentFormat = currentFormatEl.value;
             let hours24, minutes;
@@ -1505,16 +1641,15 @@
 
         // Initialize language scheduler on page load
         (function() {
-            const origInit = window.onload;
             document.addEventListener('DOMContentLoaded', function() {
                 // Initialize language scheduler if present
                 if (document.getElementById('languageSyncTime')) {
                     initializeLanguageTimeDropdowns();
 
-                    // Set initial time picker visibility
-                    const langFormatEl = document.querySelector('input[name="langTimeFormatToggle"]:checked');
-                    if (langFormatEl) {
-                        toggleLanguageTimePickers(langFormatEl.value);
+                    // Set initial time picker visibility using global time format
+                    const globalFormatEl = document.querySelector('input[name="globalTimeFormatToggle"]:checked');
+                    if (globalFormatEl) {
+                        toggleLanguageTimePickers(globalFormatEl.value);
                     }
 
                     // Set initial frequency UI

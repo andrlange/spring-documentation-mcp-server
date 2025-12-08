@@ -9,6 +9,7 @@ import com.spring.mcp.service.ApiKeyService;
 import com.spring.mcp.service.SettingsService;
 import com.spring.mcp.service.scheduler.LanguageSchedulerService;
 import com.spring.mcp.service.scheduler.SchedulerService;
+import com.spring.mcp.service.settings.GlobalSettingsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +44,7 @@ public class SettingsController {
 
     private final SettingsService settingsService;
     private final ApiKeyService apiKeyService;
+    private final GlobalSettingsService globalSettingsService;
     private final Optional<SchedulerService> schedulerService;
     private final Optional<LanguageSchedulerService> languageSchedulerService;
 
@@ -59,11 +61,13 @@ public class SettingsController {
     public SettingsController(
             SettingsService settingsService,
             ApiKeyService apiKeyService,
+            GlobalSettingsService globalSettingsService,
             Optional<SchedulerService> schedulerService,
             Optional<LanguageSchedulerService> languageSchedulerService,
             @Autowired(required = false) ServletWebServerApplicationContext webServerAppContext) {
         this.settingsService = settingsService;
         this.apiKeyService = apiKeyService;
+        this.globalSettingsService = globalSettingsService;
         this.schedulerService = schedulerService;
         this.languageSchedulerService = languageSchedulerService;
         this.webServerAppContext = webServerAppContext;
@@ -102,15 +106,22 @@ public class SettingsController {
         model.addAttribute("apiKeys", apiKeys);
         model.addAttribute("apiKeyStats", apiKeyService.getStatistics());
 
+        // Load global time format
+        String globalTimeFormat = globalSettingsService.getTimeFormat();
+        model.addAttribute("globalTimeFormat", globalTimeFormat);
+
+        // Load sync frequencies for all schedulers
+        model.addAttribute("syncFrequencies", SyncFrequency.values());
+
         // Load scheduler settings (if available)
         if (schedulerService.isPresent()) {
             SchedulerSettings schedulerSettings = schedulerService.get().getSettings();
             model.addAttribute("schedulerSettings", schedulerSettings);
 
-            // Format time for display based on user preference
+            // Format time for display using global time format
             String displayTime = schedulerService.get().formatTimeForDisplay(
                 schedulerSettings.getSyncTime(),
-                schedulerSettings.getTimeFormat()
+                globalTimeFormat
             );
             model.addAttribute("displayTime", displayTime);
         }
@@ -119,12 +130,11 @@ public class SettingsController {
         if (languageSchedulerService.isPresent()) {
             LanguageSchedulerSettings languageSchedulerSettings = languageSchedulerService.get().getSettings();
             model.addAttribute("languageSchedulerSettings", languageSchedulerSettings);
-            model.addAttribute("syncFrequencies", SyncFrequency.values());
 
-            // Format language scheduler time for display
+            // Format language scheduler time for display using global time format
             String languageDisplayTime = languageSchedulerService.get().formatTimeForDisplay(
                 languageSchedulerSettings.getSyncTime(),
-                languageSchedulerSettings.getTimeFormat()
+                globalTimeFormat
             );
             model.addAttribute("languageDisplayTime", languageDisplayTime);
         }
@@ -161,18 +171,71 @@ public class SettingsController {
         return "redirect:/settings";
     }
 
+    // ==================== Global Settings ====================
+
+    /**
+     * Update global time format (12h/24h toggle) - AJAX endpoint
+     * This applies to all scheduler displays
+     */
+    @PostMapping("/global/time-format")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateGlobalTimeFormat(@RequestParam String timeFormat) {
+        log.debug("Updating global time format to: {}", timeFormat);
+
+        try {
+            globalSettingsService.updateTimeFormat(timeFormat);
+
+            // Prepare display times for both schedulers
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Time format updated to " + timeFormat);
+            response.put("timeFormat", timeFormat);
+
+            // Update display times for schedulers
+            if (schedulerService.isPresent()) {
+                SchedulerSettings settings = schedulerService.get().getSettings();
+                String displayTime = schedulerService.get().formatTimeForDisplay(
+                    settings.getSyncTime(), timeFormat
+                );
+                response.put("displayTime", displayTime);
+            }
+
+            if (languageSchedulerService.isPresent()) {
+                LanguageSchedulerSettings settings = languageSchedulerService.get().getSettings();
+                String languageDisplayTime = languageSchedulerService.get().formatTimeForDisplay(
+                    settings.getSyncTime(), timeFormat
+                );
+                response.put("languageDisplayTime", languageDisplayTime);
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("success", false, "error", e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error updating global time format", e);
+            return ResponseEntity.internalServerError()
+                .body(Map.of("success", false, "error", "Failed to update time format"));
+        }
+    }
+
     // ==================== Scheduler Configuration ====================
 
     /**
-     * Update scheduler settings (sync time and enabled status)
+     * Update scheduler settings with frequency support
      */
     @PostMapping("/scheduler")
     public String updateSchedulerSettings(
             @RequestParam(value = "syncEnabled", defaultValue = "false") boolean syncEnabled,
+            @RequestParam String frequency,
             @RequestParam String syncTime,
+            @RequestParam(required = false) String weekdays,
+            @RequestParam(required = false) Integer dayOfMonth,
             RedirectAttributes redirectAttributes) {
 
-        log.debug("Updating scheduler settings: syncEnabled={}, syncTime={}", syncEnabled, syncTime);
+        log.debug("Updating scheduler settings: syncEnabled={}, frequency={}, syncTime={}",
+            syncEnabled, frequency, syncTime);
 
         if (schedulerService.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Scheduler service not available");
@@ -180,14 +243,21 @@ public class SettingsController {
         }
 
         try {
-            SchedulerSettings currentSettings = schedulerService.get().getSettings();
-            schedulerService.get().updateSettings(syncEnabled, syncTime, currentSettings.getTimeFormat());
+            SyncFrequency syncFrequency = SyncFrequency.valueOf(frequency.toUpperCase());
+            String globalTimeFormat = globalSettingsService.getTimeFormat();
+
+            schedulerService.get().updateSettings(
+                syncEnabled, syncTime, globalTimeFormat, weekdays,
+                weekdays != null && !weekdays.isEmpty(),
+                syncFrequency, dayOfMonth != null ? dayOfMonth : 1
+            );
 
             redirectAttributes.addFlashAttribute("success",
                 "Scheduler settings updated successfully. " +
-                (syncEnabled ? "Automatic sync enabled at " + syncTime : "Automatic sync disabled"));
+                (syncEnabled ? "Automatic sync enabled (" + syncFrequency.getDisplayName() + ")" : "Automatic sync disabled"));
 
-            log.info("Scheduler settings updated: syncEnabled={}, syncTime={}", syncEnabled, syncTime);
+            log.info("Scheduler settings updated: syncEnabled={}, frequency={}, syncTime={}",
+                syncEnabled, frequency, syncTime);
         } catch (Exception e) {
             log.error("Error updating scheduler settings", e);
             redirectAttributes.addFlashAttribute("error",
@@ -199,43 +269,13 @@ public class SettingsController {
 
     /**
      * Update time format immediately (12h/24h toggle) - AJAX endpoint
+     * @deprecated Use /settings/global/time-format instead
      */
     @PostMapping("/scheduler/time-format")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> updateTimeFormat(@RequestParam String timeFormat) {
-        log.debug("Updating time format to: {}", timeFormat);
-
-        if (schedulerService.isEmpty()) {
-            return ResponseEntity.badRequest()
-                .body(Map.of("success", false, "error", "Scheduler service not available"));
-        }
-
-        try {
-            // Validate time format
-            if (!timeFormat.equals("12h") && !timeFormat.equals("24h")) {
-                return ResponseEntity.badRequest()
-                    .body(Map.of("success", false, "error", "Invalid time format"));
-            }
-
-            SchedulerSettings settings = schedulerService.get().updateTimeFormat(timeFormat);
-
-            // Format time for display
-            String displayTime = schedulerService.get().formatTimeForDisplay(
-                settings.getSyncTime(),
-                settings.getTimeFormat()
-            );
-
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Time format updated to " + timeFormat,
-                "displayTime", displayTime
-            ));
-
-        } catch (Exception e) {
-            log.error("Error updating time format", e);
-            return ResponseEntity.internalServerError()
-                .body(Map.of("success", false, "error", "Failed to update time format"));
-        }
+        log.debug("Updating time format to: {} (delegating to global)", timeFormat);
+        return updateGlobalTimeFormat(timeFormat);
     }
 
     // ==================== Language Scheduler Configuration ====================
@@ -262,16 +302,16 @@ public class SettingsController {
 
         try {
             SyncFrequency syncFrequency = SyncFrequency.valueOf(frequency.toUpperCase());
-            LanguageSchedulerSettings currentSettings = languageSchedulerService.get().getSettings();
+            String globalTimeFormat = globalSettingsService.getTimeFormat();
 
             languageSchedulerService.get().updateSettings(
                     syncEnabled, syncFrequency, syncTime, weekdays,
                     dayOfMonth != null ? dayOfMonth : 1,
-                    currentSettings.getTimeFormat());
+                    globalTimeFormat);
 
             redirectAttributes.addFlashAttribute("success",
                     "Language scheduler settings updated successfully. " +
-                    (syncEnabled ? "Automatic language sync enabled" : "Automatic language sync disabled"));
+                    (syncEnabled ? "Automatic language sync enabled (" + syncFrequency.getDisplayName() + ")" : "Automatic language sync disabled"));
 
             log.info("Language scheduler settings updated: syncEnabled={}, frequency={}, syncTime={}",
                     syncEnabled, frequency, syncTime);
@@ -286,41 +326,13 @@ public class SettingsController {
 
     /**
      * Update language scheduler time format (AJAX endpoint)
+     * @deprecated Use /settings/global/time-format instead
      */
     @PostMapping("/language-scheduler/time-format")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> updateLanguageTimeFormat(@RequestParam String timeFormat) {
-        log.debug("Updating language scheduler time format to: {}", timeFormat);
-
-        if (languageSchedulerService.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("success", false, "error", "Language scheduler service not available"));
-        }
-
-        try {
-            if (!timeFormat.equals("12h") && !timeFormat.equals("24h")) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("success", false, "error", "Invalid time format"));
-            }
-
-            LanguageSchedulerSettings settings = languageSchedulerService.get().updateTimeFormat(timeFormat);
-
-            String displayTime = languageSchedulerService.get().formatTimeForDisplay(
-                    settings.getSyncTime(),
-                    settings.getTimeFormat()
-            );
-
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "Time format updated to " + timeFormat,
-                    "displayTime", displayTime
-            ));
-
-        } catch (Exception e) {
-            log.error("Error updating language scheduler time format", e);
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("success", false, "error", "Failed to update time format"));
-        }
+        log.debug("Updating language time format to: {} (delegating to global)", timeFormat);
+        return updateGlobalTimeFormat(timeFormat);
     }
 
     // ==================== API Key Management ====================

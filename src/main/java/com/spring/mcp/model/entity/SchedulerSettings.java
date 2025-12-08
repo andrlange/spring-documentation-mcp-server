@@ -1,9 +1,11 @@
 package com.spring.mcp.model.entity;
 
+import com.spring.mcp.model.enums.SyncFrequency;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,6 +47,21 @@ public class SchedulerSettings {
      */
     @Column(name = "time_format", nullable = false, length = 3)
     private String timeFormat;
+
+    /**
+     * Sync frequency: DAILY, WEEKLY, MONTHLY
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "frequency", nullable = false, length = 10)
+    @Builder.Default
+    private SyncFrequency frequency = SyncFrequency.DAILY;
+
+    /**
+     * Day of month for MONTHLY frequency (1-31)
+     */
+    @Column(name = "day_of_month")
+    @Builder.Default
+    private Integer dayOfMonth = 1;
 
     /**
      * Timestamp of last automatic sync execution
@@ -112,5 +129,46 @@ public class SchedulerSettings {
             return true;
         }
         return getWeekdaySet().contains(weekday.toUpperCase());
+    }
+
+    /**
+     * Get effective day of month for a specific year-month.
+     * Implements "last day fallback" for months with fewer days.
+     *
+     * @param yearMonth the target month
+     * @return the effective day (capped at month's last day)
+     */
+    public int getEffectiveDay(YearMonth yearMonth) {
+        int lastDay = yearMonth.lengthOfMonth();
+        return Math.min(dayOfMonth != null ? dayOfMonth : 1, lastDay);
+    }
+
+    /**
+     * Get display string for schedule
+     */
+    public String getScheduleDescription() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(frequency != null ? frequency.getDisplayName() : "Daily");
+
+        switch (frequency != null ? frequency : SyncFrequency.DAILY) {
+            case DAILY:
+                sb.append(" at ").append(syncTime);
+                break;
+            case WEEKLY:
+                sb.append(" on ");
+                if (Boolean.TRUE.equals(allWeekdays)) {
+                    sb.append("all days");
+                } else {
+                    sb.append(weekdays);
+                }
+                sb.append(" at ").append(syncTime);
+                break;
+            case MONTHLY:
+                sb.append(" on day ").append(dayOfMonth != null ? dayOfMonth : 1);
+                sb.append(" at ").append(syncTime);
+                break;
+        }
+
+        return sb.toString();
     }
 }
