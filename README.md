@@ -1,5 +1,17 @@
 # Spring Documentation MCP Server
+
+> ⚠️ **Disclaimer**
+>
+> This is **NOT** an official Spring or Spring Boot project and is **NOT** part of the Spring ecosystem.
+>
+> This project is created for **educational purposes only**, similar to my other demo applications that showcase architecture patterns and Spring Boot OSS features.
+>
+> **Code Authorship**: This service was written using [Claude Code](https://claude.ai/claude-code) as the code author.
+>
+> **Purpose**: My main goal is to create demo applications using my own specifications to explore AI-assisted development workflows.
+
 ### (Current Version 1.4.2)
+
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
 > Thanks to Dan Vega - https://github.com/danvega/sb4 providing Spring Boot 4 architecture examples - 
