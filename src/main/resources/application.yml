@@ -439,10 +439,13 @@ logging:
     org.htmlunit.IncorrectnessListenerImpl: OFF
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+    # File pattern (used when file logging is enabled)
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-  file:
-    name: logs/spring-boot-documentation-mcp-server.log
-  logback:
-    rollingpolicy:
-      max-file-size: 10MB
-      max-history: 30
+  # File logging is DISABLED by default (console only)
+  # To enable file logging, uncomment the following lines:
+  # file:
+  #   name: logs/spring-boot-documentation-mcp-server.log
+  # logback:
+  #   rollingpolicy:
+  #     max-file-size: 10MB
+  #     max-history: 30
