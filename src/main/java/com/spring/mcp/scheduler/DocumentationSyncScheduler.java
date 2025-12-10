@@ -16,8 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,17 +28,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
- * Scheduled jobs for documentation synchronization and version detection.
+ * Documentation synchronization service providing manual sync operations.
  * <p>
- * This scheduler is responsible for:
+ * This service provides methods for:
  * <ul>
- *   <li>Daily full synchronization of all documentation (configurable schedule)</li>
- *   <li>Hourly detection of new Spring versions</li>
- *   <li>Weekly updates of existing documentation content</li>
- *   <li>Monthly cleanup of end-of-life versions</li>
+ *   <li>Manual documentation synchronization (triggered via UI or API)</li>
+ *   <li>Version detection for Spring projects</li>
+ *   <li>Documentation content updates</li>
+ *   <li>Cleanup of end-of-life versions</li>
  * </ul>
  * <p>
- * All scheduled jobs include:
+ * <b>Note:</b> Scheduled synchronization is handled by {@link com.spring.mcp.service.scheduler.SchedulerService}
+ * which is configurable via the /settings UI. This class no longer contains hardcoded @Scheduled annotations.
+ * <p>
+ * All sync operations include:
  * <ul>
  *   <li>Comprehensive error handling and recovery</li>
  *   <li>Job status tracking and monitoring</li>
@@ -48,20 +49,13 @@ import java.util.stream.Collectors;
  *   <li>Detailed logging for observability</li>
  *   <li>Retry logic for transient failures</li>
  * </ul>
- * <p>
- * Configuration properties from application.yml:
- * <ul>
- *   <li>mcp.documentation.fetch.enabled - Enable/disable all scheduled jobs</li>
- *   <li>mcp.documentation.fetch.schedule - Cron expression for daily sync</li>
- * </ul>
  *
  * @author Spring MCP Server
- * @version 1.0.0
+ * @version 1.1.0
  * @since Phase 3
  */
 @Slf4j
 @Component
-@EnableScheduling
 @RequiredArgsConstructor
 public class DocumentationSyncScheduler {
 
@@ -170,9 +164,9 @@ public class DocumentationSyncScheduler {
     }
 
     /**
-     * Daily full synchronization of all documentation.
+     * Full synchronization of all documentation.
      * <p>
-     * This job runs daily at 2 AM (configurable via application.yml) and performs:
+     * This method performs:
      * <ol>
      *   <li>Fetches all active projects and versions</li>
      *   <li>Downloads and indexes documentation for each version</li>
@@ -180,13 +174,15 @@ public class DocumentationSyncScheduler {
      *   <li>Tracks statistics and errors</li>
      * </ol>
      * <p>
-     * The job is skipped if:
+     * The sync is skipped if:
      * <ul>
      *   <li>Sync is disabled (mcp.documentation.fetch.enabled=false)</li>
      *   <li>A sync operation is already in progress</li>
      * </ul>
+     * <p>
+     * <b>Note:</b> This method is called by {@link com.spring.mcp.service.scheduler.SchedulerService}
+     * based on UI-configured schedule, or can be triggered manually.
      */
-    @Scheduled(cron = "${mcp.documentation.fetch.schedule:0 0 2 * * ?}")
     public void syncDocumentation() {
         if (!syncEnabled) {
             log.debug("Documentation sync is disabled, skipping job");
@@ -282,17 +278,20 @@ public class DocumentationSyncScheduler {
     }
 
     /**
-     * Hourly detection of new Spring versions.
+     * Detection of new Spring versions.
      * <p>
-     * This job runs every hour and performs:
+     * This method performs:
      * <ol>
      *   <li>Checks spring.io for new version releases</li>
      *   <li>Detects stable, RC, and snapshot versions</li>
      *   <li>Updates version metadata in the database</li>
      *   <li>Triggers documentation sync for new versions</li>
      * </ol>
+     * <p>
+     * <b>Note:</b> This method is called as part of the comprehensive sync
+     * managed by {@link com.spring.mcp.service.scheduler.SchedulerService},
+     * or can be triggered manually.
      */
-    @Scheduled(cron = "0 0 * * * ?") // Every hour at the top of the hour
     public void detectNewVersions() {
         if (!syncEnabled || !autoDetectVersions) {
             log.debug("Version detection is disabled, skipping job");
@@ -372,16 +371,19 @@ public class DocumentationSyncScheduler {
     }
 
     /**
-     * Weekly update of existing documentation content.
+     * Update of existing documentation content.
      * <p>
-     * This job runs every Sunday at 3 AM and performs:
+     * This method performs:
      * <ol>
      *   <li>Checks existing documentation links for content changes</li>
      *   <li>Re-fetches and re-indexes updated documentation</li>
      *   <li>Updates search vectors if content has changed</li>
      * </ol>
+     * <p>
+     * <b>Note:</b> This method is called as part of the comprehensive sync
+     * managed by {@link com.spring.mcp.service.scheduler.SchedulerService},
+     * or can be triggered manually.
      */
-    @Scheduled(cron = "0 0 3 * * SUN") // Every Sunday at 3 AM
     public void updateExistingDocumentation() {
         if (!syncEnabled) {
             log.debug("Documentation update is disabled, skipping job");
@@ -479,16 +481,19 @@ public class DocumentationSyncScheduler {
     }
 
     /**
-     * Monthly cleanup of end-of-life versions.
+     * Cleanup of end-of-life versions.
      * <p>
-     * This job runs on the first day of each month at 4 AM and performs:
+     * This method performs:
      * <ol>
      *   <li>Identifies versions past their end-of-life date</li>
      *   <li>Marks them as inactive</li>
      *   <li>Optionally archives their documentation</li>
      * </ol>
+     * <p>
+     * <b>Note:</b> This method is called as part of the comprehensive sync
+     * managed by {@link com.spring.mcp.service.scheduler.SchedulerService},
+     * or can be triggered manually.
      */
-    @Scheduled(cron = "0 0 4 1 * ?") // First day of every month at 4 AM
     public void cleanupOldVersions() {
         if (!syncEnabled) {
             log.debug("Version cleanup is disabled, skipping job");
@@ -840,20 +845,22 @@ public class DocumentationSyncScheduler {
     /**
      * Comprehensive synchronization of ALL Spring projects and versions from all sources.
      * <p>
-     * This job runs daily at 1 AM (before regular documentation sync) and performs:
+     * This method performs:
      * <ol>
      *   <li>Syncs all Spring Boot versions from Spring Generations API (with support dates)</li>
      *   <li>Syncs additional Spring Boot versions from Spring Initializr API</li>
      *   <li>Ensures ALL projects and versions are loaded and updated in the database</li>
      * </ol>
      * <p>
-     * The job is skipped if:
+     * The sync is skipped if:
      * <ul>
      *   <li>Sync is disabled (mcp.documentation.fetch.enabled=false)</li>
      *   <li>A comprehensive sync operation is already in progress</li>
      * </ul>
+     * <p>
+     * <b>Note:</b> This method is called by {@link com.spring.mcp.service.scheduler.SchedulerService}
+     * based on UI-configured schedule, or can be triggered manually via the /sync page.
      */
-    @Scheduled(cron = "0 0 1 * * ?")
     public void comprehensiveSync() {
         if (!syncEnabled) {
             log.debug("Comprehensive sync is disabled, skipping job");

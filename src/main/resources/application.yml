@@ -188,9 +188,11 @@ mcp:
         type: "tutorial"
 
     fetch:
-      enabled: true
-      # Note: Schedule is managed via UI-configurable Comprehensive Sync scheduler
-      # Individual schedules removed - all sync happens through Comprehensive Sync phases
+      enabled: true  # Enables manual sync operations (required for sync functionality)
+      # Note: All scheduled synchronization is managed via UI at /settings
+      # - Comprehensive Sync: Configurable via SchedulerService (disabled by default)
+      # - Language Evolution: Configurable via LanguageSchedulerService (disabled by default)
+      # No hardcoded @Scheduled annotations - users control all schedules via UI
       timeout: 30000 # 30 seconds
       retry:
         max-attempts: 3
