@@ -30,7 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Total MCP tools increased from 39 to **43**
 
 ### Fixed
-- Scheduler HotFix, removed daily scheduler 1am
+- Fix 1 - Scheduler HotFix, removed daily scheduler 1am
+- Fix 2 - Security Filter failure for Flavor Groups 
 
 ---
 

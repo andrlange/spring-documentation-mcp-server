@@ -148,11 +148,17 @@ public class FlavorsController {
         } else {
             // Normal view - show expandable groups and ungrouped flavors
 
-            // Get IDs of flavors that are in groups (to exclude from ungrouped list)
+            // Get IDs of flavors that are in groups the user can access (to exclude from ungrouped list)
             Set<Long> groupedFlavorIds = sortedGroups.stream()
                 .flatMap(g -> g.getGroupFlavors().stream())
                 .map(gf -> gf.getFlavor().getId())
                 .collect(Collectors.toSet());
+
+            // SECURITY FIX: Get the set of flavor IDs accessible to this user
+            // This includes: unassigned flavors + public group flavors + member private group flavors
+            // Flavors in private groups where the user is NOT a member must be hidden
+            Long userId = currentUser != null ? currentUser.getId() : null;
+            Set<Long> accessibleFlavorIds = flavorGroupService.getAccessibleFlavorIdsForUser(userId);
 
             // Get flavors based on filters
             List<FlavorDto> allFlavors;
@@ -166,6 +172,13 @@ public class FlavorsController {
                 allFlavors = flavorService.findByCategory(catFilter);
             } else {
                 allFlavors = flavorService.findAll();
+            }
+
+            // SECURITY FIX: Filter to only include accessible flavors (unless admin)
+            if (!isAdmin) {
+                allFlavors = allFlavors.stream()
+                    .filter(f -> accessibleFlavorIds.contains(f.getId()))
+                    .collect(Collectors.toList());
             }
 
             // Filter by active status if specified
@@ -314,13 +327,30 @@ public class FlavorsController {
 
     /**
      * View flavor details (read-only).
+     * SECURITY: Non-admin users can only view flavors they have access to
+     * (unassigned, public group, or member of private group).
      */
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public String viewFlavor(@PathVariable Long id, Model model) {
+    public String viewFlavor(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails,
+            Model model) {
 
         FlavorDto flavor = flavorService.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Flavor not found: " + id));
+
+        // SECURITY CHECK: Verify user has access to this flavor
+        User currentUser = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
+        boolean isAdmin = currentUser != null && currentUser.getRole() == UserRole.ADMIN;
+
+        if (!isAdmin) {
+            Long userId = currentUser != null ? currentUser.getId() : null;
+            Set<Long> accessibleFlavorIds = flavorGroupService.getAccessibleFlavorIdsForUser(userId);
+            if (!accessibleFlavorIds.contains(id)) {
+                throw new IllegalArgumentException("Flavor not found: " + id); // Don't reveal it exists
+            }
+        }
 
         model.addAttribute("activePage", "flavors");
         model.addAttribute("pageTitle", flavor.getDisplayName());
@@ -576,6 +606,7 @@ public class FlavorsController {
 
     /**
      * Export flavor as markdown.
+     * SECURITY: Non-admin users can only export flavors they have access to.
      *
      * @param id the flavor ID
      * @param includeMetadata if true, includes YAML front matter header (default: true)
@@ -585,9 +616,22 @@ public class FlavorsController {
     @ResponseBody
     public ResponseEntity<String> exportMarkdown(
             @PathVariable Long id,
-            @RequestParam(defaultValue = "true") boolean includeMetadata) {
+            @RequestParam(defaultValue = "true") boolean includeMetadata,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         log.info("Exporting flavor id: {} as markdown (includeMetadata: {})", id, includeMetadata);
+
+        // SECURITY CHECK: Verify user has access to this flavor
+        User currentUser = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
+        boolean isAdmin = currentUser != null && currentUser.getRole() == UserRole.ADMIN;
+
+        if (!isAdmin) {
+            Long userId = currentUser != null ? currentUser.getId() : null;
+            Set<Long> accessibleFlavorIds = flavorGroupService.getAccessibleFlavorIdsForUser(userId);
+            if (!accessibleFlavorIds.contains(id)) {
+                throw new IllegalArgumentException("Flavor not found: " + id);
+            }
+        }
 
         FlavorDto flavor = flavorService.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Flavor not found: " + id));
@@ -616,11 +660,26 @@ public class FlavorsController {
 
     /**
      * Get flavor content (AJAX for preview).
+     * SECURITY: Non-admin users can only access flavors they have access to.
      */
     @GetMapping("/{id}/content")
     @PreAuthorize("isAuthenticated()")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getFlavorContent(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getFlavorContent(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        // SECURITY CHECK: Verify user has access to this flavor
+        User currentUser = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
+        boolean isAdmin = currentUser != null && currentUser.getRole() == UserRole.ADMIN;
+
+        if (!isAdmin) {
+            Long userId = currentUser != null ? currentUser.getId() : null;
+            Set<Long> accessibleFlavorIds = flavorGroupService.getAccessibleFlavorIdsForUser(userId);
+            if (!accessibleFlavorIds.contains(id)) {
+                return ResponseEntity.notFound().build();
+            }
+        }
 
         return flavorService.findById(id)
             .map(flavor -> {

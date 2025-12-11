@@ -361,7 +361,7 @@ class InitializrMetadataServiceTest {
                 "values": [
                   {
                     "name": "Web",
-                    "content": [
+                    "values": [
                       {
                         "id": "web",
                         "name": "Spring Web",
@@ -377,7 +377,7 @@ class InitializrMetadataServiceTest {
                   },
                   {
                     "name": "SQL",
-                    "content": [
+                    "values": [
                       {
                         "id": "data-jpa",
                         "name": "Spring Data JPA",

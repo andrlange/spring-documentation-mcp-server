@@ -4,6 +4,8 @@ import com.spring.mcp.model.dto.flavor.CategoryStatsDto;
 import com.spring.mcp.model.dto.flavor.FlavorDto;
 import com.spring.mcp.model.dto.flavor.FlavorSummaryDto;
 import com.spring.mcp.model.enums.FlavorCategory;
+import com.spring.mcp.security.SecurityContextHelper;
+import com.spring.mcp.service.FlavorGroupService;
 import com.spring.mcp.service.FlavorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * MCP Tools for Flavors - company guidelines, architecture patterns,
@@ -21,28 +24,24 @@ import java.util.List;
  * Uses @McpTool annotation for Spring AI MCP Server auto-discovery.
  * This service is only enabled when the flavors feature is enabled.
  * <p>
- * <strong>Note on Flavor Groups (v1.3.3+):</strong>
- * Flavors can now be organized into groups with visibility rules:
+ * <strong>Security (v1.4.3+):</strong>
+ * All flavor tools filter results based on API key group membership:
  * <ul>
- *   <li>Unassigned flavors are visible to everyone</li>
+ *   <li>Unassigned flavors (not in any group) are visible to everyone</li>
  *   <li>Flavors in PUBLIC groups (no members) are visible to everyone</li>
- *   <li>Flavors in PRIVATE groups (has members) are visible only to group members</li>
+ *   <li>Flavors in PRIVATE groups (has members) are visible only to API keys that are members</li>
  *   <li>Flavors in INACTIVE groups are completely hidden</li>
  * </ul>
  * <p>
- * Currently, these tools return all active unassigned and public group flavors.
- * For group-specific filtering, use the FlavorGroupTools:
+ * For group-specific operations, use the FlavorGroupTools:
  * <ul>
  *   <li>{@code listFlavorGroups} - List accessible flavor groups</li>
  *   <li>{@code getFlavorsGroup} - Get all flavors in a specific group</li>
  *   <li>{@code getFlavorGroupStatistics} - Get group statistics</li>
  * </ul>
- * <p>
- * Future enhancement: When API key context propagation is implemented,
- * these tools will automatically filter based on group membership.
  *
  * @author Spring MCP Server
- * @version 1.3.3
+ * @version 1.4.3
  * @since 2025-11-30
  */
 @Service
@@ -52,6 +51,8 @@ import java.util.List;
 public class FlavorTools {
 
     private final FlavorService flavorService;
+    private final FlavorGroupService flavorGroupService;
+    private final SecurityContextHelper securityContextHelper;
 
     @McpTool(description = """
         Search company flavors (guidelines, architecture patterns, compliance rules, agent configurations).
@@ -67,11 +68,20 @@ public class FlavorTools {
             @McpToolParam(description = "Maximum results to return (default: 10, max: 50)")
             Integer limit
     ) {
-        log.info("Tool: searchFlavors - query={}, category={}, tags={}, limit={}", query, category, tags, limit);
+        Long apiKeyId = securityContextHelper.getCurrentApiKeyId();
+        log.info("Tool: searchFlavors - query={}, category={}, tags={}, limit={}, apiKeyId={}",
+                query, category, tags, limit, apiKeyId);
 
         FlavorCategory cat = category != null ? FlavorCategory.fromString(category) : null;
         int maxResults = limit != null ? Math.min(limit, 50) : 10;
-        return flavorService.search(query, cat, tags, maxResults);
+
+        // Get accessible flavor IDs for this API key
+        Set<Long> accessibleIds = flavorGroupService.getAccessibleFlavorIdsForApiKey(apiKeyId);
+
+        // Search and filter to only accessible flavors
+        return flavorService.search(query, cat, tags, maxResults).stream()
+                .filter(f -> accessibleIds.contains(f.getId()))
+                .toList();
     }
 
     @McpTool(description = """
@@ -81,10 +91,18 @@ public class FlavorTools {
             @McpToolParam(description = "Unique name of the flavor (e.g., 'hexagonal-spring-boot')")
             String uniqueName
     ) {
-        log.info("Tool: getFlavorByName - uniqueName={}", uniqueName);
+        Long apiKeyId = securityContextHelper.getCurrentApiKeyId();
+        log.info("Tool: getFlavorByName - uniqueName={}, apiKeyId={}", uniqueName, apiKeyId);
 
-        return flavorService.findByUniqueName(uniqueName)
+        FlavorDto flavor = flavorService.findByUniqueName(uniqueName)
             .orElseThrow(() -> new IllegalArgumentException("Flavor not found: " + uniqueName));
+
+        // Security check: verify API key can access this flavor
+        if (!flavorGroupService.canApiKeyAccessFlavor(flavor.getId(), apiKeyId)) {
+            throw new IllegalArgumentException("Flavor not found: " + uniqueName);
+        }
+
+        return flavor;
     }
 
     @McpTool(description = """
@@ -94,13 +112,21 @@ public class FlavorTools {
             @McpToolParam(description = "Category: ARCHITECTURE, COMPLIANCE, AGENTS, INITIALIZATION, or GENERAL")
             String category
     ) {
-        log.info("Tool: getFlavorsByCategory - category={}", category);
+        Long apiKeyId = securityContextHelper.getCurrentApiKeyId();
+        log.info("Tool: getFlavorsByCategory - category={}, apiKeyId={}", category, apiKeyId);
 
         FlavorCategory cat = FlavorCategory.fromString(category);
         if (cat == null) {
             throw new IllegalArgumentException("Invalid category: " + category);
         }
-        return flavorService.findByCategory(cat);
+
+        // Get accessible flavor IDs for this API key
+        Set<Long> accessibleIds = flavorGroupService.getAccessibleFlavorIdsForApiKey(apiKeyId);
+
+        // Filter to only accessible flavors
+        return flavorService.findByCategory(cat).stream()
+                .filter(f -> accessibleIds.contains(f.getId()))
+                .toList();
     }
 
     @McpTool(description = """
@@ -111,12 +137,20 @@ public class FlavorTools {
             @McpToolParam(description = "Technology slugs (e.g., ['spring-boot', 'kafka', 'jpa'])")
             List<String> slugs
     ) {
-        log.info("Tool: getArchitecturePatterns - slugs={}", slugs);
+        Long apiKeyId = securityContextHelper.getCurrentApiKeyId();
+        log.info("Tool: getArchitecturePatterns - slugs={}, apiKeyId={}", slugs, apiKeyId);
 
         if (slugs == null || slugs.isEmpty()) {
             throw new IllegalArgumentException("At least one technology slug is required");
         }
-        return flavorService.findArchitectureByTechnologies(slugs);
+
+        // Get accessible flavor IDs for this API key
+        Set<Long> accessibleIds = flavorGroupService.getAccessibleFlavorIdsForApiKey(apiKeyId);
+
+        // Filter to only accessible flavors
+        return flavorService.findArchitectureByTechnologies(slugs).stream()
+                .filter(f -> accessibleIds.contains(f.getId()))
+                .toList();
     }
 
     @McpTool(description = """
@@ -127,12 +161,20 @@ public class FlavorTools {
             @McpToolParam(description = "Rule names or framework identifiers (e.g., ['GDPR', 'SOC2', 'PCI-DSS'])")
             List<String> rules
     ) {
-        log.info("Tool: getComplianceRules - rules={}", rules);
+        Long apiKeyId = securityContextHelper.getCurrentApiKeyId();
+        log.info("Tool: getComplianceRules - rules={}, apiKeyId={}", rules, apiKeyId);
 
         if (rules == null || rules.isEmpty()) {
             throw new IllegalArgumentException("At least one rule name is required");
         }
-        return flavorService.findComplianceByRules(rules);
+
+        // Get accessible flavor IDs for this API key
+        Set<Long> accessibleIds = flavorGroupService.getAccessibleFlavorIdsForApiKey(apiKeyId);
+
+        // Filter to only accessible flavors
+        return flavorService.findComplianceByRules(rules).stream()
+                .filter(f -> accessibleIds.contains(f.getId()))
+                .toList();
     }
 
     @McpTool(description = """
@@ -143,10 +185,18 @@ public class FlavorTools {
             @McpToolParam(description = "Use case identifier (e.g., 'backend-development', 'ui-development', 'testing')")
             String useCase
     ) {
-        log.info("Tool: getAgentConfiguration - useCase={}", useCase);
+        Long apiKeyId = securityContextHelper.getCurrentApiKeyId();
+        log.info("Tool: getAgentConfiguration - useCase={}, apiKeyId={}", useCase, apiKeyId);
 
-        return flavorService.findAgentConfigurationByUseCase(useCase)
+        FlavorDto flavor = flavorService.findAgentConfigurationByUseCase(useCase)
             .orElseThrow(() -> new IllegalArgumentException("No agent configuration found for use case: " + useCase));
+
+        // Security check: verify API key can access this flavor
+        if (!flavorGroupService.canApiKeyAccessFlavor(flavor.getId(), apiKeyId)) {
+            throw new IllegalArgumentException("No agent configuration found for use case: " + useCase);
+        }
+
+        return flavor;
     }
 
     @McpTool(description = """
@@ -157,10 +207,18 @@ public class FlavorTools {
             @McpToolParam(description = "Use case identifier (e.g., 'microservice', 'api-gateway', 'monolith')")
             String useCase
     ) {
-        log.info("Tool: getProjectInitialization - useCase={}", useCase);
+        Long apiKeyId = securityContextHelper.getCurrentApiKeyId();
+        log.info("Tool: getProjectInitialization - useCase={}, apiKeyId={}", useCase, apiKeyId);
 
-        return flavorService.findInitializationByUseCase(useCase)
+        FlavorDto flavor = flavorService.findInitializationByUseCase(useCase)
             .orElseThrow(() -> new IllegalArgumentException("No initialization template found for use case: " + useCase));
+
+        // Security check: verify API key can access this flavor
+        if (!flavorGroupService.canApiKeyAccessFlavor(flavor.getId(), apiKeyId)) {
+            throw new IllegalArgumentException("No initialization template found for use case: " + useCase);
+        }
+
+        return flavor;
     }
 
     @McpTool(description = """
