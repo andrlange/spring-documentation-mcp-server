@@ -1,21 +1,24 @@
 ---
-name: spring-boot-api-documenter
-description: Auto-generate OpenAPI 3 documentation for Spring Boot REST APIs using springdoc-openapi. Use when API endpoints change, controllers are modified, or user mentions API docs, Swagger, or OpenAPI. Triggers on @RestController changes, documentation requests, endpoint additions.
+name: spring-boot-4x-api-documenter
+description: Auto-generate OpenAPI 3 documentation for Spring Boot 4.x REST APIs using springdoc-openapi v3.0. Use when API endpoints change, controllers are modified, or user mentions API docs, Swagger, or OpenAPI. Triggers on @RestController changes, documentation requests, endpoint additions. Requires Spring Boot 4.0+ and Java 17+.
 allowed-tools: Read, Write, Grep, Edit
 ---
 
-# Spring Boot API Documenter Skill
+# Spring Boot 4.x API Documenter Skill
 
-Auto-generate OpenAPI 3 documentation for Spring Boot REST APIs using springdoc-openapi v2.8.14.
+Auto-generate OpenAPI 3 documentation for Spring Boot 4.x REST APIs using springdoc-openapi v3.0.0.
+
+> **Note**: This skill is for **Spring Boot 4.x** projects. For Spring Boot 3.x, use the `api-documenter-sb3x` skill with springdoc-openapi v2.8.x.
 
 ## When I Activate
 
-- API endpoints added/modified in Spring Boot
+- API endpoints added/modified in Spring Boot 4.x
 - User mentions API docs, OpenAPI, Swagger, or springdoc
 - @RestController files changed
 - Request/response DTOs modified
 - Documentation configuration needed
-- Migration from SpringFox or springdoc v1
+- Migration from springdoc-openapi v2.x to v3.0
+- API versioning configuration (Spring Framework 7 feature)
 
 ## What I Generate
 
@@ -27,18 +30,25 @@ Auto-generate OpenAPI 3 documentation for Spring Boot REST APIs using springdoc-
 - Error responses via @ControllerAdvice
 - Grouped API definitions
 
-### Spring Boot Integration
-- springdoc-openapi dependency configuration
-- Swagger UI and Scalar UI setup
+### Spring Boot 4.x Integration
+- springdoc-openapi v3.0 dependency configuration
+- Swagger UI (v5.30.1) and Scalar UI (v0.4.3) setup
 - application.properties/yml configuration
 - Security scheme definitions
 - GroupedOpenApi bean configurations
+- Initial API versioning support (Spring Framework 7)
 
 ---
 
 ## Quick Start
 
-### Adding springdoc-openapi to Spring Boot
+### Requirements
+
+- **Spring Boot**: 4.0.0 or higher
+- **Java**: 17 or higher (Jakarta EE 9)
+- **Spring Framework**: 7.x
+
+### Adding springdoc-openapi to Spring Boot 4.x
 
 **Maven (WebMvc with Swagger UI):**
 
@@ -46,7 +56,7 @@ Auto-generate OpenAPI 3 documentation for Spring Boot REST APIs using springdoc-
 <dependency>
     <groupId>org.springdoc</groupId>
     <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-    <version>2.8.14</version>
+    <version>3.0.0</version>
 </dependency>
 ```
 
@@ -56,20 +66,20 @@ Auto-generate OpenAPI 3 documentation for Spring Boot REST APIs using springdoc-
 <dependency>
     <groupId>org.springdoc</groupId>
     <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
-    <version>2.8.14</version>
+    <version>3.0.0</version>
 </dependency>
 ```
 
 **Gradle (WebMvc with Swagger UI):**
 
 ```groovy
-implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
+implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0'
 ```
 
 **Gradle (WebFlux with Swagger UI):**
 
 ```groovy
-implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.14'
+implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.0'
 ```
 
 ### Default URLs After Setup
@@ -483,16 +493,16 @@ management.endpoints.web.exposure.include=openapi, swagger-ui
 
 ## Module Reference
 
-### Available Modules
+### Available Modules (v3.0.0)
 
-| Module | Use Case |
-|--------|----------|
-| `springdoc-openapi-starter-webmvc-ui` | WebMvc + Swagger UI |
-| `springdoc-openapi-starter-webmvc-api` | WebMvc without UI |
-| `springdoc-openapi-starter-webflux-ui` | WebFlux + Swagger UI |
-| `springdoc-openapi-starter-webflux-api` | WebFlux without UI |
-| `springdoc-openapi-starter-webmvc-scalar` | WebMvc + Scalar UI |
-| `springdoc-openapi-starter-webflux-scalar` | WebFlux + Scalar UI |
+| Module | Use Case | Bundled UI Version |
+|--------|----------|-------------------|
+| `springdoc-openapi-starter-webmvc-ui` | WebMvc + Swagger UI | Swagger UI v5.30.1 |
+| `springdoc-openapi-starter-webmvc-api` | WebMvc without UI | - |
+| `springdoc-openapi-starter-webflux-ui` | WebFlux + Swagger UI | Swagger UI v5.30.1 |
+| `springdoc-openapi-starter-webflux-api` | WebFlux without UI | - |
+| `springdoc-openapi-starter-webmvc-scalar` | WebMvc + Scalar UI | Scalar v0.4.3 |
+| `springdoc-openapi-starter-webflux-scalar` | WebFlux + Scalar UI | Scalar v0.4.3 |
 
 ### Integrated Support (No Extra Dependencies)
 
@@ -577,7 +587,7 @@ management.endpoints.web.exposure.include=openapi, swagger-ui
 
 ```groovy
 plugins {
-    id("org.springframework.boot") version "3.5.7"
+    id("org.springframework.boot") version "4.0.0"
     id("org.springdoc.openapi-gradle-plugin") version "1.9.0"
 }
 ```
@@ -588,10 +598,40 @@ plugins {
 
 ## Migration Guides
 
+### From springdoc-openapi v2.x to v3.0 (Spring Boot 3.x to 4.x)
+
+**Prerequisites:**
+- Upgrade to Spring Boot 4.0.0+
+- Upgrade to Spring Framework 7.x
+- Ensure Java 17+ (Jakarta EE 9)
+
+**Step 1: Update dependencies**
+
+| v2.x Module | v3.0 Module |
+|-------------|-------------|
+| `springdoc-openapi-starter-webmvc-ui:2.8.x` | `springdoc-openapi-starter-webmvc-ui:3.0.0` |
+| `springdoc-openapi-starter-webflux-ui:2.8.x` | `springdoc-openapi-starter-webflux-ui:3.0.0` |
+| `springdoc-openapi-starter-webmvc-api:2.8.x` | `springdoc-openapi-starter-webmvc-api:3.0.0` |
+| `springdoc-openapi-starter-webflux-api:2.8.x` | `springdoc-openapi-starter-webflux-api:3.0.0` |
+
+**Step 2: No breaking changes in configuration**
+- All existing `springdoc.*` properties remain compatible
+- Existing `GroupedOpenApi` beans continue to work
+- OpenAPI annotations unchanged
+
+**Step 3: New features available**
+- Initial API versioning support (Spring Framework 7)
+- WebFlux static resources support
+- Updated Swagger UI (v5.30.1) and Scalar (v0.4.3)
+
+**Known Issues:**
+- API versioning with `springdoc.api-docs.version` may cause HTTP 400 errors (issue #3163)
+- Test thoroughly before production deployment
+
 ### From SpringFox
 
 1. Remove SpringFox dependencies
-2. Add `springdoc-openapi-starter-webmvc-ui`
+2. Add `springdoc-openapi-starter-webmvc-ui:3.0.0`
 3. Replace annotations:
 
 | SpringFox (Swagger 2) | springdoc (Swagger 3) |
@@ -607,20 +647,20 @@ plugins {
 
 4. Replace Docket beans with GroupedOpenApi beans
 
-### From springdoc-openapi v1
+### From springdoc-openapi v1 (Legacy)
 
 Replace modules:
 
-| v1 Module | v2 Module |
+| v1 Module | v3 Module |
 |-----------|-----------|
-| `springdoc-openapi-ui` | `springdoc-openapi-starter-webmvc-ui` |
-| `springdoc-openapi-webflux-ui` | `springdoc-openapi-starter-webflux-ui` |
-| `springdoc-openapi-webmvc-core` | `springdoc-openapi-starter-webmvc-api` |
-| `springdoc-openapi-common` | `springdoc-openapi-starter-common` |
+| `springdoc-openapi-ui` | `springdoc-openapi-starter-webmvc-ui:3.0.0` |
+| `springdoc-openapi-webflux-ui` | `springdoc-openapi-starter-webflux-ui:3.0.0` |
+| `springdoc-openapi-webmvc-core` | `springdoc-openapi-starter-webmvc-api:3.0.0` |
+| `springdoc-openapi-common` | `springdoc-openapi-starter-common:3.0.0` |
 
 Update class imports:
 
-| v1 Class | v2 Class |
+| v1 Class | v2/v3 Class |
 |----------|----------|
 | `org.springdoc.core.GroupedOpenApi` | `org.springdoc.core.models.GroupedOpenApi` |
 | `org.springdoc.core.SpringDocUtils` | `org.springdoc.core.utils.SpringDocUtils` |
@@ -630,14 +670,17 @@ Update class imports:
 
 ## Compatibility Matrix
 
-| Spring Boot | springdoc-openapi |
-|-------------|-------------------|
-| 3.5.x | 2.8.x |
-| 3.4.x | 2.7.x - 2.8.x |
-| 3.3.x | 2.6.x |
-| 3.2.x | 2.3.x - 2.5.x |
-| 3.1.x | 2.2.x |
-| 3.0.x | 2.0.x - 2.1.x |
+| Spring Boot | Spring Framework | springdoc-openapi | Java |
+|-------------|------------------|-------------------|------|
+| **4.0.x** | **7.x** | **3.0.x** | **17+** |
+| 3.5.x | 6.2.x | 2.8.x | 17+ |
+| 3.4.x | 6.1.x | 2.7.x - 2.8.x | 17+ |
+| 3.3.x | 6.0.x | 2.6.x | 17+ |
+| 3.2.x | 6.0.x | 2.3.x - 2.5.x | 17+ |
+| 3.1.x | 6.0.x | 2.2.x | 17+ |
+| 3.0.x | 6.0.x | 2.0.x - 2.1.x | 17+ |
+
+> **Important**: springdoc-openapi v3.0.x **requires** Spring Boot 4.0+. For Spring Boot 3.x projects, use springdoc-openapi v2.8.x.
 
 ---
 
@@ -749,10 +792,14 @@ static {
 ## References
 
 - [springdoc-openapi GitHub](https://github.com/springdoc/springdoc-openapi)
+- [springdoc-openapi v3.0.0 Release](https://github.com/springdoc/springdoc-openapi/releases/tag/v3.0.0)
 - [springdoc-openapi Demos](https://github.com/springdoc/springdoc-openapi-demos)
-- [OpenAPI 3 Specification](https://spec.openapis.org/oas/v3.1.0)
+- [springdoc.org Documentation](https://springdoc.org/)
+- [OpenAPI 3.1 Specification](https://spec.openapis.org/oas/v3.1.0)
 - [Swagger UI Configuration](https://swagger.io/docs/open-source-tools/swagger-ui/usage/configuration/)
+- [Spring Boot 4.0 Documentation](https://docs.spring.io/spring-boot/docs/4.0.0/reference/html/)
+- [Spring Framework 7 Documentation](https://docs.spring.io/spring-framework/reference/)
 
 ---
 
-*This skill uses springdoc-openapi v2.8.14 documentation as its knowledge base for Spring Boot API documentation generation.*
+*This skill uses springdoc-openapi v3.0.0 documentation as its knowledge base for Spring Boot 4.x API documentation generation.*
