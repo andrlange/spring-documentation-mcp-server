@@ -310,9 +310,16 @@ public class JavadocCrawlService {
 
     /**
      * Normalize URL to ensure it ends with a slash.
+     * Also strips index.html suffix if present (common in API doc URLs).
      */
     private String normalizeUrl(String url) {
         if (url == null) return "";
+        // Strip index.html suffix (URLs like .../api/index.html should become .../api/)
+        if (url.endsWith("/index.html")) {
+            url = url.substring(0, url.length() - 10); // Remove "index.html", keep "/"
+        } else if (url.endsWith("index.html")) {
+            url = url.substring(0, url.length() - 10); // Remove "index.html"
+        }
         return url.endsWith("/") ? url : url + "/";
     }
 
