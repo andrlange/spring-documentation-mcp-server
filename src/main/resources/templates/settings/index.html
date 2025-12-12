@@ -315,6 +315,112 @@
         </div>
     </div>
 
+    <!-- Javadoc Sync Version Filter (Release 1.4.3) -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0">
+                <i class="bi bi-file-earmark-code" style="color: #f59e0b;"></i> Javadoc Sync Version Filter
+            </h5>
+            <small class="text-muted">Control which version types are included in Javadoc API documentation sync</small>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">
+                <i class="bi bi-info-circle"></i>
+                By default, only GA (General Availability) and CURRENT versions are synced. Enable the options below to include
+                pre-release versions in the Javadoc sync process. This affects all projects with Javadoc sync enabled.
+            </p>
+
+            <div class="row g-3 mb-3">
+                <!-- SNAPSHOT Toggle -->
+                <div class="col-md-4">
+                    <div class="card h-100 border-warning">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-title text-warning mb-1">
+                                        <i class="bi bi-lightning-charge"></i> SNAPSHOT
+                                    </h6>
+                                    <small class="text-muted">e.g., 2.0.0-SNAPSHOT</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           id="javadocSyncSnapshot"
+                                           th:checked="${settings.javadocSyncSnapshot}"
+                                           onchange="updateJavadocFilter()">
+                                </div>
+                            </div>
+                            <p class="card-text mt-2 small text-muted">
+                                Development builds with latest changes. May contain unstable APIs.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RC Toggle -->
+                <div class="col-md-4">
+                    <div class="card h-100 border-info">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-title text-info mb-1">
+                                        <i class="bi bi-box-seam"></i> Release Candidate (RC)
+                                    </h6>
+                                    <small class="text-muted">e.g., 1.0.0-RC1, 1.0.0-RC2</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           id="javadocSyncRc"
+                                           th:checked="${settings.javadocSyncRc}"
+                                           onchange="updateJavadocFilter()">
+                                </div>
+                            </div>
+                            <p class="card-text mt-2 small text-muted">
+                                Pre-release versions close to final release. APIs mostly stable.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Milestone Toggle -->
+                <div class="col-md-4">
+                    <div class="card h-100 border-primary">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-title text-primary mb-1">
+                                        <i class="bi bi-flag"></i> Milestone (M)
+                                    </h6>
+                                    <small class="text-muted">e.g., 1.0.0-M1, 1.0.0-M2</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           id="javadocSyncMilestone"
+                                           th:checked="${settings.javadocSyncMilestone}"
+                                           onchange="updateJavadocFilter()">
+                                </div>
+                            </div>
+                            <p class="card-text mt-2 small text-muted">
+                                Early preview releases. APIs may change significantly.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status indicator -->
+            <div id="javadocFilterStatus" class="alert alert-light border mb-0" style="display: none;">
+                <i class="bi bi-check-circle text-success"></i>
+                <span id="javadocFilterMessage">Settings saved</span>
+            </div>
+
+            <div class="alert alert-info mb-0">
+                <i class="bi bi-lightbulb"></i>
+                <strong>Tip:</strong> Keeping pre-release versions disabled reduces sync time and storage usage.
+                Enable them only if you need to reference upcoming API changes in your documentation.
+            </div>
+        </div>
+    </div>
+
     <!-- Schedulers Section (Dark Theme) -->
     <div class="schedule-status-card mb-4">
         <div class="schedule-status-header d-flex justify-content-between align-items-center">
@@ -344,8 +450,8 @@
                 <!-- Comprehensive Sync Scheduler -->
                 <div class="accordion-item border-0 border-bottom">
                     <h2 class="accordion-header">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#comprehensiveSyncScheduler" aria-expanded="true">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#comprehensiveSyncScheduler" aria-expanded="false">
                             <i class="bi bi-clock-history me-2" style="color: #63b3ed;"></i>
                             <strong>Comprehensive Sync</strong>
                             <span th:if="${schedulerSettings != null and schedulerSettings.syncEnabled}"
@@ -354,7 +460,7 @@
                                   class="badge bg-secondary ms-2">Disabled</span>
                         </button>
                     </h2>
-                    <div id="comprehensiveSyncScheduler" class="accordion-collapse collapse show"
+                    <div id="comprehensiveSyncScheduler" class="accordion-collapse collapse"
                          data-bs-parent="#schedulerAccordion">
                         <div class="accordion-body">
                             <p class="text-muted mb-3">
@@ -1657,6 +1763,81 @@
                 }
             });
         })();
+
+        // ==================== Javadoc Sync Version Filter (Release 1.4.3) ====================
+
+        // Update Javadoc sync filter settings (AJAX)
+        async function updateJavadocFilter() {
+            const syncSnapshot = document.getElementById('javadocSyncSnapshot').checked;
+            const syncRc = document.getElementById('javadocSyncRc').checked;
+            const syncMilestone = document.getElementById('javadocSyncMilestone').checked;
+
+            try {
+                const formData = new FormData();
+                formData.append('syncSnapshot', syncSnapshot);
+                formData.append('syncRc', syncRc);
+                formData.append('syncMilestone', syncMilestone);
+
+                const csrfToken = getCsrfToken();
+                if (csrfToken) {
+                    formData.append('_csrf', csrfToken);
+                }
+
+                const response = await fetch('/settings/javadoc-filter', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show success message
+                    const statusEl = document.getElementById('javadocFilterStatus');
+                    const messageEl = document.getElementById('javadocFilterMessage');
+
+                    const enabledFilters = [];
+                    if (syncSnapshot) enabledFilters.push('SNAPSHOT');
+                    if (syncRc) enabledFilters.push('RC');
+                    if (syncMilestone) enabledFilters.push('Milestone');
+
+                    if (enabledFilters.length > 0) {
+                        messageEl.textContent = `Filter updated! Syncing: GA + ${enabledFilters.join(', ')} versions`;
+                    } else {
+                        messageEl.textContent = 'Filter updated! Syncing only GA/CURRENT versions';
+                    }
+
+                    statusEl.style.display = 'block';
+                    statusEl.classList.remove('alert-danger');
+                    statusEl.classList.add('alert-success');
+
+                    // Hide after 3 seconds
+                    setTimeout(() => {
+                        statusEl.style.display = 'none';
+                    }, 3000);
+
+                    console.log('Javadoc filter updated:', data);
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Error updating Javadoc filter:', error);
+
+                // Show error message
+                const statusEl = document.getElementById('javadocFilterStatus');
+                const messageEl = document.getElementById('javadocFilterMessage');
+
+                messageEl.textContent = 'Failed to update filter: ' + error.message;
+                statusEl.style.display = 'block';
+                statusEl.classList.remove('alert-success');
+                statusEl.classList.add('alert-danger');
+
+                // Don't auto-hide errors
+            }
+        }
     </script>
 </div>
 </body>

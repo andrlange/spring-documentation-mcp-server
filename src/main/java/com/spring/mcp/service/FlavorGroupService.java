@@ -64,9 +64,10 @@ public class FlavorGroupService {
     /**
      * Updates an existing flavor group.
      * Note: unique_name cannot be changed.
+     * Only non-null fields in updates are applied.
      *
      * @param id the group ID
-     * @param updates the updated fields
+     * @param updates the updated fields (only non-null values are applied)
      * @return the updated group
      * @throws EntityNotFoundException if group not found
      */
@@ -75,11 +76,19 @@ public class FlavorGroupService {
         FlavorGroup group = groupRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Group not found with id: " + id));
 
-        // Update allowed fields (unique_name is immutable)
-        group.setDisplayName(updates.getDisplayName());
-        group.setDescription(updates.getDescription());
-        group.setIsActive(updates.getIsActive());
-        group.setUpdatedBy(updates.getUpdatedBy());
+        // Update only non-null fields (unique_name is immutable)
+        if (updates.getDisplayName() != null) {
+            group.setDisplayName(updates.getDisplayName());
+        }
+        if (updates.getDescription() != null) {
+            group.setDescription(updates.getDescription());
+        }
+        if (updates.getIsActive() != null) {
+            group.setIsActive(updates.getIsActive());
+        }
+        if (updates.getUpdatedBy() != null) {
+            group.setUpdatedBy(updates.getUpdatedBy());
+        }
 
         log.info("Updated flavor group: {} (id={})", group.getUniqueName(), id);
         return groupRepository.save(group);

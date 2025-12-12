@@ -56,22 +56,30 @@
                         This is the complete sync that populates all data including:
                     </p>
                     <div class="row">
-                        <div class="col-md-6">
-                            <ul>
-                                <li><strong>Spring Boot versions</strong> (spring_boot_versions table)</li>
-                                <li><strong>Spring Generations</strong> (16+ Boot versions, 110+ projects)</li>
-                                <li><strong>Spring Initializr</strong> (additional Boot versions)</li>
+                        <div class="col-md-4">
+                            <ul class="small">
+                                <li><strong>Spring Boot versions</strong> (primary source)</li>
+                                <li><strong>Spring Generations</strong> (110+ projects)</li>
+                                <li><strong>Spring Initializr</strong> (Boot versions)</li>
+                                <li><strong>Project pages</strong> (documentation links)</li>
                             </ul>
                         </div>
-                        <div class="col-md-6">
-                            <ul>
-                                <li><strong>Project relationships</strong> (parent/child hierarchies)</li>
-                                <li><strong>Documentation content</strong> (OVERVIEW from spring.io)</li>
-                                <li><strong>Code examples</strong> (samples from spring.io project pages)</li>
+                        <div class="col-md-4">
+                            <ul class="small">
+                                <li><strong>Project relationships</strong> (parent/child)</li>
+                                <li><strong>Documentation content</strong> (Markdown)</li>
+                                <li><strong>Code examples</strong> (samples)</li>
+                                <li th:if="${openRewriteEnabled}"><strong style="color: #f97316;">Migration Recipes</strong> (OpenRewrite)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <ul class="small">
+                                <li><strong style="color: #6366f1;">GitHub Documentation</strong> (AsciiDoc)</li>
+                                <li th:if="${javadocsEnabled}"><strong style="color: #0d9488;">Javadocs API</strong> (classes, methods)</li>
                             </ul>
                         </div>
                     </div>
-                    <div class="alert alert-info mb-3" role="alert">
+                    <div class="alert alert-info alert-permanent mb-3" role="alert">
                         <i class="bi bi-lightbulb-fill"></i>
                         <strong>Note:</strong> This sync runs all phases sequentially:
                         <ol class="mb-0 mt-2">
@@ -675,33 +683,119 @@
                         <li><strong>Default Marking:</strong> The latest stable version is marked as the default/latest for each project.</li>
                     </ol>
 
+                    <h6 class="mt-4">Sync Phases Overview</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 80px;">Phase</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th style="width: 100px;">Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-success">0</span></td>
+                                    <td>Spring Boot Versions</td>
+                                    <td>Fetch Spring Boot versions from Initializr API (primary source)</td>
+                                    <td>~5-10s</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-success">1</span></td>
+                                    <td>Spring Generations</td>
+                                    <td>Sync 16+ Boot versions and 110+ projects per version from Generations API</td>
+                                    <td>~30-60s</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-secondary">2</span></td>
+                                    <td>Spring Initializr</td>
+                                    <td>Additional Boot versions (included in Phase 0)</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-success">3</span></td>
+                                    <td>Crawl Project Pages</td>
+                                    <td>Extract documentation links and support dates from spring.io project pages</td>
+                                    <td>~30-90s</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-success">4</span></td>
+                                    <td>Project Relationships</td>
+                                    <td>Detect parent/child relationships (e.g., Spring Data → JPA, MongoDB)</td>
+                                    <td>~10-20s</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-success">5</span></td>
+                                    <td>Documentation Content</td>
+                                    <td>Fetch and convert documentation from spring.io to Markdown</td>
+                                    <td>~60-120s</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-success">6</span></td>
+                                    <td>Code Examples</td>
+                                    <td>Extract code examples and sample repositories from project pages</td>
+                                    <td>~20-40s</td>
+                                </tr>
+                                <tr class="table-warning">
+                                    <td><span class="badge" style="background-color: #f97316;">7</span></td>
+                                    <td>Migration Recipes</td>
+                                    <td>OpenRewrite migration knowledge (conditional - if enabled)</td>
+                                    <td>~5-10s</td>
+                                </tr>
+                                <tr class="table-info">
+                                    <td><span class="badge" style="background-color: #6366f1;">8</span></td>
+                                    <td>GitHub Documentation</td>
+                                    <td>Antora/AsciiDoc docs from spring-projects GitHub repositories</td>
+                                    <td>~60-120s</td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td><span class="badge" style="background-color: #0d9488;">9</span></td>
+                                    <td>Javadocs API</td>
+                                    <td>Download and parse Javadoc API documentation (conditional - if enabled)</td>
+                                    <td>~2-5min</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="mt-4">Additional Sync Options (Outside Main Phases)</h6>
+                    <ul>
+                        <li><strong style="color: #8b5cf6;">Languages (Java/Kotlin):</strong> Sync language versions, features, deprecations - runs independently from comprehensive sync</li>
+                        <li><strong style="color: #f59e0b;">Fix Documentation Versions:</strong> One-time utility to fix placeholder versions in documentation links (hidden by default)</li>
+                    </ul>
+
                     <h6 class="mt-4">Best Practices</h6>
                     <ul>
-                        <li><strong>Initial Setup:</strong> Run <strong>Comprehensive Sync</strong> after first installation to populate all data (all 7 phases).</li>
+                        <li><strong>Initial Setup:</strong> Run <strong>Comprehensive Sync</strong> after first installation to populate all data (runs all 10 phases).</li>
                         <li><strong>Regular Updates:</strong> Run Comprehensive Sync periodically (weekly or monthly) to stay current with new Spring releases.</li>
-                        <li><strong>Targeted Updates:</strong> Use individual sync steps (Phases 0-6) when you only need to refresh specific data:
-                            <ul class="mt-2">
-                                <li><strong>Phase 0:</strong> New Spring Boot versions released</li>
-                                <li><strong>Phase 1:</strong> Update Spring Generations data and project mappings</li>
-                                <li><strong>Phase 3:</strong> Refresh project page documentation links</li>
-                                <li><strong>Phase 4:</strong> Update parent/child project relationships</li>
-                                <li><strong>Phase 5:</strong> Refresh OVERVIEW documentation content</li>
-                                <li><strong>Phase 6:</strong> Update code examples and samples</li>
-                            </ul>
-                        </li>
+                        <li><strong>Targeted Updates:</strong> Use individual sync steps when you only need to refresh specific data.</li>
+                        <li><strong>Javadoc Version Filter:</strong> Configure which version types (SNAPSHOT, RC, Milestone) to include in Javadoc sync via Settings page.</li>
                         <li><strong>Monitor Progress:</strong> Watch the real-time progress indicators during Comprehensive Sync to track each phase.</li>
                         <li><strong>Check Results:</strong> Review success/error messages after each sync to ensure data integrity.</li>
                         <li><strong>Sequential Execution:</strong> Individual syncs can be run in any order, but for complete data, use Comprehensive Sync which runs all phases sequentially.</li>
                     </ul>
 
-                    <h6 class="mt-4">Troubleshooting</h6>
-                    <div class="alert alert-warning" role="alert">
-                        <strong>Common Issues:</strong>
-                        <ul class="mb-0">
-                            <li><strong>Network Errors:</strong> Ensure the server has internet access to reach external APIs.</li>
+                    <h6 class="mt-4">
+                        <i class="bi bi-exclamation-triangle text-warning"></i>
+                        Troubleshooting
+                    </h6>
+                    <div class="alert alert-warning alert-permanent border-warning" role="alert">
+                        <strong><i class="bi bi-tools me-1"></i> Common Issues:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li><strong>Network Errors:</strong> Ensure the server has internet access to reach external APIs (spring.io, start.spring.io, GitHub).</li>
                             <li><strong>API Changes:</strong> External APIs may change structure; check logs for parsing errors.</li>
                             <li><strong>Duplicate Entries:</strong> The system prevents duplicates, but check database constraints are in place.</li>
+                            <li><strong>Javadoc Sync Failures:</strong> If a project fails 5 consecutive times, sync is auto-disabled. Re-enable in Projects page.</li>
+                            <li><strong>Rate Limiting:</strong> GitHub API has rate limits (60 req/hour unauthenticated). Configure GITHUB_TOKEN for 5000 req/hour.</li>
                         </ul>
+                    </div>
+                    <div class="alert alert-info alert-permanent border-info" role="alert">
+                        <strong><i class="bi bi-journal-text me-1"></i> Checking Logs:</strong>
+                        <p class="mb-0 mt-2">
+                            Monitor application logs for detailed sync progress and errors.
+                            Log level for sync operations: <code>com.spring.mcp.service.sync</code> at DEBUG level.
+                        </p>
                     </div>
                 </div>
             </div>
