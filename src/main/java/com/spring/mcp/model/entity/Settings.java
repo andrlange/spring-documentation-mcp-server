@@ -32,6 +32,30 @@ public class Settings {
     @Builder.Default
     private Boolean enterpriseSubscriptionEnabled = false;
 
+    /**
+     * Include SNAPSHOT versions in Javadoc sync (e.g., 2.0.0-SNAPSHOT).
+     * Default: false (exclude SNAPSHOTs)
+     */
+    @Column(name = "javadoc_sync_snapshot", nullable = false)
+    @Builder.Default
+    private Boolean javadocSyncSnapshot = false;
+
+    /**
+     * Include RC (Release Candidate) versions in Javadoc sync (e.g., 1.0.0-RC1).
+     * Default: false (exclude RCs)
+     */
+    @Column(name = "javadoc_sync_rc", nullable = false)
+    @Builder.Default
+    private Boolean javadocSyncRc = false;
+
+    /**
+     * Include Milestone versions in Javadoc sync (e.g., 1.0.0-M1).
+     * Default: false (exclude Milestones)
+     */
+    @Column(name = "javadoc_sync_milestone", nullable = false)
+    @Builder.Default
+    private Boolean javadocSyncMilestone = false;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

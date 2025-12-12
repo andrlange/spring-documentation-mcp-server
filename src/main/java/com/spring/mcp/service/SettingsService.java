@@ -56,6 +56,90 @@ public class SettingsService {
         return updated;
     }
 
+    // ==================== Javadoc Sync Version Filter Settings ====================
+
+    /**
+     * Check if SNAPSHOT versions should be included in Javadoc sync.
+     *
+     * @return true if SNAPSHOTs should be synced
+     */
+    @Transactional(readOnly = true)
+    public boolean isJavadocSyncSnapshotEnabled() {
+        return getSettings().getJavadocSyncSnapshot();
+    }
+
+    /**
+     * Check if RC versions should be included in Javadoc sync.
+     *
+     * @return true if RCs should be synced
+     */
+    @Transactional(readOnly = true)
+    public boolean isJavadocSyncRcEnabled() {
+        return getSettings().getJavadocSyncRc();
+    }
+
+    /**
+     * Check if Milestone versions should be included in Javadoc sync.
+     *
+     * @return true if Milestones should be synced
+     */
+    @Transactional(readOnly = true)
+    public boolean isJavadocSyncMilestoneEnabled() {
+        return getSettings().getJavadocSyncMilestone();
+    }
+
+    /**
+     * Update the Javadoc sync version filter settings.
+     *
+     * @param syncSnapshot include SNAPSHOT versions
+     * @param syncRc include RC versions
+     * @param syncMilestone include Milestone versions
+     * @return the updated settings
+     */
+    @Transactional
+    public Settings updateJavadocSyncFilters(boolean syncSnapshot, boolean syncRc, boolean syncMilestone) {
+        Settings settings = getSettings();
+        settings.setJavadocSyncSnapshot(syncSnapshot);
+        settings.setJavadocSyncRc(syncRc);
+        settings.setJavadocSyncMilestone(syncMilestone);
+        Settings updated = settingsRepository.save(settings);
+        log.info("Javadoc sync filters updated: SNAPSHOT={}, RC={}, Milestone={}",
+                syncSnapshot, syncRc, syncMilestone);
+        return updated;
+    }
+
+    /**
+     * Check if a version string should be included in Javadoc sync based on current settings.
+     *
+     * @param version the version string to check
+     * @return true if the version should be synced
+     */
+    @Transactional(readOnly = true)
+    public boolean shouldSyncJavadocVersion(String version) {
+        if (version == null) {
+            return false;
+        }
+        String upperVersion = version.toUpperCase();
+
+        // Check SNAPSHOT versions
+        if (upperVersion.contains("-SNAPSHOT")) {
+            return isJavadocSyncSnapshotEnabled();
+        }
+
+        // Check RC versions (e.g., -RC1, -RC2)
+        if (upperVersion.matches(".*-RC\\d+.*")) {
+            return isJavadocSyncRcEnabled();
+        }
+
+        // Check Milestone versions (e.g., -M1, -M2)
+        if (upperVersion.matches(".*-M\\d+.*")) {
+            return isJavadocSyncMilestoneEnabled();
+        }
+
+        // GA/CURRENT versions are always synced
+        return true;
+    }
+
     /**
      * Update all settings.
      *

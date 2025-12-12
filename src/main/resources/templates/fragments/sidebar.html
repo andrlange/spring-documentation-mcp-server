@@ -63,6 +63,11 @@
 
             <!-- Admin Only -->
             <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                <a class="nav-link" th:href="@{/sync}" th:classappend="${activePage == 'sync'} ? 'active' : ''">
+                    <i class="bi bi-arrow-repeat" style="color: #60a5fa;"></i> Synchronization
+                </a>
+            </li>
+            <li class="nav-item" sec:authorize="hasRole('ADMIN')">
                 <a class="nav-link" th:href="@{/users}" th:classappend="${activePage == 'users' or activePage == 'groups'} ? 'active' : ''">
                     <i class="bi bi-people"></i> Users & Groups
                 </a>

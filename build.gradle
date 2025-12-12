@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.spring.mcp'
-version = '1.4.2'
+version = '1.4.3'
 
 java {
     // Using Java 25 (LTS version)
@@ -27,7 +27,7 @@ repositories {
 }
 
 ext {
-    springAiVersion = '1.1.1'
+    springAiVersion = '1.1.2'
     thymeleafVersion = '3.4.0'
     jsoupVersion = '1.21.2'
     htmlunitVersion = '4.19.0'

@@ -335,6 +335,40 @@ public class SettingsController {
         return updateGlobalTimeFormat(timeFormat);
     }
 
+    // ==================== Javadoc Sync Version Filter ====================
+
+    /**
+     * Update Javadoc sync version filter settings (AJAX endpoint).
+     * Controls which version types (SNAPSHOT, RC, Milestone) are included in Javadoc sync.
+     */
+    @PostMapping("/javadoc-filter")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateJavadocFilter(
+            @RequestParam(value = "syncSnapshot", defaultValue = "false") boolean syncSnapshot,
+            @RequestParam(value = "syncRc", defaultValue = "false") boolean syncRc,
+            @RequestParam(value = "syncMilestone", defaultValue = "false") boolean syncMilestone) {
+
+        log.debug("Updating Javadoc sync filter: SNAPSHOT={}, RC={}, Milestone={}",
+                syncSnapshot, syncRc, syncMilestone);
+
+        try {
+            settingsService.updateJavadocSyncFilters(syncSnapshot, syncRc, syncMilestone);
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Javadoc sync filter updated successfully",
+                "syncSnapshot", syncSnapshot,
+                "syncRc", syncRc,
+                "syncMilestone", syncMilestone
+            ));
+
+        } catch (Exception e) {
+            log.error("Error updating Javadoc sync filter", e);
+            return ResponseEntity.internalServerError()
+                .body(Map.of("success", false, "error", "Failed to update Javadoc sync filter: " + e.getMessage()));
+        }
+    }
+
     // ==================== API Key Management ====================
 
     /**

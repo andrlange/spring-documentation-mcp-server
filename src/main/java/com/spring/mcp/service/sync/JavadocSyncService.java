@@ -7,6 +7,7 @@ import com.spring.mcp.model.entity.SpringProject;
 import com.spring.mcp.repository.JavadocSyncStatusRepository;
 import com.spring.mcp.repository.ProjectVersionRepository;
 import com.spring.mcp.repository.SpringProjectRepository;
+import com.spring.mcp.service.SettingsService;
 import com.spring.mcp.service.javadoc.JavadocCrawlService;
 import com.spring.mcp.service.javadoc.JavadocStorageService;
 import lombok.*;
@@ -38,6 +39,7 @@ public class JavadocSyncService {
     private final ProjectVersionRepository versionRepository;
     private final SpringProjectRepository projectRepository;
     private final JavadocsFeatureConfig config;
+    private final SettingsService settingsService;
 
     /**
      * Sync Javadocs for all enabled projects.
@@ -116,7 +118,17 @@ public class JavadocSyncService {
             List<ProjectVersion> versions = versionRepository.findByProjectIdWithApiDocUrl(projectId);
             log.info("Found {} versions with API doc URLs for {}", versions.size(), project.getSlug());
 
-            for (ProjectVersion version : versions) {
+            // Filter versions based on settings (Release 1.4.3)
+            List<ProjectVersion> filteredVersions = filterVersionsBySettings(versions);
+            if (filteredVersions.size() < versions.size()) {
+                log.info("Filtered from {} to {} versions based on Javadoc sync settings (SNAPSHOT={}, RC={}, Milestone={})",
+                        versions.size(), filteredVersions.size(),
+                        settingsService.isJavadocSyncSnapshotEnabled(),
+                        settingsService.isJavadocSyncRcEnabled(),
+                        settingsService.isJavadocSyncMilestoneEnabled());
+            }
+
+            for (ProjectVersion version : filteredVersions) {
                 try {
                     // Crawl the Javadocs (will skip already-synced classes at the class level)
                     String apiDocUrl = version.getApiDocUrl();
@@ -280,6 +292,22 @@ public class JavadocSyncService {
     @Transactional
     public int clearVersion(String projectSlug, String version) {
         return storageService.clearLibraryVersion(projectSlug, version);
+    }
+
+    /**
+     * Filter versions based on Javadoc sync settings.
+     * By default, only GA/CURRENT versions are included. SNAPSHOT, RC, and Milestone
+     * versions are included only if their respective settings are enabled.
+     * <p>
+     * Added in Release 1.4.3.
+     *
+     * @param versions list of versions to filter
+     * @return filtered list of versions
+     */
+    private List<ProjectVersion> filterVersionsBySettings(List<ProjectVersion> versions) {
+        return versions.stream()
+                .filter(v -> settingsService.shouldSyncJavadocVersion(v.getVersion()))
+                .toList();
     }
 
     /**

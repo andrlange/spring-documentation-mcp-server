@@ -5,6 +5,47 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.3] - 2025-12-12
+
+### Added
+- **Javadoc Sync Version Filter**: New settings to control which version types are included in Javadoc synchronization
+    - Toggle switches for SNAPSHOT, RC (Release Candidate), and Milestone (M) versions
+    - By default, only GA (General Availability) and CURRENT versions are synced
+    - Settings UI in `/settings` page with instant AJAX save
+    - Example: For Spring AI with versions `1.1.2` (GA), `2.0.0-SNAPSHOT`, `2.0.0-M1`, filters let you choose exactly which to sync
+    - Helps reduce sync time and storage by excluding pre-release versions when not needed
+- **Login Screen Version Display**: App version number now shown below the title on the login page
+    - Created dedicated `LoginController` to replace view controller (required for model attributes)
+    - Reads version from `info.app.version` property in `application.yml`
+    - Subtle styling to not distract from login form
+- **Sidebar Synchronization Link**: Added "Synchronization" menu item in admin sidebar
+    - Visible only to ADMIN role users
+    - Links to `/sync` page (same as Dashboard "Sync Projects" button)
+    - Blue sync icon (`bi-arrow-repeat`) consistent with other menu styling
+- **Sync Guide Update**: Comprehensive update to the Sync Guide on `/sync` page
+    - Added detailed phases overview table with all 10 phases (0-9)
+    - Shows phase name, description, and estimated duration for each phase
+    - Added "Additional Sync Options" section for Languages and Fix Documentation Versions
+    - Updated best practices to reference all phases and new Javadoc Version Filter
+
+### Changed
+- **Spring AI**: Updated from 1.1.1 to 1.1.2
+
+### Fixed
+- **Flavor Groups Toggle Error**: Fixed JPA exception when activating/deactivating flavor groups on `/groups` page
+    - Issue: `updateGroup()` method was overwriting non-null fields with null values when only `isActive` was being updated
+    - Solution: Changed to selective field update - only non-null fields in the update request are applied
+    - Location: `FlavorGroupService.updateGroup()` method
+
+### Technical Details
+- New Flyway migration: `V14__javadoc_version_filter.sql`
+- New Settings entity fields: `javadocSyncSnapshot`, `javadocSyncRc`, `javadocSyncMilestone`
+- New SettingsService methods: `shouldSyncJavadocVersion()`, `updateJavadocSyncFilters()`
+- JavadocSyncService now filters versions using `filterVersionsBySettings()` before crawling
+- New `LoginController` replaces view controller for `/login` (enables model attribute injection)
+
+---
+
 ## [1.4.2] - 2025-12-08 + HotFix 1 + HotFix 2
 
 ### Added
@@ -245,6 +286,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.4.3 | 2025-12-12 | Javadoc sync version filter, login version display, flavor groups fix |
 | 1.4.2 | 2025-12-08 | Javadoc API Documentation feature (4 MCP tools) |
 | 1.4.1 | 2025-12-07 | GitHub docs keyword fix, configurable sync features |
 | 1.4.0 | 2025-12-06 | Boot Initializr integration, Caffeine caching (5 MCP tools) |

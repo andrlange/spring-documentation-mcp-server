@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring Boot Documentation MCP Server
-    version: 1.4.2 - HotFox 2
+    version: 1.4.3
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.8
@@ -72,7 +72,7 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.4.2"
+        version: "1.4.3"
         instructions: |
           Spring Boot Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 
@@ -323,13 +323,13 @@ mcp:
         # Note: Runs as Phase 9 of Comprehensive Sync - schedule managed via UI
         enabled: ${JAVADOCS_SYNC_ENABLED:true}  # Enabled by default (runs with comprehensive sync)
         max-failures: 5
-        rate-limit-ms: 500
+        rate-limit-ms: 230
         batch-size: 50
         on-startup: false
       parser:
         connection-timeout-ms: 10000
         read-timeout-ms: 30000
-        user-agent: "Spring-MCP-Server/1.4.2 (Javadoc-Crawler)"
+        user-agent: "Spring-MCP-Server/1.4.3 (Javadoc-Crawler)"
         max-depth: 3
         max-classes-per-package: 500
         max-methods-per-class: 200

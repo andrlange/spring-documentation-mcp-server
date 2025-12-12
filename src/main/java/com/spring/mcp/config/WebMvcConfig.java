@@ -15,7 +15,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
         // Map root to dashboard
         registry.addViewController("/").setViewName("redirect:/dashboard");
 
-        // Login page
-        registry.addViewController("/login").setViewName("login");
+        // Note: Login page is handled by LoginController to ensure model attributes are resolved
     }
 }

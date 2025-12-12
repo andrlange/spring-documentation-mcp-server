@@ -10,7 +10,7 @@
 >
 > **Purpose**: My main goal is to create demo applications using my own specifications to explore AI-assisted development workflows.
 
-### (Current Version 1.4.2 HotFix 2 - Scheduler, Flavors fix)
+### (Current Version 1.4.3 - Javadoc Sync Filter, UI Fixes)
 
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
@@ -73,6 +73,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
+| **1.4.3** | 2025-12-12 | Javadoc sync version filter, login version, flavor groups fix |
 | **1.4.2** | 2025-12-08 | Javadoc API documentation crawler and search (4 MCP tools)   |
 | **1.4.1** | 2025-12-07 | GitHub docs keyword fix, configurable sync features          |
 | **1.4.0** | 2025-12-06 | Boot Initializr integration, Caffeine caching (5 MCP tools)  |
@@ -112,7 +113,7 @@ docker-compose up -d postgres
 ### 2. Build and Run
 ```bash
 ./gradlew clean build
-java -jar build/libs/spring-boot-documentation-mcp-server-1.4.2.jar
+java -jar build/libs/spring-boot-documentation-mcp-server-1.4.3.jar
 ```
 
 Or using Gradle:
@@ -542,11 +543,29 @@ To enable Javadoc synchronization for a Spring project:
 
 #### Sync Behavior
 
-- **Rate Limiting**: The crawler uses a 500ms delay between requests to avoid overwhelming the server
+- **Rate Limiting**: The crawler uses a 230ms delay between requests to avoid overwhelming the server
 - **Batch Processing**: Classes are processed in batches with configurable limits
 - **Failure Handling**: After 5 consecutive failures, sync is automatically disabled for the project
 - **Scheduled Sync**: By default, enabled projects sync weekly on Sunday at 4 AM
 - **Manual Sync**: Use the Sync page (`/sync`) → Phase 9 "Javadocs" card to trigger manual sync
+
+#### Javadoc Version Filter (v1.4.3)
+
+By default, only **GA (General Availability)** and **CURRENT** versions are synchronized. Pre-release versions can be optionally included via Settings:
+
+1. **Navigate to Settings** (`/settings`)
+2. **Find "Javadoc Sync Version Filter"** section
+3. **Toggle filters**:
+   - **SNAPSHOT**: Include development builds (e.g., `2.0.0-SNAPSHOT`)
+   - **RC**: Include release candidates (e.g., `1.0.0-RC1`, `1.0.0-RC2`)
+   - **Milestone (M)**: Include milestone releases (e.g., `1.0.0-M1`, `1.0.0-M2`)
+
+> **Tip**: Keeping pre-release versions disabled reduces sync time and storage usage. Enable them only if you need to reference upcoming API changes in your documentation.
+
+**Example**: For Spring AI with versions `1.1.2` (GA), `2.0.0-SNAPSHOT`, `2.0.0-M1`, `1.0.3`:
+- With all filters disabled: Only `1.1.2` and `1.0.3` are synced
+- With SNAPSHOT enabled: Adds `2.0.0-SNAPSHOT`
+- With Milestone enabled: Adds `2.0.0-M1`
 
 #### What Gets Indexed
 
