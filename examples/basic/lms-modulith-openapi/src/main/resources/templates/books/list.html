@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-book me-2"></i>Books</h2>
+        <a th:href="@{/books/new}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Add Book
+        </a>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form th:action="@{/books}" method="get" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="search" th:value="${search}"
+                           placeholder="Search by title, ISBN, or author...">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="category">
+                        <option value="">All Categories</option>
+                        <option th:each="cat : ${categories}" th:value="${cat.id}"
+                                th:selected="${cat.id == selectedCategory}" th:text="${cat.name}">Category</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="availability">
+                        <option value="">All Books</option>
+                        <option value="available" th:selected="${availability == 'available'}">Available Only</option>
+                        <option value="loaned" th:selected="${availability == 'loaned'}">On Loan</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-light w-100">
+                        <i class="bi bi-search me-1"></i>Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Books Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>ISBN</th>
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>Category</th>
+                            <th>Available</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="book : ${books}">
+                            <td><code th:text="${book.isbn}">ISBN</code></td>
+                            <td th:text="${book.title}">Title</td>
+                            <td th:text="${book.author.name}">Author</td>
+                            <td>
+                                <span class="badge bg-secondary" th:if="${book.category != null}"
+                                      th:text="${book.category.name}">Category</span>
+                                <span class="text-muted" th:if="${book.category == null}">-</span>
+                            </td>
+                            <td>
+                                <span th:text="${book.availableCopies} + '/' + ${book.totalCopies}">0/0</span>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${book.available} ? 'bg-success' : 'bg-warning'"
+                                      th:text="${book.available} ? 'Available' : 'All Loaned'">Status</span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a th:href="@{/books/{isbn}(isbn=${book.isbn})}"
+                                       class="btn btn-outline-light" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a th:href="@{/books/{isbn}/edit(isbn=${book.isbn})}"
+                                       class="btn btn-outline-light" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a th:if="${book.available}" th:href="@{/loans/new(isbn=${book.isbn})}"
+                                       class="btn btn-outline-primary" title="Loan">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(books)}">
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                No books found
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav th:if="${totalPages > 1}" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                <a class="page-link" th:href="@{/books(page=${currentPage - 1}, search=${search})}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                th:classappend="${i == currentPage} ? 'active'">
+                <a class="page-link" th:href="@{/books(page=${i}, search=${search})}" th:text="${i + 1}">1</a>
+            </li>
+            <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                <a class="page-link" th:href="@{/books(page=${currentPage + 1}, search=${search})}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</th:block>
+</body>
+</html>

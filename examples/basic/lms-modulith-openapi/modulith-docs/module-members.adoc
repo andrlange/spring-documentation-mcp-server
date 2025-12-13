@@ -1,0 +1,13 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.example.library.members`
+|Spring components
+|_Controllers_
+
+* `c.e.l.m.api.MemberController`
+
+_Services_
+
+* `c.e.l.m.api.MemberService`
+|===

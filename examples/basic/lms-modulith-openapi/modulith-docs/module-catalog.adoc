@@ -1,0 +1,13 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.example.library.catalog`
+|Spring components
+|_Controllers_
+
+* `c.e.l.c.api.BookController`
+
+_Services_
+
+* `c.e.l.c.api.BookService`
+|===

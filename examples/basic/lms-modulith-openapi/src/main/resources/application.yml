@@ -1,0 +1,85 @@
+spring:
+  application:
+    name: library-management-system
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/librarydb
+    username: library
+    password: library123
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  # API Versioning Configuration (Spring Framework 7)
+  mvc:
+    apiversion:
+      use:
+        header: API-Version
+      default-version: "1.0"
+      supported-versions:
+        - "1.0"
+        - "2.0"
+
+# Server Configuration
+server:
+  port: 8080
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,modulith,library-stats
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+
+# OpenAPI / Swagger Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+    version: openapi_3_1
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operationsSorter: alpha
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    displayRequestDuration: true
+    filter: true
+  packages-to-scan: com.example.library
+  show-actuator: true
+  group-configs:
+    - group: catalog-api
+      display-name: Catalog API
+      paths-to-match: /api/books/**, /api/authors/**, /api/categories/**
+    - group: members-api
+      display-name: Members API
+      paths-to-match: /api/members/**
+    - group: loans-api
+      display-name: Loans API
+      paths-to-match: /api/loans/**
+    - group: notifications-api
+      display-name: Notifications API
+      paths-to-match: /api/notifications/**
+
+# Logging
+logging:
+  level:
+    com.example.library: DEBUG
+    org.springframework.modulith: DEBUG
+    org.springframework.web.accept: DEBUG

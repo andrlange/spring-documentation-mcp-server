@@ -1,0 +1,72 @@
+@startuml
+
+set separator none
+top to bottom direction
+hide stereotype
+
+skinparam {
+  componentStyle uml1
+}
+
+<style>
+  root {
+    BackgroundColor: #ffffff;
+    FontColor: #444444;
+  }
+  // Element,Component
+  .Element-RWxlbWVudCxDb21wb25lbnQ= {
+    BackgroundColor: #ffffff;
+    LineColor: #444444;
+    LineStyle: 0;
+    LineThickness: 2;
+    FontColor: #444444;
+    FontSize: 24;
+    HorizontalAlignment: center;
+    Shadowing: 0;
+    MaximumWidth: 450;
+  }
+  // Relationship
+  .Relationship-UmVsYXRpb25zaGlw {
+    LineThickness: 2;
+    LineStyle: 10-10;
+    LineColor: #444444;
+    FontColor: #444444;
+    FontSize: 24;
+  }
+  // Library Management System
+  .Boundary-TGlicmFyeSBNYW5hZ2VtZW50IFN5c3RlbQ== {
+    BackgroundColor: #ffffff;
+    LineColor: #444444;
+    LineStyle: 0;
+    LineThickness: 2;
+    FontColor: #444444;
+    FontSize: 24;
+    HorizontalAlignment: center;
+    Shadowing: 0;
+  }
+</style>
+
+rectangle "Library Management System\n<size:16>[Software System]</size>" <<Boundary-TGlicmFyeSBNYW5hZ2VtZW50IFN5c3RlbQ==>> {
+  component "==Catalog Module\n<size:16>[Component: Module]</size>" <<Element-RWxlbWVudCxDb21wb25lbnQ=>> as LibraryManagementSystem.LibraryManagementSystem.CatalogModule
+  component "==Members Module\n<size:16>[Component: Module]</size>" <<Element-RWxlbWVudCxDb21wb25lbnQ=>> as LibraryManagementSystem.LibraryManagementSystem.MembersModule
+  component "==Loans Module\n<size:16>[Component: Module]</size>" <<Element-RWxlbWVudCxDb21wb25lbnQ=>> as LibraryManagementSystem.LibraryManagementSystem.LoansModule
+  component "==Notifications Module\n<size:16>[Component: Module]</size>" <<Element-RWxlbWVudCxDb21wb25lbnQ=>> as LibraryManagementSystem.LibraryManagementSystem.NotificationsModule
+  component "==Config Module\n<size:16>[Component: Module]</size>" <<Element-RWxlbWVudCxDb21wb25lbnQ=>> as LibraryManagementSystem.LibraryManagementSystem.ConfigModule
+  component "==Web Module\n<size:16>[Component: Module]</size>" <<Element-RWxlbWVudCxDb21wb25lbnQ=>> as LibraryManagementSystem.LibraryManagementSystem.WebModule
+}
+
+LibraryManagementSystem.LibraryManagementSystem.NotificationsModule --> LibraryManagementSystem.LibraryManagementSystem.LoansModule <<Relationship-UmVsYXRpb25zaGlw>> : "listens to"
+LibraryManagementSystem.LibraryManagementSystem.NotificationsModule --> LibraryManagementSystem.LibraryManagementSystem.CatalogModule <<Relationship-UmVsYXRpb25zaGlw>> : "listens to"
+LibraryManagementSystem.LibraryManagementSystem.NotificationsModule --> LibraryManagementSystem.LibraryManagementSystem.MembersModule <<Relationship-UmVsYXRpb25zaGlw>> : "listens to"
+LibraryManagementSystem.LibraryManagementSystem.LoansModule --> LibraryManagementSystem.LibraryManagementSystem.CatalogModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+LibraryManagementSystem.LibraryManagementSystem.LoansModule --> LibraryManagementSystem.LibraryManagementSystem.MembersModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+LibraryManagementSystem.LibraryManagementSystem.ConfigModule --> LibraryManagementSystem.LibraryManagementSystem.CatalogModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+LibraryManagementSystem.LibraryManagementSystem.ConfigModule --> LibraryManagementSystem.LibraryManagementSystem.MembersModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+LibraryManagementSystem.LibraryManagementSystem.ConfigModule --> LibraryManagementSystem.LibraryManagementSystem.LoansModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+LibraryManagementSystem.LibraryManagementSystem.ConfigModule --> LibraryManagementSystem.LibraryManagementSystem.NotificationsModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+LibraryManagementSystem.LibraryManagementSystem.WebModule --> LibraryManagementSystem.LibraryManagementSystem.CatalogModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+LibraryManagementSystem.LibraryManagementSystem.WebModule --> LibraryManagementSystem.LibraryManagementSystem.MembersModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+LibraryManagementSystem.LibraryManagementSystem.WebModule --> LibraryManagementSystem.LibraryManagementSystem.LoansModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+LibraryManagementSystem.LibraryManagementSystem.WebModule --> LibraryManagementSystem.LibraryManagementSystem.NotificationsModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+
+@enduml

@@ -1,0 +1,16 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.example.library.config`
+|Spring components
+|* `c.e.l.c.ApiVersionConfig`
+* `c.e.l.c.LibraryHealthIndicator`
+* `c.e.l.c.LibraryInfoContributor`
+* `c.e.l.c.LibraryMetricsEndpoint`
+* `c.e.l.c.OpenApiConfig`
+|Bean references
+|* `c.e.l.c.api.BookService` (in Catalog Module)
+* `c.e.l.m.api.MemberService` (in Members Module)
+* `c.e.l.l.api.LoanService` (in Loans Module)
+* `c.e.l.n.api.NotificationService` (in Notifications Module)
+|===

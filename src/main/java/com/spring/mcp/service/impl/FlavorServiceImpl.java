@@ -256,8 +256,12 @@ public class FlavorServiceImpl implements FlavorService {
             log.info("Auto-renamed flavor from '{}' to '{}'", originalUniqueName, uniqueName);
         }
 
-        // Parse category (may be null if invalid or missing)
+        // Parse category (default to GENERAL if invalid or missing)
         FlavorCategory category = FlavorCategory.fromString(categoryStr);
+        if (category == null) {
+            category = FlavorCategory.GENERAL;
+            log.debug("No valid category specified, defaulting to GENERAL");
+        }
 
         // Parse tags
         List<String> tags = new ArrayList<>();

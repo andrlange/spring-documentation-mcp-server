@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-credit-card me-2"></i>Membership Cards</h2>
+        <span class="badge bg-primary fs-6" th:text="${#lists.size(cards)} + ' cards'">0 cards</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary bg-opacity-10 border-primary">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Total Cards</span>
+                        <span class="fs-4 fw-bold text-primary" th:text="${#lists.size(cards)}">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning bg-opacity-10 border-warning">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Expiring Soon (30 days)</span>
+                        <span class="fs-4 fw-bold text-warning" th:text="${expiringSoonCount}">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert for expiring cards -->
+    <div class="alert alert-warning d-flex align-items-center mb-4" th:if="${expiringSoonCount > 0}">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${expiringSoonCount} + ' card(s) will expire within the next 30 days.'">Alert</span>
+    </div>
+
+    <!-- Cards Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Card Number</th>
+                            <th>Member</th>
+                            <th>Email</th>
+                            <th>Type</th>
+                            <th>Issue Date</th>
+                            <th>Expiry Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="card : ${cards}"
+                            th:classappend="${!card.valid} ? 'table-danger' : (${card.expiringSoon(30)} ? 'table-warning' : '')">
+                            <td><code th:text="${card.cardNumber}">LIB-XXX</code></td>
+                            <td>
+                                <strong th:text="${card.member.fullName}">Member Name</strong>
+                            </td>
+                            <td th:text="${card.member.email}">email@example.com</td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${card.member.membershipType.name() == 'PREMIUM'} ? 'bg-warning text-dark' : 'bg-secondary'"
+                                      th:text="${card.member.membershipType}">STANDARD</span>
+                            </td>
+                            <td th:text="${#temporals.format(card.issueDate, 'MMM d, yyyy')}">Jan 1, 2024</td>
+                            <td>
+                                <span th:text="${#temporals.format(card.expiryDate, 'MMM d, yyyy')}">Jan 1, 2025</span>
+                                <i class="bi bi-exclamation-circle text-warning ms-1"
+                                   th:if="${card.valid && card.expiringSoon(30)}"
+                                   title="Expiring soon"></i>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${card.valid} ? 'bg-success' : 'bg-danger'"
+                                      th:text="${card.valid} ? 'Valid' : 'Expired'">Status</span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a th:href="@{/members}"
+                                       class="btn btn-outline-light" title="View Member">
+                                        <i class="bi bi-person"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(cards)}">
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                No membership cards found
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <h6 class="card-title"><i class="bi bi-info-circle me-2"></i>Card Information</h6>
+            <div class="row text-muted small">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Standard Membership:</strong></p>
+                    <ul class="mb-0">
+                        <li>Card valid for 1 year</li>
+                        <li>5 books maximum</li>
+                        <li>14-day loan period</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Premium Membership:</strong></p>
+                    <ul class="mb-0">
+                        <li>Card valid for 2 years</li>
+                        <li>10 books maximum</li>
+                        <li>21-day loan period</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

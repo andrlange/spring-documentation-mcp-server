@@ -1,0 +1,19 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.example.library.notifications`
+|Spring components
+|_Controllers_
+
+* `c.e.l.n.api.NotificationController`
+
+_Services_
+
+* `c.e.l.n.api.NotificationService`
+|Events listened to
+|* `c.e.l.c.events.BookAddedEvent` (async) 
+* `c.e.l.l.events.BookLoanedEvent` (async) 
+* `c.e.l.l.events.BookReturnedEvent` (async) 
+* `c.e.l.l.events.LoanOverdueEvent` (async) 
+* `c.e.l.m.events.MemberRegisteredEvent` (async) 
+|===

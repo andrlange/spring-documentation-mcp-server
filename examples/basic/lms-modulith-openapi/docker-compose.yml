@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: library-db
+    environment:
+      POSTGRES_DB: librarydb
+      POSTGRES_USER: library
+      POSTGRES_PASSWORD: library123
+    ports:
+      - "5433:5432"  # Use 5433 externally to avoid conflict with other PostgreSQL instances
+    volumes:
+      - lms_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U library -d librarydb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: library-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@library.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+volumes:
+  lms_postgres_data:

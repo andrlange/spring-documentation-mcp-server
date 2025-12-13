@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-people me-2"></i>Members</h2>
+        <a th:href="@{/members/new}" class="btn btn-primary">
+            <i class="bi bi-person-plus me-2"></i>Register Member
+        </a>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form th:action="@{/members}" method="get" class="row g-3">
+                <div class="col-md-5">
+                    <input type="text" class="form-control" name="search" th:value="${search}"
+                           placeholder="Search by name or email...">
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" name="status">
+                        <option value="">All Status</option>
+                        <option value="ACTIVE" th:selected="${status == 'ACTIVE'}">Active</option>
+                        <option value="INACTIVE" th:selected="${status == 'INACTIVE'}">Inactive</option>
+                        <option value="SUSPENDED" th:selected="${status == 'SUSPENDED'}">Suspended</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="type">
+                        <option value="">All Types</option>
+                        <option value="STANDARD" th:selected="${type == 'STANDARD'}">Standard</option>
+                        <option value="PREMIUM" th:selected="${type == 'PREMIUM'}">Premium</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-light w-100">
+                        <i class="bi bi-search me-1"></i>Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Members Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Card #</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Member Since</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="member : ${members}">
+                            <td th:text="${member.id}">#</td>
+                            <td th:text="${member.fullName}">Name</td>
+                            <td>
+                                <a th:href="'mailto:' + ${member.email}" class="text-info text-decoration-none"
+                                   th:text="${member.email}">email@example.com</a>
+                            </td>
+                            <td>
+                                <code th:if="${member.membershipCard != null}"
+                                      th:text="${member.membershipCard.cardNumber}">CARD</code>
+                                <span class="text-muted" th:if="${member.membershipCard == null}">-</span>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${member.membershipType.name() == 'PREMIUM'} ? 'bg-warning' : 'bg-secondary'"
+                                      th:text="${member.membershipType}">Type</span>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${member.status.name() == 'ACTIVE'} ? 'bg-success' : (${member.status.name() == 'SUSPENDED'} ? 'bg-danger' : 'bg-secondary')"
+                                      th:text="${member.status}">Status</span>
+                            </td>
+                            <td th:text="${#temporals.format(member.membershipDate, 'MMM d, yyyy')}">Date</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a th:href="@{/members/{id}(id=${member.id})}"
+                                       class="btn btn-outline-light" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a th:href="@{/members/{id}/edit(id=${member.id})}"
+                                       class="btn btn-outline-light" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a th:href="@{/loans/member/{id}(id=${member.id})}"
+                                       class="btn btn-outline-info" title="Loan History">
+                                        <i class="bi bi-clock-history"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(members)}">
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="bi bi-people fs-1 d-block mb-2"></i>
+                                No members found
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav th:if="${totalPages > 1}" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                <a class="page-link" th:href="@{/members(page=${currentPage - 1}, search=${search})}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                th:classappend="${i == currentPage} ? 'active'">
+                <a class="page-link" th:href="@{/members(page=${i}, search=${search})}" th:text="${i + 1}">1</a>
+            </li>
+            <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                <a class="page-link" th:href="@{/members(page=${currentPage + 1}, search=${search})}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</th:block>
+</body>
+</html>

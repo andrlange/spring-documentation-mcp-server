@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-tags me-2"></i>Categories</h2>
+        <span class="badge bg-primary fs-6" th:text="${#lists.size(categories)} + ' categories'">0 categories</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card bg-success bg-opacity-10 border-success">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Total Categories</span>
+                        <span class="fs-4 fw-bold text-success" th:text="${#lists.size(categories)}">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories Grid -->
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-4" th:each="category : ${categories}">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-tag me-2 text-success"></i>
+                            <span th:text="${category.name}">Category Name</span>
+                        </h5>
+                        <span class="badge bg-info" th:text="${bookCounts[category.id]} + ' books'">0 books</span>
+                    </div>
+                    <p class="card-text text-muted" th:if="${category.description != null && !category.description.isEmpty()}"
+                       th:text="${category.description}">Category description</p>
+                    <p class="card-text text-muted" th:if="${category.description == null || category.description.isEmpty()}">
+                        <em>No description available</em>
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <a th:href="@{/books(category=${category.id})}" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-book me-1"></i>View Books
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12" th:if="${#lists.isEmpty(categories)}">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+                    <p class="text-muted mb-0">No categories found</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <h6 class="card-title"><i class="bi bi-info-circle me-2"></i>Note</h6>
+            <p class="card-text text-muted mb-0">
+                Categories help organize books in the library. Use the
+                <a th:href="@{/swagger-ui.html}" class="text-info">API Documentation</a>
+                to add or edit categories.
+            </p>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

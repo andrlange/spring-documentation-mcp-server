@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/members}">Members</a></li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="${member.fullName}">Member Name</li>
+        </ol>
+    </nav>
+
+    <!-- Alerts -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        <span th:text="${success}">Success message</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="row">
+        <!-- Member Information -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="bi bi-person-circle me-2"></i>Member Details</h4>
+                    <div class="btn-group btn-group-sm">
+                        <a th:href="@{/members/{id}/edit(id=${member.id})}" class="btn btn-outline-light">
+                            <i class="bi bi-pencil me-1"></i>Edit
+                        </a>
+                        <a th:href="@{/members}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Back
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">Name</div>
+                        <div class="col-md-9">
+                            <strong th:text="${member.fullName}">Member Name</strong>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">Email</div>
+                        <div class="col-md-9">
+                            <a th:href="'mailto:' + ${member.email}" class="text-info"
+                               th:text="${member.email}">email@example.com</a>
+                        </div>
+                    </div>
+                    <div class="row mb-3" th:if="${member.phone != null && !member.phone.isEmpty()}">
+                        <div class="col-md-3 text-muted">Phone</div>
+                        <div class="col-md-9" th:text="${member.phone}">555-1234</div>
+                    </div>
+                    <div class="row mb-3" th:if="${member.address != null && !member.address.isEmpty()}">
+                        <div class="col-md-3 text-muted">Address</div>
+                        <div class="col-md-9" th:text="${member.address}">123 Main St</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">Membership Type</div>
+                        <div class="col-md-9">
+                            <span class="badge"
+                                  th:classappend="${member.membershipType.name() == 'PREMIUM'} ? 'bg-warning' : 'bg-secondary'"
+                                  th:text="${member.membershipType}">Type</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">Status</div>
+                        <div class="col-md-9">
+                            <span class="badge"
+                                  th:classappend="${member.status.name() == 'ACTIVE'} ? 'bg-success' : (${member.status.name() == 'SUSPENDED'} ? 'bg-danger' : 'bg-secondary')"
+                                  th:text="${member.status}">Status</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">Member Since</div>
+                        <div class="col-md-9" th:text="${#temporals.format(member.membershipDate, 'MMMM d, yyyy')}">January 1, 2024</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Loans -->
+            <div class="card mb-4" th:if="${!#lists.isEmpty(activeLoans)}">
+                <div class="card-header bg-primary bg-opacity-10 border-primary">
+                    <h5 class="mb-0 text-primary">
+                        <i class="bi bi-book me-2"></i>Active Loans
+                        <span class="badge bg-primary ms-2" th:text="${#lists.size(activeLoans)}">0</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Book ISBN</th>
+                                    <th>Loan Date</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="loan : ${activeLoans}">
+                                    <td><code th:text="${loan.bookIsbn}">ISBN</code></td>
+                                    <td th:text="${#temporals.format(loan.loanDate, 'MMM d, yyyy')}">Date</td>
+                                    <td th:text="${#temporals.format(loan.dueDate, 'MMM d, yyyy')}">Date</td>
+                                    <td>
+                                        <span class="badge" th:classappend="${loan.overdue} ? 'bg-danger' : 'bg-primary'">
+                                            <span th:if="${loan.overdue}">OVERDUE</span>
+                                            <span th:unless="${loan.overdue}">ACTIVE</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <form th:action="@{/loans/{id}/return(id=${loan.id})}" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-success btn-sm" title="Return">
+                                                    <i class="bi bi-box-arrow-in-left"></i>
+                                                </button>
+                                            </form>
+                                            <form th:if="${!loan.overdue && loan.renewalCount < 2}"
+                                                  th:action="@{/loans/{id}/renew(id=${loan.id})}" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-info btn-sm" title="Renew">
+                                                    <i class="bi bi-arrow-repeat"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loan History -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Loan History</h5>
+                    <a th:href="@{/loans/member/{id}(id=${member.id})}" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-list me-1"></i>View All
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Book ISBN</th>
+                                    <th>Loan Date</th>
+                                    <th>Return Date</th>
+                                    <th>Status</th>
+                                    <th>Fine</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="loan : ${loanHistory}" th:if="${#lists.size(loanHistory) > 0}">
+                                    <td><code th:text="${loan.bookIsbn}">ISBN</code></td>
+                                    <td th:text="${#temporals.format(loan.loanDate, 'MMM d, yyyy')}">Date</td>
+                                    <td th:text="${loan.returnDate != null} ? ${#temporals.format(loan.returnDate, 'MMM d, yyyy')} : '-'">Date</td>
+                                    <td>
+                                        <span class="badge"
+                                              th:classappend="${loan.status.name() == 'RETURNED'} ? 'bg-success' : (${loan.status.name() == 'RETURNED_LATE'} ? 'bg-warning' : 'bg-secondary')"
+                                              th:text="${loan.status}">Status</span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${loan.fineAmount > 0}"
+                                              th:classappend="${!loan.finePaid} ? 'text-danger' : 'text-success'"
+                                              th:text="'$' + ${#numbers.formatDecimal(loan.fineAmount, 1, 2)}">$0.00</span>
+                                        <span class="badge bg-success ms-1" th:if="${loan.fineAmount > 0 && loan.finePaid}">Paid</span>
+                                        <span class="text-muted" th:if="${loan.fineAmount == 0}">-</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(loanHistory)}">
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                        No loan history
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Notifications -->
+            <div class="card" th:if="${!#lists.isEmpty(notifications)}">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-bell me-2"></i>Recent Notifications</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item bg-dark" th:each="notification : ${notifications}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="badge me-2"
+                                          th:classappend="${notification.type.name()} == 'LOAN_CONFIRMATION' ? 'bg-info' :
+                                                          (${notification.type.name()} == 'DUE_DATE_REMINDER' ? 'bg-warning' :
+                                                          (${notification.type.name()} == 'OVERDUE_NOTICE' ? 'bg-danger' : 'bg-secondary'))"
+                                          th:text="${notification.type}">Type</span>
+                                    <span th:text="${notification.subject}">Subject</span>
+                                </div>
+                                <small class="text-muted" th:text="${#temporals.format(notification.createdAt, 'MMM d, yyyy')}">Date</small>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Membership Card -->
+            <div class="card mb-4" th:if="${member.membershipCard != null}">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-credit-card me-2"></i>Membership Card</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="bg-dark p-4 rounded mb-3">
+                        <h6 class="text-muted mb-2">Card Number</h6>
+                        <code class="fs-4" th:text="${member.membershipCard.cardNumber}">LIB-XXXXXXXX</code>
+                    </div>
+                    <div class="row text-start">
+                        <div class="col-6">
+                            <p class="mb-1 text-muted small">Issued</p>
+                            <p th:text="${#temporals.format(member.membershipCard.issueDate, 'MMM d, yyyy')}">Jan 1, 2024</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-1 text-muted small">Expires</p>
+                            <p th:classappend="${!member.membershipCard.valid} ? 'text-danger'"
+                               th:text="${#temporals.format(member.membershipCard.expiryDate, 'MMM d, yyyy')}">Jan 1, 2025</p>
+                        </div>
+                    </div>
+                    <span class="badge w-100 py-2"
+                          th:classappend="${member.membershipCard.valid} ? 'bg-success' : 'bg-danger'"
+                          th:text="${member.membershipCard.valid} ? 'Valid' : 'Expired'">Status</span>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Active Loans</span>
+                        <span th:text="${#lists.size(activeLoans)}">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Total Loans</span>
+                        <span th:text="${#lists.size(activeLoans) + #lists.size(loanHistory)}">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Notifications</span>
+                        <span th:text="${#lists.size(notifications)}">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body d-grid gap-2">
+                    <a th:href="@{/loans/new}" class="btn btn-primary" th:if="${member.status.name() == 'ACTIVE'}">
+                        <i class="bi bi-plus-circle me-2"></i>Create New Loan
+                    </a>
+                    <a th:href="@{/loans/member/{id}(id=${member.id})}" class="btn btn-outline-light">
+                        <i class="bi bi-clock-history me-2"></i>Full Loan History
+                    </a>
+                    <a th:href="@{/members/{id}/edit(id=${member.id})}" class="btn btn-outline-light">
+                        <i class="bi bi-pencil me-2"></i>Edit Member
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

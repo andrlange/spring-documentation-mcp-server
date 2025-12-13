@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-person-badge me-2"></i>Authors</h2>
+        <span class="badge bg-primary fs-6" th:text="${#lists.size(authors)} + ' authors'">0 authors</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary bg-opacity-10 border-primary">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Total Authors</span>
+                        <span class="fs-4 fw-bold text-primary" th:text="${#lists.size(authors)}">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Authors Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Birth Year</th>
+                            <th>Biography</th>
+                            <th>Books</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="author : ${authors}">
+                            <td th:text="${author.id}">#</td>
+                            <td>
+                                <strong th:text="${author.name}">Author Name</strong>
+                            </td>
+                            <td>
+                                <span th:if="${author.birthYear != null}" th:text="${author.birthYear}">1970</span>
+                                <span class="text-muted" th:if="${author.birthYear == null}">-</span>
+                            </td>
+                            <td>
+                                <span th:if="${author.biography != null && !author.biography.isEmpty()}"
+                                      th:text="${#strings.abbreviate(author.biography, 50)}">Biography...</span>
+                                <span class="text-muted" th:if="${author.biography == null || author.biography.isEmpty()}">-</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info" th:text="${bookCounts[author.id]} + ' books'">0 books</span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a th:href="@{/books(search=${author.name})}"
+                                       class="btn btn-outline-light" title="View Books">
+                                        <i class="bi bi-book"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(authors)}">
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                No authors found
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <h6 class="card-title"><i class="bi bi-info-circle me-2"></i>Note</h6>
+            <p class="card-text text-muted mb-0">
+                Authors are managed through the API. Use the
+                <a th:href="@{/swagger-ui.html}" class="text-info">API Documentation</a>
+                to add or edit authors.
+            </p>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

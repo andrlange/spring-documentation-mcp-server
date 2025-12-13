@@ -1,0 +1,24 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.example.library.loans`
+|Spring components
+|_Controllers_
+
+* `c.e.l.l.api.LoanController`
+
+_Services_
+
+* `c.e.l.l.api.LoanService`
+
+_Repositories_
+
+* `c.e.l.l.internal.LoanPolicyRepository`
+* `c.e.l.l.internal.LoanRepository`
+|Bean references
+|* `c.e.l.c.api.BookService` (in Catalog Module)
+* `c.e.l.m.api.MemberService` (in Members Module)
+|Aggregate roots
+|* `c.e.l.l.internal.Loan`
+* `c.e.l.l.internal.LoanPolicy`
+|===

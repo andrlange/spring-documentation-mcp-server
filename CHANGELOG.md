@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Issue: `updateGroup()` method was overwriting non-null fields with null values when only `isActive` was being updated
     - Solution: Changed to selective field update - only non-null fields in the update request are applied
     - Location: `FlavorGroupService.updateGroup()` method
+  
+ ### HotFix 1
+- Issue: Importing a Markdown as Flavor throws an exception, missing category now set to GENERAL on mardown 
+  documents hot including YAML front matter definition.
+  
 
 ### Technical Details
 - New Flyway migration: `V14__javadoc_version_filter.sql`

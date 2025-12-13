@@ -1,0 +1,31 @@
+== Library Management System
+plantuml::components.puml[,,format=svg]
+
+== Catalog Module
+plantuml::module-catalog.puml[,,format=svg]
+include::module-catalog.adoc[]
+
+== Members Module
+plantuml::module-members.puml[,,format=svg]
+include::module-members.adoc[]
+
+== Shared Module
+plantuml::module-shared.puml[,,format=svg]
+include::module-shared.adoc[]
+
+== Loans Module
+plantuml::module-loans.puml[,,format=svg]
+include::module-loans.adoc[]
+
+== Notifications Module
+plantuml::module-notifications.puml[,,format=svg]
+include::module-notifications.adoc[]
+
+== Config Module
+plantuml::module-config.puml[,,format=svg]
+include::module-config.adoc[]
+
+== Web Module
+plantuml::module-web.puml[,,format=svg]
+include::module-web.adoc[]
+

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/loans}">Loans</a></li>
+            <li class="breadcrumb-item active" aria-current="page">New Loan</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Create New Loan</h4>
+                    <a th:href="@{/loans}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Loans
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Alerts -->
+                    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <span th:text="${error}">Error message</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <form th:action="@{/loans/new}" method="post">
+                        <!-- Book Selection -->
+                        <div class="mb-4">
+                            <label for="bookIsbn" class="form-label">
+                                <i class="bi bi-book me-1"></i>Select Book <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select form-select-lg" id="bookIsbn" name="bookIsbn" required>
+                                <option value="">-- Choose a book --</option>
+                                <option th:each="book : ${books}"
+                                        th:value="${book.isbn}"
+                                        th:selected="${book.isbn == selectedIsbn}"
+                                        th:text="${book.title + ' (' + book.isbn + ') - ' + book.author.name}">
+                                    Book Title
+                                </option>
+                            </select>
+                            <div class="form-text">
+                                Only books with available copies are shown.
+                                <span th:if="${#lists.isEmpty(books)}" class="text-warning">
+                                    No books currently available for loan.
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Member Selection -->
+                        <div class="mb-4">
+                            <label for="memberId" class="form-label">
+                                <i class="bi bi-person me-1"></i>Select Member <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select form-select-lg" id="memberId" name="memberId" required>
+                                <option value="">-- Choose a member --</option>
+                                <option th:each="member : ${members}"
+                                        th:value="${member.id}"
+                                        th:text="${member.fullName + ' (' + member.email + ') - ' + member.membershipType}">
+                                    Member Name
+                                </option>
+                            </select>
+                            <div class="form-text">
+                                Only active members are shown.
+                                <span th:if="${#lists.isEmpty(members)}" class="text-warning">
+                                    No active members found.
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-4">
+                            <label for="notes" class="form-label">
+                                <i class="bi bi-card-text me-1"></i>Notes (Optional)
+                            </label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"
+                                      placeholder="Add any additional notes about this loan..."></textarea>
+                        </div>
+
+                        <!-- Loan Policy Info -->
+                        <div class="card bg-dark mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="bi bi-info-circle me-2"></i>Loan Policy</h6>
+                                <div class="row text-muted small">
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Standard Members:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>14 days loan period</li>
+                                            <li>Up to 5 books at a time</li>
+                                            <li>2 renewals allowed</li>
+                                            <li>$0.50/day late fee</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Premium Members:</strong></p>
+                                        <ul class="mb-0">
+                                            <li>21 days loan period</li>
+                                            <li>Up to 10 books at a time</li>
+                                            <li>3 renewals allowed</li>
+                                            <li>$0.25/day late fee</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg"
+                                    th:disabled="${#lists.isEmpty(books) || #lists.isEmpty(members)}">
+                                <i class="bi bi-check-circle me-2"></i>Create Loan
+                            </button>
+                            <a th:href="@{/loans}" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a th:href="@{/books}" class="btn btn-outline-light">
+                            <i class="bi bi-book me-1"></i>Browse Books
+                        </a>
+                        <a th:href="@{/members}" class="btn btn-outline-light">
+                            <i class="bi bi-people me-1"></i>View Members
+                        </a>
+                        <a th:href="@{/loans}" class="btn btn-outline-light">
+                            <i class="bi bi-list me-1"></i>All Loans
+                        </a>
+                        <a th:href="@{/loans/overdue}" class="btn btn-outline-danger">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Overdue Loans
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

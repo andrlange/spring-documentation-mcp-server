@@ -1,0 +1,14 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.example.library.web`
+|Spring components
+|_Controllers_
+
+* `c.e.l.w.WebController`
+|Bean references
+|* `c.e.l.c.api.BookService` (in Catalog Module)
+* `c.e.l.m.api.MemberService` (in Members Module)
+* `c.e.l.l.api.LoanService` (in Loans Module)
+* `c.e.l.n.api.NotificationService` (in Notifications Module)
+|===

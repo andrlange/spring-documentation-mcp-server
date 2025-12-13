@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/members}">Members</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/members/{id}(id=${member.id})}" th:text="${member.fullName}">Member</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="bi bi-pencil me-2"></i>Edit Member</h4>
+                    <a th:href="@{/members/{id}(id=${member.id})}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Member
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Alerts -->
+                    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <span th:text="${error}">Error message</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <span th:text="${success}">Success message</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <form th:action="@{/members/{id}/edit(id=${member.id})}" method="post">
+                        <div class="row">
+                            <!-- First Name -->
+                            <div class="col-md-6 mb-3">
+                                <label for="firstName" class="form-label">
+                                    <i class="bi bi-person me-1"></i>First Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="firstName" name="firstName"
+                                       th:value="${member.firstName}" required>
+                            </div>
+
+                            <!-- Last Name -->
+                            <div class="col-md-6 mb-3">
+                                <label for="lastName" class="form-label">
+                                    <i class="bi bi-person me-1"></i>Last Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="lastName" name="lastName"
+                                       th:value="${member.lastName}" required>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="bi bi-envelope me-1"></i>Email <span class="text-danger">*</span>
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email"
+                                   th:value="${member.email}" required>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">
+                                <i class="bi bi-telephone me-1"></i>Phone
+                            </label>
+                            <input type="tel" class="form-control" id="phone" name="phone"
+                                   th:value="${member.phone}" placeholder="555-123-4567">
+                        </div>
+
+                        <div class="row">
+                            <!-- Membership Type -->
+                            <div class="col-md-6 mb-3">
+                                <label for="membershipType" class="form-label">
+                                    <i class="bi bi-award me-1"></i>Membership Type <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="membershipType" name="membershipType" required>
+                                    <option value="STANDARD" th:selected="${member.membershipType.name() == 'STANDARD'}">Standard</option>
+                                    <option value="PREMIUM" th:selected="${member.membershipType.name() == 'PREMIUM'}">Premium</option>
+                                </select>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="col-md-6 mb-3">
+                                <label for="status" class="form-label">
+                                    <i class="bi bi-toggle-on me-1"></i>Status <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="status" name="status" required>
+                                    <option value="ACTIVE" th:selected="${member.status.name() == 'ACTIVE'}">Active</option>
+                                    <option value="INACTIVE" th:selected="${member.status.name() == 'INACTIVE'}">Inactive</option>
+                                    <option value="SUSPENDED" th:selected="${member.status.name() == 'SUSPENDED'}">Suspended</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Status Warning -->
+                        <div class="card bg-dark mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="bi bi-info-circle me-2"></i>Status Information</h6>
+                                <div class="text-muted small">
+                                    <p class="mb-1"><strong>Active:</strong> Member can borrow books and use library services.</p>
+                                    <p class="mb-1"><strong>Inactive:</strong> Member cannot borrow books. May be reactivated.</p>
+                                    <p class="mb-0"><strong>Suspended:</strong> Member account is temporarily suspended due to policy violations.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle me-2"></i>Save Changes
+                            </button>
+                            <a th:href="@{/members/{id}(id=${member.id})}" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Member Info Card -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Member Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted">Member ID</p>
+                            <p class="mb-3" th:text="${member.id}">#1</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted">Member Since</p>
+                            <p class="mb-3" th:text="${#temporals.format(member.membershipDate, 'MMM d, yyyy')}">Jan 1, 2024</p>
+                        </div>
+                        <div class="col-md-6" th:if="${member.membershipCard != null}">
+                            <p class="mb-1 text-muted">Card Number</p>
+                            <p class="mb-0"><code th:text="${member.membershipCard.cardNumber}">LIB-XXXXXXXX</code></p>
+                        </div>
+                        <div class="col-md-6" th:if="${member.membershipCard != null}">
+                            <p class="mb-1 text-muted">Card Expires</p>
+                            <p class="mb-0" th:classappend="${!member.membershipCard.valid} ? 'text-danger'"
+                               th:text="${#temporals.format(member.membershipCard.expiryDate, 'MMM d, yyyy')}">Jan 1, 2025</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

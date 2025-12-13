@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-bell me-2"></i>Notifications</h2>
+    </div>
+
+    <!-- Notifications Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Member</th>
+                            <th>Type</th>
+                            <th>Subject</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Sent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="notification : ${notifications}">
+                            <td th:text="${notification.id}">#</td>
+                            <td th:text="${notification.memberId}">Member</td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${notification.type.name() == 'OVERDUE_NOTICE'} ? 'bg-danger' :
+                                                       (${notification.type.name() == 'DUE_SOON_REMINDER'} ? 'bg-warning' :
+                                                       (${notification.type.name() == 'WELCOME'} ? 'bg-success' : 'bg-info'))"
+                                      th:text="${notification.type}">Type</span>
+                            </td>
+                            <td th:text="${notification.subject}">Subject</td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${notification.status.name() == 'SENT'} ? 'bg-success' :
+                                                       (${notification.status.name() == 'READ'} ? 'bg-secondary' :
+                                                       (${notification.status.name() == 'FAILED'} ? 'bg-danger' : 'bg-warning'))"
+                                      th:text="${notification.status}">Status</span>
+                            </td>
+                            <td th:text="${#temporals.format(notification.createdAt, 'MMM d, HH:mm')}">Date</td>
+                            <td>
+                                <span th:if="${notification.sentAt != null}"
+                                      th:text="${#temporals.format(notification.sentAt, 'MMM d, HH:mm')}">Date</span>
+                                <span class="text-muted" th:if="${notification.sentAt == null}">-</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(notifications)}">
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="bi bi-bell-slash fs-1 d-block mb-2"></i>
+                                No notifications found
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>
