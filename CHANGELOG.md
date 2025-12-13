@@ -38,8 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Location: `FlavorGroupService.updateGroup()` method
   
  ### HotFix 1
-- Issue: Importing a Markdown as Flavor throws an exception, missing category now set to GENERAL on mardown 
-  documents hot including YAML front matter definition.
+- Issue: Importing a Markdown as Flavor throws an exception, missing category now set to GENERAL on markdown 
+  documents not including YAML front matter definition.
   
 
 ### Technical Details
