@@ -10,13 +10,9 @@
 >
 > **Purpose**: My main goal is to create demo applications using my own specifications to explore AI-assisted development workflows.
 
-### (Current Version 1.4.3 - HotFix 1 - Javadoc Sync Filter, UI Fixes)
+### (Current Version 1.5.0 - MCP Monitoring Dashboard)
 
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
-
-> Thanks to Dan Vega - https://github.com/danvega/sb4 providing Spring Boot 4 architecture examples - 
-> flavors/architecture/danvega-sb4
-
 
 ## What is this?
 
@@ -50,6 +46,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
   - [Flavor Groups - Team Access Control](#flavor-groups---team-access-control)
   - [Boot Initializr Integration](#boot-initializr-integration)
   - [Javadoc API Documentation](#javadoc-api-documentation)
+  - [MCP Monitoring Dashboard](#mcp-monitoring-dashboard)
 - [Using with Claude Code](#using-with-claude-code)
   - [Configuration](#mcp-configuration)
   - [Documentation Queries](#documentation-queries)
@@ -73,6 +70,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
+| **1.5.0** | 2025-12-16 | MCP Monitoring Dashboard with real-time metrics and analytics |
 | **1.4.3** | 2025-12-12 | Javadoc sync version filter, login version, flavor groups fix |
 | **1.4.2** | 2025-12-08 | Javadoc API documentation crawler and search (4 MCP tools)   |
 | **1.4.1** | 2025-12-07 | GitHub docs keyword fix, configurable sync features          |
@@ -113,7 +111,7 @@ docker-compose up -d postgres
 ### 2. Build and Run
 ```bash
 ./gradlew clean build
-java -jar build/libs/spring-boot-documentation-mcp-server-1.4.3.jar
+java -jar build/libs/spring-boot-documentation-mcp-server-1.5.0.jar
 ```
 
 Or using Gradle:
@@ -609,6 +607,41 @@ mcp:
 
 ---
 
+### MCP Monitoring Dashboard
+
+Real-time monitoring and analytics for MCP server operations, providing insights into tool usage, connection events, and performance metrics.
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="assets/screen-28.png" alt="MCP Monitoring Dashboard" />
+      <p align="center"><b>Monitoring Dashboard</b> - Real-time tool usage metrics with time period selection</p>
+    </td>
+  </tr>
+</table>
+
+**Features**:
+- **Real-Time Metrics**: Live dashboard with auto-refresh (configurable interval)
+- **Time Period Selection**: View metrics for 5 minutes, 1 hour, or 24 hours
+- **Tool Usage by Group**: Metrics organized by tool categories (Documentation, Versions, Migration, Language, Flavors, Initializr/Javadoc)
+- **Performance Tracking**: Average, min, max latency per tool with success/error rates
+- **Connection Monitoring**: Active connections, connection events, and error tracking
+- **API Key Usage**: Request counts per API key with last-used timestamps
+- **Client Usage Statistics**: Top clients by connection count
+- **Data Retention**: Configurable retention period with manual cleanup option
+
+**Dashboard Sections**:
+- **Overview Cards**: Total requests, active connections, latency metrics, error rates
+- **Tool Usage by Group**: Expandable groups showing individual tool metrics
+- **API Key Usage**: Top 5 API keys by request count
+- **Client Usage**: Top clients accessing the MCP server
+- **Settings**: Auto-refresh interval and data retention configuration
+
+**Access**:
+Navigate to `/monitoring` (requires ADMIN role) to access the dashboard.
+
+---
+
 ## Using with Claude Code
 
 Configure Claude Code to use the Spring Documentation MCP Server for AI-assisted development.
@@ -950,13 +983,13 @@ lsof -ti :8080 | xargs kill -9
 - [x] Flavor Groups with team-based access control
 - [x] Boot Initializr integration with Caffeine caching
 - [x] Javadoc API documentation crawler and search
+- [x] Export features (Markdown)
+- [x] Analytics and usage tracking
+- [x] MCP Monitoring Dashboard with real-time metrics
 
 ### Planned
 - [ ] Semantic search using embeddings
 - [ ] Version comparison and diff
-- [ ] Export features (PDF, Markdown)
-- [ ] Analytics and usage tracking
-- [ ] Multi-language documentation support
 - [ ] Air-Gapped Replication Mode
 
 ---
@@ -985,6 +1018,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Spring AI MCP Server Docs**: https://docs.spring.io/spring-ai/reference/api/mcp/mcp-overview.html
 - **MCP Protocol Specification**: https://spec.modelcontextprotocol.io/
 - **Spring Documentation**: https://spring.io/projects
+
+---
+
+> Thanks to Dan Vega - https://github.com/danvega/sb4 providing Spring Boot 4 architecture examples -
+> flavors/architecture/danvega-sb4
 
 ---
 

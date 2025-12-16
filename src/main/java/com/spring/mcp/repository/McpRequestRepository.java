@@ -63,4 +63,21 @@ public interface McpRequestRepository extends JpaRepository<McpRequest, Long> {
      * Find most recent requests
      */
     List<McpRequest> findTop20ByOrderByCreatedAtDesc();
+
+    /**
+     * Count requests created after a given time
+     */
+    long countByCreatedAtAfter(LocalDateTime since);
+
+    /**
+     * Count requests with non-success status created after a given time
+     */
+    @Query("SELECT COUNT(r) FROM McpRequest r WHERE r.responseStatus <> :status AND r.createdAt > :since")
+    long countByResponseStatusNotAndCreatedAtAfter(@Param("status") String status, @Param("since") LocalDateTime since);
+
+    /**
+     * Get distinct tool names from requests
+     */
+    @Query("SELECT DISTINCT r.toolName FROM McpRequest r WHERE r.toolName IS NOT NULL ORDER BY r.toolName")
+    List<String> findDistinctToolNames();
 }

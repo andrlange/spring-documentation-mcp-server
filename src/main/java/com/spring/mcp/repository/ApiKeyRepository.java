@@ -43,4 +43,19 @@ public interface ApiKeyRepository extends JpaRepository<ApiKey, Long> {
      * Check if an API key name already exists
      */
     boolean existsByName(String name);
+
+    /**
+     * Find all API keys ordered by request count (highest first)
+     */
+    List<ApiKey> findAllByOrderByRequestCountDesc();
+
+    /**
+     * Find top N API keys by request count
+     */
+    List<ApiKey> findTop5ByOrderByRequestCountDesc();
+
+    /**
+     * Find API keys with request count greater than zero, ordered by request count
+     */
+    List<ApiKey> findByRequestCountGreaterThanOrderByRequestCountDesc(Long minCount);
 }

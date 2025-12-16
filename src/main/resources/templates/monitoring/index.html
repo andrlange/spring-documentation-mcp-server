@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title>MCP Monitoring - Spring MCP Server</title>
+    <style>
+        /* Dark Theme Monitoring Dashboard */
+        .monitoring-container {
+            background: #0f1318; /* Solid color instead of gradient to reduce GPU load */
+            min-height: calc(100vh - 60px);
+            padding: 1.5rem;
+            contain: layout style; /* Isolate repaints to this container */
+            overflow-x: hidden; /* Prevent horizontal overflow causing render issues */
+        }
+
+        /* Period Selector */
+        .period-selector {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.25rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .period-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            color: #a0aec0;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.15s ease, color 0.15s ease; /* Specific properties */
+        }
+
+        .period-btn:hover {
+            background: rgba(99, 179, 237, 0.1);
+            color: #e2e8f0;
+        }
+
+        .period-btn.active {
+            background: #3182ce; /* Solid color instead of gradient */
+            color: white;
+        }
+
+        /* Overview Cards */
+        .metric-card {
+            background: #1e2433; /* Solid color instead of gradient to reduce GPU load */
+            border-radius: 12px;
+            border: 1px solid rgba(99, 179, 237, 0.15);
+            padding: 1.25rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease; /* Specific properties, not 'all' */
+            height: 100%;
+            will-change: auto; /* Only promote to GPU layer on interaction */
+        }
+
+        .metric-card:hover {
+            border-color: rgba(99, 179, 237, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Reduced shadow complexity */
+        }
+
+        .metric-card.success { border-left: 3px solid #48bb78; }
+        .metric-card.warning { border-left: 3px solid #ed8936; }
+        .metric-card.danger { border-left: 3px solid #fc8181; }
+        .metric-card.info { border-left: 3px solid #63b3ed; }
+
+        .metric-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            line-height: 1.2;
+        }
+
+        .metric-value.success { color: #68d391; }
+        .metric-value.warning { color: #f6ad55; }
+        .metric-value.danger { color: #fc8181; }
+        .metric-value.info { color: #63b3ed; }
+
+        .metric-subtitle {
+            font-size: 0.75rem;
+            color: #718096;
+            margin-top: 0.25rem;
+        }
+
+        /* Tool Groups */
+        .tool-group-card {
+            background: #1e2433; /* Solid color instead of gradient */
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: border-color 0.2s ease; /* Specific property */
+        }
+
+        .tool-group-card:hover {
+            border-color: rgba(99, 179, 237, 0.3);
+        }
+
+        .tool-group-header {
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+            transition: background-color 0.15s ease; /* Specific property */
+        }
+
+        .tool-group-header:hover {
+            background: rgba(99, 179, 237, 0.1);
+        }
+
+        .tool-group-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .tool-group-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .tool-group-icon.primary { background: rgba(66, 153, 225, 0.2); color: #63b3ed; }
+        .tool-group-icon.info { background: rgba(99, 179, 237, 0.2); color: #63b3ed; }
+        .tool-group-icon.warning { background: rgba(237, 137, 54, 0.2); color: #f6ad55; }
+        .tool-group-icon.success { background: rgba(72, 187, 120, 0.2); color: #68d391; }
+        .tool-group-icon.secondary { background: rgba(160, 174, 192, 0.2); color: #a0aec0; }
+        .tool-group-icon.dark { background: rgba(45, 55, 72, 0.5); color: #e2e8f0; }
+
+        .tool-group-name {
+            font-weight: 600;
+            color: #e2e8f0;
+            font-size: 1rem;
+        }
+
+        .tool-group-stats {
+            display: flex;
+            gap: 1.5rem;
+            color: #a0aec0;
+            font-size: 0.875rem;
+        }
+
+        .tool-group-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tool-group-body {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tool-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: background-color 0.15s ease; /* Specific property */
+        }
+
+        .tool-item:hover {
+            background: rgba(99, 179, 237, 0.1);
+        }
+
+        .tool-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .tool-name {
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+
+        .tool-metrics {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .tool-metric {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .tool-metric-label {
+            color: #718096;
+        }
+
+        .tool-metric-value {
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .tool-metric-value.success { color: #68d391; }
+        .tool-metric-value.warning { color: #f6ad55; }
+        .tool-metric-value.danger { color: #fc8181; }
+
+        /* Chevron animation */
+        .chevron {
+            transition: transform 0.2s ease;
+            color: #718096;
+            backface-visibility: hidden; /* Reduce repaints during animation */
+        }
+
+        .chevron.expanded {
+            transform: rotate(180deg);
+        }
+
+        /* Status indicators - simplified shadows */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .status-dot.success { background: #48bb78; }
+        .status-dot.warning { background: #ed8936; }
+        .status-dot.danger { background: #fc8181; }
+
+        /* Last updated badge */
+        .last-updated {
+            font-size: 0.75rem;
+            color: #718096;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .last-updated i {
+            font-size: 0.875rem;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #718096;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content" class="monitoring-container" x-data="monitoringDashboard()">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-white mb-1">
+                <i class="bi bi-activity me-2"></i>MCP Monitoring
+            </h2>
+            <p class="text-muted mb-0">Real-time metrics, connections, and tool usage</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <!-- Period Selector -->
+            <div class="period-selector">
+                <button th:each="bucket : ${bucketTypes}"
+                        th:classappend="${bucket.name() == selectedPeriod} ? 'active' : ''"
+                        th:text="${bucket.displayName}"
+                        th:data-period="${bucket.name()}"
+                        class="period-btn"
+                        @click="changePeriod($event.target.dataset.period)">
+                </button>
+            </div>
+
+            <!-- Auto-refresh toggle -->
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="autoRefresh"
+                       x-model="autoRefresh" @change="toggleAutoRefresh()">
+                <label class="form-check-label text-muted" for="autoRefresh">Auto-refresh</label>
+            </div>
+
+            <!-- Last updated -->
+            <div class="last-updated">
+                <i class="bi bi-clock"></i>
+                <span x-text="lastUpdated">--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row g-3 mb-4" id="overview-cards">
+        <!-- Active Sessions -->
+        <div class="col-md-3 col-sm-6">
+            <div class="metric-card info">
+                <div class="metric-label">
+                    <i class="bi bi-plug me-1"></i> Active Sessions
+                </div>
+                <div class="metric-value info" th:text="${overview.activeConnections}">0</div>
+                <div class="metric-subtitle">Last 5 minutes</div>
+            </div>
+        </div>
+
+        <!-- Total Requests -->
+        <div class="col-md-3 col-sm-6">
+            <div class="metric-card success">
+                <div class="metric-label">
+                    <i class="bi bi-arrow-repeat me-1"></i> Total Requests
+                </div>
+                <div class="metric-value success" th:text="${overview.totalRequestsLast24h}">0</div>
+                <div class="metric-subtitle">Last 24 hours</div>
+            </div>
+        </div>
+
+        <!-- Average Latency -->
+        <div class="col-md-3 col-sm-6">
+            <div class="metric-card" th:classappend="${overview.avgLatencyMs < 200} ? 'success' : (${overview.avgLatencyMs < 500} ? 'warning' : 'danger')">
+                <div class="metric-label">
+                    <i class="bi bi-speedometer2 me-1"></i> Avg Latency
+                </div>
+                <div class="metric-value" th:classappend="${overview.avgLatencyMs < 200} ? 'success' : (${overview.avgLatencyMs < 500} ? 'warning' : 'danger')"
+                     th:text="${#numbers.formatDecimal(overview.avgLatencyMs, 0, 0)} + ' ms'">0 ms</div>
+                <div class="metric-subtitle" th:text="'Min: ' + ${#numbers.formatDecimal(overview.minLatencyMs, 0, 0)} + 'ms / Max: ' + ${#numbers.formatDecimal(overview.maxLatencyMs, 0, 0)} + 'ms'">
+                    Min: 0ms / Max: 0ms
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Rate -->
+        <div class="col-md-3 col-sm-6">
+            <div class="metric-card" th:classappend="${overview.errorRate < 1} ? 'success' : (${overview.errorRate < 5} ? 'warning' : 'danger')">
+                <div class="metric-label">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Error Rate
+                </div>
+                <div class="metric-value" th:classappend="${overview.errorRate < 1} ? 'success' : (${overview.errorRate < 5} ? 'warning' : 'danger')"
+                     th:text="${#numbers.formatDecimal(overview.errorRate, 1, 2)} + '%'">0.00%</div>
+                <div class="metric-subtitle" th:text="${overview.errorCount} + ' errors / ' + ${overview.successCount} + ' success'">
+                    0 errors / 0 success
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Metrics Row -->
+    <div class="row g-3 mb-4">
+        <!-- Throughput -->
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="metric-label">
+                    <i class="bi bi-graph-up me-1"></i> Throughput
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="metric-value" style="font-size: 1.5rem;" th:text="${#numbers.formatDecimal(overview.requestsPerMinute, 1, 2)}">0.00</span>
+                    <span class="text-muted">req/min</span>
+                </div>
+                <div class="metric-subtitle" th:text="${#numbers.formatDecimal(overview.requestsPerSecond, 1, 4)} + ' req/sec'">
+                    0.0000 req/sec
+                </div>
+            </div>
+        </div>
+
+        <!-- Connections (24h) -->
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="metric-label">
+                    <i class="bi bi-plug-fill me-1"></i> Connections (24h)
+                </div>
+                <div class="d-flex align-items-baseline gap-3">
+                    <div>
+                        <span class="text-success" th:text="${overview.connectionsLast24h}">0</span>
+                        <span class="text-muted small">connected</span>
+                    </div>
+                    <div>
+                        <span class="text-secondary" th:text="${overview.disconnectionsLast24h}">0</span>
+                        <span class="text-muted small">disconnected</span>
+                    </div>
+                    <div th:if="${overview.connectionErrorsLast24h > 0}">
+                        <span class="text-danger" th:text="${overview.connectionErrorsLast24h}">0</span>
+                        <span class="text-muted small">errors</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Period Stats -->
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="metric-label">
+                    <i class="bi bi-clock-history me-1"></i> Period Stats
+                </div>
+                <div class="d-flex gap-4">
+                    <div>
+                        <span class="text-white fw-bold" th:text="${overview.totalRequestsLast5Min}">0</span>
+                        <span class="text-muted small">5 min</span>
+                    </div>
+                    <div>
+                        <span class="text-white fw-bold" th:text="${overview.totalRequestsLastHour}">0</span>
+                        <span class="text-muted small">1 hour</span>
+                    </div>
+                    <div>
+                        <span class="text-white fw-bold" th:text="${overview.totalRequestsLast24h}">0</span>
+                        <span class="text-muted small">24 hours</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool Groups Section -->
+    <h4 class="text-white mb-3">
+        <i class="bi bi-tools me-2"></i>Tool Usage by Group
+    </h4>
+
+    <div id="tool-groups" th:if="${toolGroups != null and !toolGroups.isEmpty()}">
+        <div th:each="group : ${toolGroups}" class="tool-group-card" x-data="{ expanded: false }">
+            <!-- Group Header -->
+            <div class="tool-group-header" @click="expanded = !expanded">
+                <div class="tool-group-title">
+                    <div class="tool-group-icon" th:classappend="${group.colorClass}">
+                        <i th:class="'bi ' + ${group.iconClass}"></i>
+                    </div>
+                    <div>
+                        <div class="tool-group-name" th:text="${group.displayName}">Group Name</div>
+                        <div class="text-muted small" th:text="${group.toolCount} + ' tools'">0 tools</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="tool-group-stats">
+                        <div class="tool-group-stat">
+                            <i class="bi bi-arrow-repeat"></i>
+                            <span th:text="${group.totalRequests}">0</span> requests
+                        </div>
+                        <div class="tool-group-stat">
+                            <i class="bi bi-speedometer2"></i>
+                            <span th:text="${#numbers.formatDecimal(group.avgLatencyMs, 0, 0)} + 'ms'">0ms</span>
+                        </div>
+                        <div class="tool-group-stat">
+                            <span class="status-dot" th:classappend="${group.errorRate < 1} ? 'success' : (${group.errorRate < 5} ? 'warning' : 'danger')"></span>
+                            <span th:text="${#numbers.formatDecimal(group.errorRate, 1, 1)} + '%'">0.0%</span> errors
+                        </div>
+                    </div>
+                    <i class="bi bi-chevron-down chevron" :class="{ 'expanded': expanded }"></i>
+                </div>
+            </div>
+
+            <!-- Group Body (Tools List) -->
+            <div class="tool-group-body" x-show="expanded" x-collapse>
+                <div th:if="${group.tools == null or group.tools.isEmpty()}" class="text-muted text-center py-3">
+                    No activity in this period
+                </div>
+                <div th:each="tool : ${group.tools}" class="tool-item">
+                    <div class="tool-name" th:text="${tool.displayName}">Tool Name</div>
+                    <div class="tool-metrics">
+                        <div class="tool-metric">
+                            <span class="tool-metric-label">Requests:</span>
+                            <span class="tool-metric-value" th:text="${tool.totalRequests}">0</span>
+                        </div>
+                        <div class="tool-metric">
+                            <span class="tool-metric-label">Latency:</span>
+                            <span class="tool-metric-value" th:classappend="${tool.latencyStatusClass}"
+                                  th:text="${#numbers.formatDecimal(tool.avgLatencyMs, 0, 0)} + 'ms'">0ms</span>
+                        </div>
+                        <div class="tool-metric">
+                            <span class="tool-metric-label">Errors:</span>
+                            <span class="tool-metric-value" th:classappend="${tool.errorRateStatusClass}"
+                                  th:text="${#numbers.formatDecimal(tool.errorRate, 1, 1)} + '%'">0.0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${toolGroups == null or toolGroups.isEmpty()}" class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <h5 class="text-muted">No Tool Activity Yet</h5>
+        <p class="text-muted">Tool usage metrics will appear here once tools are invoked.</p>
+    </div>
+
+    <!-- API Key Usage Section -->
+    <div class="mt-5" th:if="${apiKeyUsage != null}">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="text-white mb-0">
+                <i class="bi bi-key me-2"></i>API Key Usage
+            </h4>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-secondary" th:text="${apiKeyUsage.totalKeys} + ' keys'">0 keys</span>
+                <span class="badge bg-success" th:text="${apiKeyUsage.activeKeys} + ' active'">0 active</span>
+                <span class="badge bg-info" th:text="${apiKeyUsage.totalRequests} + ' total requests'">0 total requests</span>
+            </div>
+        </div>
+
+        <!-- Top 5 API Keys Table -->
+        <div class="tool-group-card" th:if="${apiKeyUsage.topKeys != null and !apiKeyUsage.topKeys.isEmpty()}">
+            <div class="tool-group-header" style="cursor: default;">
+                <div class="tool-group-title">
+                    <div class="tool-group-icon success">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <div>
+                        <div class="tool-group-name">Top API Keys</div>
+                        <div class="text-muted small">Highest usage by request count</div>
+                    </div>
+                </div>
+            </div>
+            <div class="tool-group-body p-0">
+                <table class="table table-dark table-hover mb-0" style="background: transparent;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Name</th>
+                            <th class="text-muted text-end" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Requests</th>
+                            <th class="text-muted text-center" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Status</th>
+                            <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Last Used</th>
+                            <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Created By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="key : ${apiKeyUsage.topKeys}" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td class="text-white" style="padding: 0.75rem 1rem;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-key-fill" th:classappend="${key.isActive} ? 'text-success' : 'text-muted'"></i>
+                                    <span th:text="${key.name}">API Key Name</span>
+                                </div>
+                                <div class="text-muted small" th:if="${key.description}" th:text="${#strings.abbreviate(key.description, 50)}"></div>
+                            </td>
+                            <td class="text-end" style="padding: 0.75rem 1rem;">
+                                <span class="fw-bold text-info" th:text="${#numbers.formatInteger(key.requestCount, 1, 'COMMA')}">0</span>
+                            </td>
+                            <td class="text-center" style="padding: 0.75rem 1rem;">
+                                <span th:if="${key.isActive}" class="badge bg-success">Active</span>
+                                <span th:unless="${key.isActive}" class="badge bg-secondary">Inactive</span>
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <span th:class="${key.statusClass}" th:text="${key.lastUsedRelative}">Never</span>
+                            </td>
+                            <td class="text-muted" style="padding: 0.75rem 1rem;" th:text="${key.createdBy}">admin</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Other API Keys (Expandable) -->
+        <div class="tool-group-card" th:if="${apiKeyUsage.otherKeys != null and !apiKeyUsage.otherKeys.isEmpty()}" x-data="{ expanded: false }">
+            <div class="tool-group-header" @click="expanded = !expanded">
+                <div class="tool-group-title">
+                    <div class="tool-group-icon secondary">
+                        <i class="bi bi-list-ul"></i>
+                    </div>
+                    <div>
+                        <div class="tool-group-name">Other API Keys</div>
+                        <div class="text-muted small" th:text="${#lists.size(apiKeyUsage.otherKeys)} + ' additional keys'">0 additional keys</div>
+                    </div>
+                </div>
+                <i class="bi bi-chevron-down chevron" :class="{ 'expanded': expanded }"></i>
+            </div>
+            <div class="tool-group-body p-0" x-show="expanded" x-collapse>
+                <table class="table table-dark table-hover mb-0" style="background: transparent;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Name</th>
+                            <th class="text-muted text-end" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Requests</th>
+                            <th class="text-muted text-center" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Status</th>
+                            <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Last Used</th>
+                            <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Created By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="key : ${apiKeyUsage.otherKeys}" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td class="text-white" style="padding: 0.75rem 1rem;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-key-fill" th:classappend="${key.isActive} ? 'text-success' : 'text-muted'"></i>
+                                    <span th:text="${key.name}">API Key Name</span>
+                                </div>
+                                <div class="text-muted small" th:if="${key.description}" th:text="${#strings.abbreviate(key.description, 50)}"></div>
+                            </td>
+                            <td class="text-end" style="padding: 0.75rem 1rem;">
+                                <span class="fw-bold text-info" th:text="${#numbers.formatInteger(key.requestCount, 1, 'COMMA')}">0</span>
+                            </td>
+                            <td class="text-center" style="padding: 0.75rem 1rem;">
+                                <span th:if="${key.isActive}" class="badge bg-success">Active</span>
+                                <span th:unless="${key.isActive}" class="badge bg-secondary">Inactive</span>
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <span th:class="${key.statusClass}" th:text="${key.lastUsedRelative}">Never</span>
+                            </td>
+                            <td class="text-muted" style="padding: 0.75rem 1rem;" th:text="${key.createdBy}">admin</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- No API Keys State -->
+        <div th:if="${apiKeyUsage.topKeys == null or apiKeyUsage.topKeys.isEmpty()}" class="empty-state">
+            <i class="bi bi-key"></i>
+            <h5 class="text-muted">No API Keys Yet</h5>
+            <p class="text-muted">Create API keys in the <a href="/settings" class="text-info">Settings</a> page to see usage statistics here.</p>
+        </div>
+    </div>
+
+    <!-- Client Usage Section -->
+    <div class="mt-5" th:if="${clientUsage != null}">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="text-white mb-0">
+                <i class="bi bi-laptop me-2"></i>Client Usage
+            </h4>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-secondary" th:text="${clientUsage.totalClients} + ' clients'">0 clients</span>
+                <span class="badge bg-info" th:text="${clientUsage.totalConnections} + ' connections (24h)'">0 connections</span>
+            </div>
+        </div>
+
+        <!-- Top 5 Clients Table -->
+        <div class="tool-group-card" th:if="${clientUsage.topClients != null and !clientUsage.topClients.isEmpty()}">
+            <div class="tool-group-header" style="cursor: default;">
+                <div class="tool-group-title">
+                    <div class="tool-group-icon warning">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <div>
+                        <div class="tool-group-name">Top Clients</div>
+                        <div class="text-muted small">Highest connection count in last 24 hours</div>
+                    </div>
+                </div>
+            </div>
+            <div class="tool-group-body p-0">
+                <table class="table table-dark table-hover mb-0" style="background: transparent;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Client</th>
+                            <th class="text-muted text-end" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Connections</th>
+                            <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Version</th>
+                            <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">User Agent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="client : ${clientUsage.topClients}" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td class="text-white" style="padding: 0.75rem 1rem;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i th:class="${client.iconClass}" th:classappend="' ' + ${client.colorClass}"></i>
+                                    <span th:text="${client.clientName}">Client Name</span>
+                                </div>
+                            </td>
+                            <td class="text-end" style="padding: 0.75rem 1rem;">
+                                <span class="fw-bold text-warning" th:text="${#numbers.formatInteger(client.connectionCount, 1, 'COMMA')}">0</span>
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <span th:if="${client.clientVersion}" class="badge bg-secondary" th:text="'v' + ${client.clientVersion}">v0.0.0</span>
+                                <span th:unless="${client.clientVersion}" class="text-muted">-</span>
+                            </td>
+                            <td class="text-muted small" style="padding: 0.75rem 1rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" th:text="${client.userAgent}">User Agent</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Other Clients (Expandable) -->
+        <div class="tool-group-card" th:if="${clientUsage.otherClients != null and !clientUsage.otherClients.isEmpty()}" x-data="{ expanded: false }">
+            <div class="tool-group-header" @click="expanded = !expanded">
+                <div class="tool-group-title">
+                    <div class="tool-group-icon secondary">
+                        <i class="bi bi-list-ul"></i>
+                    </div>
+                    <div>
+                        <div class="tool-group-name">Other Clients</div>
+                        <div class="text-muted small" th:text="${#lists.size(clientUsage.otherClients)} + ' additional clients'">0 additional clients</div>
+                    </div>
+                </div>
+                <i class="bi bi-chevron-down chevron" :class="{ 'expanded': expanded }"></i>
+            </div>
+            <div class="tool-group-body p-0" x-show="expanded" x-collapse>
+                <table class="table table-dark table-hover mb-0" style="background: transparent;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Client</th>
+                            <th class="text-muted text-end" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Connections</th>
+                            <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Version</th>
+                            <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">User Agent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="client : ${clientUsage.otherClients}" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td class="text-white" style="padding: 0.75rem 1rem;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i th:class="${client.iconClass}" th:classappend="' ' + ${client.colorClass}"></i>
+                                    <span th:text="${client.clientName}">Client Name</span>
+                                </div>
+                            </td>
+                            <td class="text-end" style="padding: 0.75rem 1rem;">
+                                <span class="fw-bold text-warning" th:text="${#numbers.formatInteger(client.connectionCount, 1, 'COMMA')}">0</span>
+                            </td>
+                            <td style="padding: 0.75rem 1rem;">
+                                <span th:if="${client.clientVersion}" class="badge bg-secondary" th:text="'v' + ${client.clientVersion}">v0.0.0</span>
+                                <span th:unless="${client.clientVersion}" class="text-muted">-</span>
+                            </td>
+                            <td class="text-muted small" style="padding: 0.75rem 1rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" th:text="${client.userAgent}">User Agent</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- No Clients State -->
+        <div th:if="${clientUsage.topClients == null or clientUsage.topClients.isEmpty()}" class="empty-state">
+            <i class="bi bi-laptop"></i>
+            <h5 class="text-muted">No Client Connections Yet</h5>
+            <p class="text-muted">MCP client connection statistics will appear here once clients connect to the server.</p>
+        </div>
+    </div>
+
+</div>
+
+<th:block layout:fragment="scripts">
+    <script th:inline="javascript">
+        function monitoringDashboard() {
+            return {
+                selectedPeriod: /*[[${selectedPeriod}]]*/ 'FIVE_MIN',
+                autoRefresh: true,
+                autoRefreshInterval: /*[[${autoRefreshSeconds}]]*/ 30,
+                refreshTimer: null,
+                lastUpdated: new Date().toLocaleTimeString(),
+
+                init() {
+                    if (this.autoRefresh) {
+                        this.startAutoRefresh();
+                    }
+                },
+
+                changePeriod(period) {
+                    this.selectedPeriod = period;
+                    window.location.href = '/monitoring?period=' + period;
+                },
+
+                toggleAutoRefresh() {
+                    if (this.autoRefresh) {
+                        this.startAutoRefresh();
+                    } else {
+                        this.stopAutoRefresh();
+                    }
+                },
+
+                startAutoRefresh() {
+                    this.stopAutoRefresh();
+                    this.refreshTimer = setInterval(() => {
+                        window.location.reload();
+                    }, this.autoRefreshInterval * 1000);
+                },
+
+                stopAutoRefresh() {
+                    if (this.refreshTimer) {
+                        clearInterval(this.refreshTimer);
+                        this.refreshTimer = null;
+                    }
+                },
+
+                destroy() {
+                    this.stopAutoRefresh();
+                }
+            };
+        }
+    </script>
+</th:block>
+</body>
+</html>

@@ -1,6 +1,7 @@
 package com.spring.mcp.config;
 
 import com.spring.mcp.security.ApiKeyAuthenticationFilter;
+import com.spring.mcp.security.McpProtocolHeaderFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +33,7 @@ public class SecurityConfig {
 
     private final DataSource dataSource;
     private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
+    private final McpProtocolHeaderFilter mcpProtocolHeaderFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -39,9 +41,13 @@ public class SecurityConfig {
             // Enable CORS with custom configuration
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-            // Add API Key authentication filter before UsernamePasswordAuthenticationFilter
+            // Add MCP Protocol Header filter first (resolves session ID, adds protocol version header)
+            // This filter runs before authentication to set up protocol compliance headers
+            .addFilterBefore(mcpProtocolHeaderFilter, UsernamePasswordAuthenticationFilter.class)
+
+            // Add API Key authentication filter after protocol headers
             // This filter processes /mcp/**, /sse, and /message endpoints
-            .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(apiKeyAuthenticationFilter, McpProtocolHeaderFilter.class)
 
             .authorizeHttpRequests(auth -> auth
                 // Public resources (including vendor assets for login page)
@@ -59,7 +65,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/**").authenticated()
 
                 // Admin-only pages
-                .requestMatchers("/users/**", "/settings/**").hasRole("ADMIN")
+                .requestMatchers("/users/**", "/settings/**", "/monitoring/**").hasRole("ADMIN")
 
                 // All other requests require authentication
                 .anyRequest().authenticated()
@@ -143,7 +149,7 @@ public class SecurityConfig {
         // Allow all standard HTTP methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
 
-        // Allow necessary headers including API key headers
+        // Allow necessary headers including API key headers and MCP protocol headers
         configuration.setAllowedHeaders(Arrays.asList(
             "Authorization",
             "X-API-Key",
@@ -151,13 +157,16 @@ public class SecurityConfig {
             "Accept",
             "Origin",
             "Cache-Control",
-            "X-Requested-With"
+            "X-Requested-With",
+            "Mcp-Session-Id"  // MCP 2025-06-18 session header
         ));
 
-        // Expose headers that clients may need to read
+        // Expose headers that clients may need to read (including MCP protocol headers)
         configuration.setExposedHeaders(Arrays.asList(
             "Content-Type",
-            "X-Content-Type-Options"
+            "X-Content-Type-Options",
+            "MCP-Protocol-Version",  // MCP 2025-06-18 protocol version
+            "Mcp-Session-Id"         // Echo session ID back to client
         ));
 
         // Allow credentials (for session-based auth on web UI)

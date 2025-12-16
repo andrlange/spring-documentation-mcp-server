@@ -5,6 +5,45 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-12-16
+
+### Added
+- **MCP Monitoring Dashboard**: Comprehensive real-time monitoring for MCP server operations
+    - **Dashboard UI**: New dark-themed monitoring page at `/monitoring` (ADMIN role required)
+    - **Overview Cards**: Total requests, active connections, latency metrics, error rates
+    - **Tool Usage by Group**: Metrics organized by tool categories with expandable details
+        - Documentation, Versions, Migration, Language, Flavors, Initializr/Javadoc groups
+        - Individual tool metrics: request count, success/error rates, latency stats
+    - **Time Period Selection**: View metrics for 5 minutes, 1 hour, or 24 hours
+    - **Performance Tracking**: Average, minimum, maximum latency per tool
+    - **Connection Monitoring**: Active connections, connection events, error tracking
+    - **API Key Usage**: Request counts per API key with last-used timestamps
+    - **Client Usage Statistics**: Top clients by connection count
+    - **Data Retention**: Configurable retention period with manual cleanup option
+    - **Auto-Refresh**: Configurable refresh interval (default: 30 seconds)
+- **Monitoring Infrastructure**:
+    - New `MonitoringController` for dashboard and API endpoints
+    - New `McpMonitoringService` for metrics recording and retrieval
+    - New `McpMonitoringCleanupService` for data retention management
+    - AOP aspect (`McpToolMetricsAspect`) for automatic tool call metrics recording
+    - New entities: `McpMetricsAggregate`, `McpConnectionEvent`, `MonitoringSettings`
+    - New enums: `BucketType`, `ConnectionEventType`, `MetricType`
+    - New DTOs: `MonitoringOverviewDto`, `ToolGroupDto`, `ToolMetricDto`, `ToolDetailDto`, `ApiKeyUsageDto`, `ClientUsageDto`
+- **Database Migrations**:
+    - `V15__monitoring_tables.sql`: Monitoring infrastructure tables
+    - `V16__api_key_request_count.sql`: API key request count tracking
+
+### Fixed
+- **checkVersionCompatibility Tool**: Verified tool correctly uses `spring_boot_compatibility` data from spring.io sync
+
+### Technical Details
+- Metrics aggregation uses 5-minute buckets for efficient storage and querying
+- SSE connection tracking via `SseConnectionTrackingFilter`
+- MCP protocol header validation via `McpProtocolHeaderFilter`
+- HTMX integration for dynamic dashboard updates without full page reload
+
+---
+
 ## [1.4.3] - 2025-12-12
 
 ### Added
