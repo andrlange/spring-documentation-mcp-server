@@ -2,6 +2,8 @@ package com.spring.mcp.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.codec.ClientCodecConfigurer;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
 /**
@@ -15,12 +17,31 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class WebClientConfig {
 
     /**
-     * Create a WebClient.Builder bean for injection.
+     * Maximum buffer size for WebClient responses (16MB).
+     * Large repositories like spring-boot can have tree responses exceeding the default 256KB limit.
+     */
+    private static final int MAX_BUFFER_SIZE = 16 * 1024 * 1024; // 16MB
+
+    /**
+     * Create a WebClient.Builder bean for injection with increased buffer size.
+     * This is needed for GitHub API calls that return large responses (e.g., recursive tree for spring-boot).
      *
-     * @return WebClient.Builder instance
+     * @return WebClient.Builder instance with custom exchange strategies
      */
     @Bean
     public WebClient.Builder webClientBuilder() {
-        return WebClient.builder();
+        ExchangeStrategies strategies = ExchangeStrategies.builder()
+                .codecs(this::configureCodecs)
+                .build();
+
+        return WebClient.builder()
+                .exchangeStrategies(strategies);
+    }
+
+    /**
+     * Configure codecs with increased buffer size.
+     */
+    private void configureCodecs(ClientCodecConfigurer configurer) {
+        configurer.defaultCodecs().maxInMemorySize(MAX_BUFFER_SIZE);
     }
 }

@@ -35,6 +35,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **checkVersionCompatibility Tool**: Verified tool correctly uses `spring_boot_compatibility` data from spring.io sync
+- **GitHub Sync Hibernate Session Corruption**: Fixed transaction isolation issues that caused cascading failures during GitHub documentation sync
+    - One project failure no longer corrupts the entire sync process
+    - Each project sync now runs in its own isolated transaction (`REQUIRES_NEW` propagation)
+    - Entity manager is cleared after failures to prevent "null identifier" errors
+    - Better error logging with full stack traces for debugging
+- **GitHub Sync Performance**: Added skip logic for already-synced documentation
+    - GA (stable) versions are now skipped if documentation already exists (static content won't change)
+    - SNAPSHOT/RC/MILESTONE versions are always re-synced (may have updates)
+    - Significantly reduces GitHub API calls and sync time for subsequent syncs
+    - Sync summary now shows "Versions Skipped (already synced)" count
+    - Code examples follow the same skip logic for GA versions
 
 ### Technical Details
 - Metrics aggregation uses 5-minute buckets for efficient storage and querying
@@ -330,6 +341,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.5.0 | 2025-12-16 | MCP Monitoring Dashboard, GitHub sync fixes and performance improvements |
 | 1.4.3 | 2025-12-12 | Javadoc sync version filter, login version display, flavor groups fix |
 | 1.4.2 | 2025-12-08 | Javadoc API Documentation feature (4 MCP tools) |
 | 1.4.1 | 2025-12-07 | GitHub docs keyword fix, configurable sync features |

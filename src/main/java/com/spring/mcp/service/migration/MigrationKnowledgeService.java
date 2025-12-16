@@ -180,8 +180,21 @@ public class MigrationKnowledgeService {
         boolean allCompatible = true;
 
         // Find the Spring Boot version entity for spring_boot_compatibility lookup
-        List<SpringBootVersion> bootVersions = springBootVersionRepository
-                .findByVersionStartingWith(springBootVersion);
+        // Parse major.minor from input version to match by version range (e.g., "3.4.0" matches "3.4.12")
+        List<SpringBootVersion> bootVersions = new ArrayList<>();
+        String[] versionParts = springBootVersion.split("\\.");
+        if (versionParts.length >= 2) {
+            try {
+                int major = Integer.parseInt(versionParts[0]);
+                int minor = Integer.parseInt(versionParts[1]);
+                bootVersions = springBootVersionRepository
+                        .findByMajorVersionAndMinorVersionOrderByPatchVersionDesc(major, minor);
+                log.debug("Looking up Spring Boot compatibility for major={}, minor={}, found {} versions",
+                        major, minor, bootVersions.size());
+            } catch (NumberFormatException e) {
+                log.warn("Invalid Spring Boot version format: {}", springBootVersion);
+            }
+        }
 
         // Get Spring Boot compatibility data if available
         List<SpringBootCompatibility> springBootCompatibilities = new ArrayList<>();

@@ -62,6 +62,8 @@ docs/
 .fastRequest/
 /mcp.md
 .mcp.json
+start.sh
+
 
 /prompts/
 /node_modules/

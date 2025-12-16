@@ -578,10 +578,10 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="activity-list">
-                            <!-- Top 5 Projects with Newest Releases -->
+                            <!-- Top 5 Most Recently Synced Versions -->
                             <div class="activity-item" th:each="version : ${recentActivityProjects}">
                                 <div class="activity-icon bg-spring-light">
-                                    <i class="bi bi-rocket-takeoff text-spring"></i>
+                                    <i class="bi bi-arrow-repeat text-spring"></i>
                                 </div>
                                 <div class="activity-content">
                                     <div class="activity-title">
@@ -589,8 +589,8 @@
                                     </div>
                                     <div class="activity-time">
                                         <span class="badge bg-light text-dark" th:text="${version.version}">Version</span>
-                                        <span th:if="${version.releaseDate != null}" th:text="${'Released: ' + #temporals.format(version.releaseDate, 'MMM dd, yyyy')}">Release date</span>
-                                        <span th:if="${version.releaseDate == null}" class="text-muted">No release date</span>
+                                        <span th:if="${version.createdAt != null}" th:text="${'Synced: ' + #temporals.format(version.createdAt, 'MMM dd, yyyy HH:mm')}">Sync date</span>
+                                        <span th:if="${version.createdAt == null}" class="text-muted">Unknown sync date</span>
                                     </div>
                                 </div>
                             </div>
@@ -599,8 +599,8 @@
                             <div class="activity-item" th:if="${#lists.isEmpty(recentActivityProjects)}">
                                 <div class="text-center py-4 text-muted">
                                     <i class="bi bi-inbox display-6"></i>
-                                    <p class="mb-0 mt-2">No recent releases</p>
-                                    <p class="small mb-0">Projects with recent releases will appear here</p>
+                                    <p class="mb-0 mt-2">No recent activity</p>
+                                    <p class="small mb-0">Recently synced versions will appear here</p>
                                 </div>
                             </div>
                         </div>

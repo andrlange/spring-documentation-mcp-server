@@ -217,6 +217,22 @@ public interface ProjectVersionRepository extends JpaRepository<ProjectVersion, 
     List<ProjectVersion> findTopByReleaseDateDesc(Pageable pageable);
 
     /**
+     * Find the most recently added/synced versions.
+     * Orders by created_at to show the newest content in the system.
+     *
+     * @param pageable pagination settings
+     * @return list of recently added versions
+     */
+    @Query("""
+        SELECT v
+        FROM ProjectVersion v
+        JOIN FETCH v.project
+        WHERE v.createdAt IS NOT NULL
+        ORDER BY v.createdAt DESC
+        """)
+    List<ProjectVersion> findTopByCreatedAtDesc(Pageable pageable);
+
+    /**
      * Find all versions with API doc URLs for a project
      *
      * @param projectId the project ID

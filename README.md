@@ -886,6 +886,50 @@ export SERVER_PORT=8080
 export BOOTSTRAP_DOCS=false  # Set to true for sample data
 ```
 
+### GitHub Token Configuration (Recommended)
+
+The GitHub sync features fetch documentation from Spring repositories. Without a token, GitHub limits you to **60 requests/hour**, which can cause `429 Too Many Requests` errors during sync. With a token, you get **5,000 requests/hour**.
+
+#### Creating a GitHub Personal Access Token
+
+1. Go to [GitHub Settings → Tokens](https://github.com/settings/tokens)
+2. Click **"Generate new token (classic)"**
+3. Give it a name like `spring-mcp-server`
+4. Select scope: **`public_repo`** (read-only access to public repositories)
+5. Click **"Generate token"**
+6. Copy the token immediately (you won't see it again)
+
+#### Using the Token
+
+**Option 1: Environment Variable (temporary)**
+```bash
+export GITHUB_TOKEN=ghp_your_token_here
+./gradlew bootRun
+```
+
+**Option 2: .env File (recommended for development)**
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit .env and add your token
+GITHUB_TOKEN=ghp_your_token_here
+
+# Source and run
+source .env && ./gradlew bootRun
+```
+
+**Option 3: Docker Compose**
+```yaml
+# In docker-compose.yml or docker-compose-all.yaml
+environment:
+  GITHUB_TOKEN: ${GITHUB_TOKEN}
+```
+
+Then run: `GITHUB_TOKEN=ghp_your_token_here docker-compose up`
+
+> **Security Note:** Never commit your token to version control. The `.env` file is already in `.gitignore`.
+
 ### Application Configuration
 
 Key configuration in `src/main/resources/application.yml`:

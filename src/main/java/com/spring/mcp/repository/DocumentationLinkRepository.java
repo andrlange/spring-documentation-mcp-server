@@ -57,6 +57,11 @@ public interface DocumentationLinkRepository extends JpaRepository<Documentation
     long countByVersionAndIsActiveTrue(ProjectVersion version);
 
     /**
+     * Count active links for a version and doc type
+     */
+    long countByVersionAndDocTypeAndIsActiveTrue(ProjectVersion version, DocumentationType docType);
+
+    /**
      * Find all links for a specific version ID
      */
     List<DocumentationLink> findByVersionId(Long versionId);

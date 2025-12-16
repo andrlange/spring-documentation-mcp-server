@@ -7,9 +7,12 @@ import com.spring.mcp.repository.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -44,6 +47,9 @@ public class GitHubDocumentationSyncService {
     private final DocumentationTypeRepository docTypeRepository;
     private final CodeExampleRepository codeExampleRepository;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     /**
      * Documentation type slug for GitHub-sourced documentation.
      */
@@ -73,9 +79,12 @@ public class GitHubDocumentationSyncService {
     /**
      * Sync documentation for all supported projects from GitHub.
      *
+     * Note: This method intentionally does NOT have @Transactional annotation.
+     * Each project sync runs in its own isolated transaction (REQUIRES_NEW)
+     * so that one project failure doesn't roll back all other projects.
+     *
      * @return sync result with statistics
      */
-    @Transactional
     public GitHubSyncResult syncAll() {
         log.info("=".repeat(60));
         log.info("GITHUB DOCUMENTATION SYNC STARTED");
@@ -98,6 +107,8 @@ public class GitHubDocumentationSyncService {
                 }
 
                 try {
+                    // Each project sync runs in its own transaction (REQUIRES_NEW)
+                    // This isolates failures so one project doesn't affect others
                     ProjectSyncResult projectResult = syncProject(project);
                     result.addProjectResult(projectResult);
                     processedCount++;
@@ -107,8 +118,17 @@ public class GitHubDocumentationSyncService {
                     }
 
                 } catch (Exception e) {
-                    log.error("Error syncing project {}: {}", project.getSlug(), e.getMessage());
+                    log.error("Error syncing project {}: {}", project.getSlug(), e.getMessage(), e);
                     result.addError(project.getSlug(), e.getMessage());
+
+                    // Clear the entity manager to reset session state after a failure
+                    // This prevents "null identifier" errors from corrupting subsequent operations
+                    try {
+                        entityManager.clear();
+                        log.debug("Entity manager cleared after project sync failure");
+                    } catch (Exception clearEx) {
+                        log.warn("Failed to clear entity manager: {}", clearEx.getMessage());
+                    }
                 }
             }
 
@@ -128,6 +148,7 @@ public class GitHubDocumentationSyncService {
             log.info("Projects Synced: {}", result.getProjectsSynced());
             log.info("Documentation Files: {}", result.getTotalDocumentationFiles());
             log.info("Code Examples: {}", result.getTotalCodeExamples());
+            log.info("Versions Skipped (already synced): {}", result.getTotalVersionsSkipped());
             log.info("Errors: {}", result.getTotalErrors());
             log.info("Status: {}", result.isSuccess() ? "SUCCESS" : "FAILED");
             log.info("=".repeat(60));
@@ -139,10 +160,13 @@ public class GitHubDocumentationSyncService {
     /**
      * Sync documentation for a specific project.
      *
+     * Uses REQUIRES_NEW propagation to ensure this project sync runs in its own
+     * isolated transaction. If this sync fails, it won't affect other projects.
+     *
      * @param project the project to sync
      * @return sync result for the project
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ProjectSyncResult syncProject(SpringProject project) {
         log.info("Syncing documentation for project: {}", project.getSlug());
 
@@ -178,6 +202,14 @@ public class GitHubDocumentationSyncService {
     /**
      * Sync documentation for a specific project version.
      *
+     * Note: This method is called from within syncProject() which already has
+     * REQUIRES_NEW propagation, so we use the default REQUIRED propagation here
+     * to join the project's transaction.
+     *
+     * For GA (stable) versions, documentation is static and won't change, so we skip
+     * re-fetching if content already exists. For SNAPSHOT/RC/MILESTONE versions,
+     * documentation may change, so we always re-sync.
+     *
      * @param project the project
      * @param version the version to sync
      * @return sync result for the version
@@ -193,6 +225,38 @@ public class GitHubDocumentationSyncService {
         result.setVersion(versionStr);
 
         try {
+            // Check if this is a stable (GA) version that already has documentation
+            // For GA versions, documentation is static and doesn't change
+            boolean isStableVersion = version.getState() == VersionState.GA;
+            long existingDocCount = linkRepository.countByVersionAndDocTypeAndIsActiveTrue(version, githubDocType);
+            long existingCodeExampleCount = codeExampleRepository.countByVersion(version);
+
+            if (isStableVersion && existingDocCount > 0) {
+                log.info("Skipping GitHub docs sync for {} {} - already has {} docs (GA version is static)",
+                        projectSlug, versionStr, existingDocCount);
+                result.setSkipped(true);
+                result.setSkipReason("GA version already synced");
+                result.setSuccess(true);
+
+                // Still check code examples for GA versions
+                if (existingCodeExampleCount == 0) {
+                    log.debug("Syncing code examples for {} {} (no existing examples)", projectSlug, versionStr);
+                    int codeExamples = codeExampleService.syncCodeExamples(version);
+                    result.setCodeExamplesCreated(codeExamples);
+                } else {
+                    log.debug("Skipping code examples sync for {} {} - already has {} examples",
+                            projectSlug, versionStr, existingCodeExampleCount);
+                }
+
+                return result;
+            }
+
+            // For non-GA versions or versions without docs, proceed with sync
+            if (!isStableVersion && existingDocCount > 0) {
+                log.info("Re-syncing {} {} ({} state) - {} existing docs may be outdated",
+                        projectSlug, versionStr, version.getState(), existingDocCount);
+            }
+
             // Discover and fetch documentation files
             Map<String, String> docFiles = contentFetchService.fetchAllDocumentation(
                 projectSlug, versionStr, discoveryService);
@@ -218,9 +282,14 @@ public class GitHubDocumentationSyncService {
                 }
             }
 
-            // Sync code examples
-            int codeExamples = codeExampleService.syncCodeExamples(version);
-            result.setCodeExamplesCreated(codeExamples);
+            // Sync code examples (skip if GA version already has examples)
+            if (isStableVersion && existingCodeExampleCount > 0) {
+                log.debug("Skipping code examples sync for {} {} - already has {} examples",
+                        projectSlug, versionStr, existingCodeExampleCount);
+            } else {
+                int codeExamples = codeExampleService.syncCodeExamples(version);
+                result.setCodeExamplesCreated(codeExamples);
+            }
 
             result.setSuccess(true);
 
@@ -236,10 +305,13 @@ public class GitHubDocumentationSyncService {
     /**
      * Sync documentation for a specific project by slug.
      *
+     * Uses REQUIRES_NEW propagation to ensure this sync runs in its own
+     * isolated transaction.
+     *
      * @param projectSlug the project slug
      * @return sync result
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ProjectSyncResult syncProjectBySlug(String projectSlug) {
         Optional<SpringProject> projectOpt = projectRepository.findBySlug(projectSlug);
 
@@ -448,6 +520,7 @@ public class GitHubDocumentationSyncService {
         private int projectsSynced;
         private int totalDocumentationFiles;
         private int totalCodeExamples;
+        private int totalVersionsSkipped;
         private int totalErrors;
 
         private List<ProjectSyncResult> projectResults = new ArrayList<>();
@@ -459,6 +532,7 @@ public class GitHubDocumentationSyncService {
                 projectsSynced++;
                 totalDocumentationFiles += result.getDocumentationFilesCreated();
                 totalCodeExamples += result.getCodeExamplesCreated();
+                totalVersionsSkipped += result.getVersionsSkipped();
             } else {
                 totalErrors++;
             }
@@ -482,6 +556,7 @@ public class GitHubDocumentationSyncService {
         private int documentationFilesCreated;
         private int codeExamplesCreated;
         private int versionsSynced;
+        private int versionsSkipped;
         private int errorsEncountered;
 
         private List<VersionSyncResult> versionResults = new ArrayList<>();
@@ -490,9 +565,13 @@ public class GitHubDocumentationSyncService {
         public void addVersionResult(VersionSyncResult result) {
             versionResults.add(result);
             if (result.isSuccess()) {
-                versionsSynced++;
-                documentationFilesCreated += result.getDocumentationFilesCreated();
-                codeExamplesCreated += result.getCodeExamplesCreated();
+                if (result.isSkipped()) {
+                    versionsSkipped++;
+                } else {
+                    versionsSynced++;
+                    documentationFilesCreated += result.getDocumentationFilesCreated();
+                    codeExamplesCreated += result.getCodeExamplesCreated();
+                }
             } else {
                 errorsEncountered++;
             }
@@ -513,6 +592,8 @@ public class GitHubDocumentationSyncService {
     public static class VersionSyncResult {
         private String version;
         private boolean success;
+        private boolean skipped;
+        private String skipReason;
         private String errorMessage;
 
         private int documentationFilesCreated;

@@ -65,7 +65,7 @@ public class GitHubDocumentationDiscoveryService {
         Map.entry("spring-pulsar", "docs/modules/ROOT/pages"),
         Map.entry("spring-retry", "docs/modules/ROOT/pages"),
         Map.entry("spring-credhub", "docs/modules/ROOT/pages"),
-        Map.entry("spring-grpc", "docs/modules/ROOT/pages")
+        Map.entry("spring-grpc", "spring-grpc-docs/src/main/antora/modules/ROOT/pages")
     );
 
     /**

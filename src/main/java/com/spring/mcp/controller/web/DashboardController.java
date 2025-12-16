@@ -127,8 +127,8 @@ public class DashboardController {
             long recentDocsCount = documentationLinkRepository.countWithRecentlyUpdatedVersions(30);
             model.addAttribute("recentDocsCount", recentDocsCount);
 
-            // Recent Activity: Top 5 projects with newest release dates
-            var recentActivityProjects = projectVersionRepository.findTopByReleaseDateDesc(PageRequest.of(0, 5));
+            // Recent Activity: Top 5 most recently added/synced versions
+            var recentActivityProjects = projectVersionRepository.findTopByCreatedAtDesc(PageRequest.of(0, 5));
             model.addAttribute("recentActivityProjects", recentActivityProjects);
 
             // OpenRewrite Recipe Statistics (conditional on feature flag)

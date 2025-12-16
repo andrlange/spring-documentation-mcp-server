@@ -6,9 +6,13 @@ import com.spring.mcp.model.entity.ProjectVersion;
 import com.spring.mcp.repository.CodeExampleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PersistenceException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,6 +35,9 @@ public class GitHubCodeExampleService {
     private final GitHubDocumentationDiscoveryService discoveryService;
     private final GitHubContentFetchService contentFetchService;
     private final CodeExampleRepository codeExampleRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
      * Pattern for include-code:: directive in AsciiDoc.
@@ -101,9 +108,23 @@ public class GitHubCodeExampleService {
                         continue;
                     }
 
-                    codeExampleRepository.save(example);
-                    savedCount++;
-                    log.debug("Saved code example: {}", example.getTitle());
+                    try {
+                        codeExampleRepository.save(example);
+                        savedCount++;
+                        log.debug("Saved code example: {}", example.getTitle());
+                    } catch (DataAccessException | PersistenceException e) {
+                        // Handle persistence errors gracefully
+                        log.error("Database error saving code example '{}': {}", example.getTitle(), e.getMessage());
+
+                        // Clear the entity manager to reset session state
+                        // This prevents "null identifier" errors from corrupting subsequent operations
+                        try {
+                            entityManager.clear();
+                            log.debug("Entity manager cleared after code example save failure");
+                        } catch (Exception clearEx) {
+                            log.warn("Failed to clear entity manager: {}", clearEx.getMessage());
+                        }
+                    }
                 }
 
             } catch (Exception e) {
