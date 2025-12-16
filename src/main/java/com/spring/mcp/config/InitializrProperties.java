@@ -83,9 +83,9 @@ public class InitializrProperties {
 
         /**
          * Default Java version.
-         * Default: "21" (LTS)
+         * Default: "25" (LTS)
          */
-        private String javaVersion = "21";
+        private String javaVersion = "25";
 
         /**
          * Default language.

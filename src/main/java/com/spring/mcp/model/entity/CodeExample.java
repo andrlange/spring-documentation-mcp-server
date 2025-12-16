@@ -44,7 +44,7 @@ public class CodeExample {
     @Builder.Default
     private String language = "java";
 
-    @Column(length = 100)
+    @Column(length = 255)
     private String category;
 
     @Column(columnDefinition = "text[]")

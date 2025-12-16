@@ -407,9 +407,16 @@ public class GitHubCodeExampleService {
         }
 
         // Format category
-        return String.join(" / ", categoryParts.stream()
+        String category = String.join(" / ", categoryParts.stream()
             .map(this::formatCategoryPart)
             .toList());
+
+        // Truncate to 255 chars to fit database column (with ellipsis if needed)
+        if (category.length() > 255) {
+            category = category.substring(0, 252) + "...";
+        }
+
+        return category;
     }
 
     /**

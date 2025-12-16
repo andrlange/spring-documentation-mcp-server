@@ -46,6 +46,12 @@ public class ExamplesController {
     private static final Pattern EXAMPLE_TITLE_PATTERN = Pattern.compile("^(.+?)\\s*-\\s*Example\\s*\\d+$");
 
     /**
+     * Pattern to extract example number from title for natural sorting.
+     * Matches "Example 1", "Example 10", etc.
+     */
+    private static final Pattern EXAMPLE_NUMBER_PATTERN = Pattern.compile("Example\\s*(\\d+)$");
+
+    /**
      * DTO for grouped examples by topic.
      */
     public record TopicGroup(
@@ -154,8 +160,8 @@ public class ExamplesController {
         return grouped.entrySet().stream()
             .map(entry -> {
                 List<CodeExample> topicExamples = entry.getValue();
-                // Sort examples by title within each topic
-                topicExamples.sort(Comparator.comparing(CodeExample::getTitle));
+                // Sort examples by example number (natural/numeric sorting)
+                topicExamples.sort(this::compareExamplesByNumber);
 
                 // Get project/version from first example
                 String projectName = null;
@@ -189,6 +195,50 @@ public class ExamplesController {
 
         // If no pattern match, use the whole title
         return title;
+    }
+
+    /**
+     * Compare two code examples by their example number for natural sorting.
+     * Extracts the numeric part from titles like "Topic - Example 10" and sorts numerically.
+     * Falls back to alphabetical comparison if no number is found.
+     */
+    private int compareExamplesByNumber(CodeExample e1, CodeExample e2) {
+        int num1 = extractExampleNumber(e1.getTitle());
+        int num2 = extractExampleNumber(e2.getTitle());
+
+        // If both have numbers, compare numerically
+        if (num1 >= 0 && num2 >= 0) {
+            return Integer.compare(num1, num2);
+        }
+
+        // If only one has a number, numbered examples come first
+        if (num1 >= 0) return -1;
+        if (num2 >= 0) return 1;
+
+        // Neither has a number, fall back to alphabetical
+        String title1 = e1.getTitle() != null ? e1.getTitle() : "";
+        String title2 = e2.getTitle() != null ? e2.getTitle() : "";
+        return title1.compareTo(title2);
+    }
+
+    /**
+     * Extract the example number from a title.
+     * Returns -1 if no number is found.
+     */
+    private int extractExampleNumber(String title) {
+        if (title == null) {
+            return -1;
+        }
+
+        Matcher matcher = EXAMPLE_NUMBER_PATTERN.matcher(title);
+        if (matcher.find()) {
+            try {
+                return Integer.parseInt(matcher.group(1));
+            } catch (NumberFormatException e) {
+                return -1;
+            }
+        }
+        return -1;
     }
 
     /**
