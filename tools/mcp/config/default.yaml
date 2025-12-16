@@ -1,0 +1,57 @@
+# MCP Testing Tool Suite - Default Configuration
+# Override with config/local.yaml or environment variables
+
+mcp_server:
+  base_url: "http://localhost:8080"
+  sse_endpoint: "/mcp/spring/sse"
+  message_endpoint: "/mcp/spring/messages"
+  # api_key: Set via MCP_API_KEY environment variable or local.yaml
+  auth_method: "header"  # Options: header (X-API-Key), bearer, query
+
+timeouts:
+  connection: 10000       # ms - timeout for establishing connection
+  read: 30000             # ms - timeout for reading responses
+  heartbeat_interval: 30000  # ms - expected heartbeat interval from server
+
+stability:
+  reconnection_attempts: 5
+  backoff_base: 1000      # ms - initial backoff delay
+  backoff_max: 60000      # ms - maximum backoff delay
+  backoff_multiplier: 2.0
+  idle_test_duration: 300 # seconds - duration for idle connection tests
+
+performance:
+  warmup_iterations: 3
+  benchmark_iterations: 10
+  concurrent_connections: 5
+  throughput_duration: 60 # seconds
+
+  # Per-tool timeout overrides (ms)
+  tool_timeouts:
+    searchJavadocs: 60000
+    getClassDoc: 45000
+    default: 30000
+
+optimization:
+  response_size_threshold: 100000  # bytes - warn if response exceeds
+  empty_result_alert: true
+  validate_json_schema: true
+
+  # Tools known to return large responses
+  large_response_tools:
+    - searchJavadocs
+    - getClassDoc
+    - getPackageDoc
+    - getSpringMigrationGuide
+
+reporting:
+  output_dir: "./reports"
+  formats:
+    - html
+    - json
+  include_raw_data: false
+  include_timestamps: true
+
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

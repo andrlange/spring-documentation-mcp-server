@@ -1,0 +1,101 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-test-suite"
+version = "0.1.0"
+description = "Testing tool suite for Spring Documentation MCP Server"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Spring MCP Team"}
+]
+keywords = ["mcp", "testing", "sse", "spring"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "sseclient-py>=1.8.0",
+    "aiohttp>=3.9.0",
+    "aiohttp-sse-client>=0.2.1",
+    "httpx>=0.27.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "orjson>=3.9.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-benchmark>=4.0.0",
+    "pytest-timeout>=2.2.0",
+    "pytest-html>=4.1.0",
+    "pandas>=2.1.0",
+    "rich>=13.7.0",
+    "tabulate>=0.9.0",
+    "python-dotenv>=1.0.0",
+    "click>=8.1.0",
+    "pyyaml>=6.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "isort",
+    "mypy",
+    "ruff",
+]
+visualization = [
+    "matplotlib>=3.8.0",
+]
+
+[project.scripts]
+mcp-test = "src.cli:main"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+]
+markers = [
+    "stability: SSE connection stability tests",
+    "performance: Performance benchmark tests",
+    "optimization: Query/response optimization tests",
+    "slow: Tests that take longer than 30 seconds",
+    "integration: Integration tests requiring running server",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+timeout = 60
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true

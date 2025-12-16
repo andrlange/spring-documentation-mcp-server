@@ -60,6 +60,12 @@ public class ApiKey {
     private LocalDateTime lastUsedAt;
 
     /**
+     * Total number of API requests made with this key
+     */
+    @Column(name = "request_count", nullable = false)
+    private Long requestCount = 0L;
+
+    /**
      * Whether this API key is currently active
      */
     @Column(name = "is_active", nullable = false)
@@ -79,12 +85,16 @@ public class ApiKey {
         if (isActive == null) {
             isActive = true;
         }
+        if (requestCount == null) {
+            requestCount = 0L;
+        }
     }
 
     /**
-     * Update last used timestamp
+     * Update last used timestamp and increment request count
      */
     public void updateLastUsed() {
         this.lastUsedAt = LocalDateTime.now();
+        this.requestCount = (this.requestCount == null ? 0L : this.requestCount) + 1;
     }
 }

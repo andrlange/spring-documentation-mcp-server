@@ -56,4 +56,10 @@ public interface SpringBootVersionRepository extends JpaRepository<SpringBootVer
      * Find versions by major and minor version
      */
     List<SpringBootVersion> findByMajorVersionAndMinorVersionOrderByPatchVersionDesc(Integer majorVersion, Integer minorVersion);
+
+    /**
+     * Find versions starting with a version prefix (e.g., "3.5" matches "3.5.0", "3.5.1", etc.)
+     * Useful for finding compatible versions when only major.minor is specified.
+     */
+    List<SpringBootVersion> findByVersionStartingWith(String versionPrefix);
 }

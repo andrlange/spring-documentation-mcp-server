@@ -5,10 +5,15 @@ import com.spring.mcp.model.entity.DeprecationReplacement;
 import com.spring.mcp.model.entity.MigrationRecipe;
 import com.spring.mcp.model.entity.MigrationTransformation;
 import com.spring.mcp.model.entity.MigrationTransformation.TransformationType;
+import com.spring.mcp.model.entity.ProjectVersion;
+import com.spring.mcp.model.entity.SpringBootCompatibility;
+import com.spring.mcp.model.entity.SpringBootVersion;
 import com.spring.mcp.model.entity.VersionCompatibility;
 import com.spring.mcp.repository.DeprecationReplacementRepository;
 import com.spring.mcp.repository.MigrationRecipeRepository;
 import com.spring.mcp.repository.MigrationTransformationRepository;
+import com.spring.mcp.repository.SpringBootCompatibilityRepository;
+import com.spring.mcp.repository.SpringBootVersionRepository;
 import com.spring.mcp.repository.VersionCompatibilityRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,16 +37,22 @@ public class MigrationKnowledgeService {
     private final MigrationTransformationRepository transformationRepository;
     private final DeprecationReplacementRepository deprecationRepository;
     private final VersionCompatibilityRepository compatibilityRepository;
+    private final SpringBootVersionRepository springBootVersionRepository;
+    private final SpringBootCompatibilityRepository springBootCompatibilityRepository;
 
     public MigrationKnowledgeService(
             MigrationRecipeRepository recipeRepository,
             MigrationTransformationRepository transformationRepository,
             DeprecationReplacementRepository deprecationRepository,
-            VersionCompatibilityRepository compatibilityRepository) {
+            VersionCompatibilityRepository compatibilityRepository,
+            SpringBootVersionRepository springBootVersionRepository,
+            SpringBootCompatibilityRepository springBootCompatibilityRepository) {
         this.recipeRepository = recipeRepository;
         this.transformationRepository = transformationRepository;
         this.deprecationRepository = deprecationRepository;
         this.compatibilityRepository = compatibilityRepository;
+        this.springBootVersionRepository = springBootVersionRepository;
+        this.springBootCompatibilityRepository = springBootCompatibilityRepository;
     }
 
     /**
@@ -156,7 +167,10 @@ public class MigrationKnowledgeService {
     }
 
     /**
-     * Check compatibility of dependencies with a Spring Boot version
+     * Check compatibility of dependencies with a Spring Boot version.
+     * First checks the migration-specific version_compatibility table,
+     * then falls back to the spring_boot_compatibility table which contains
+     * data synced from spring.io.
      */
     public CompatibilityReportDto checkCompatibility(String springBootVersion, List<String> dependencies) {
         log.info("Checking compatibility for Spring Boot {} with {} dependencies", springBootVersion, dependencies.size());
@@ -165,29 +179,76 @@ public class MigrationKnowledgeService {
         List<String> warnings = new ArrayList<>();
         boolean allCompatible = true;
 
+        // Find the Spring Boot version entity for spring_boot_compatibility lookup
+        List<SpringBootVersion> bootVersions = springBootVersionRepository
+                .findByVersionStartingWith(springBootVersion);
+
+        // Get Spring Boot compatibility data if available
+        List<SpringBootCompatibility> springBootCompatibilities = new ArrayList<>();
+        if (!bootVersions.isEmpty()) {
+            SpringBootVersion bootVersion = bootVersions.get(0);
+            springBootCompatibilities = springBootCompatibilityRepository
+                    .findAllBySpringBootVersionIdWithProjectDetails(bootVersion.getId());
+            log.debug("Found {} spring.io compatibility mappings for Spring Boot {}",
+                    springBootCompatibilities.size(), springBootVersion);
+        }
+
         for (String dependency : dependencies) {
-            // Try to find as artifact name
-            List<VersionCompatibility> matches = compatibilityRepository
+            // First, try to find in migration-specific version_compatibility table
+            List<VersionCompatibility> migrationMatches = compatibilityRepository
                     .findBySpringBootVersion(springBootVersion)
                     .stream()
                     .filter(vc -> vc.getDependencyArtifact().contains(dependency) ||
                                   vc.getDependencyGroup().contains(dependency))
                     .toList();
 
-            if (matches.isEmpty()) {
-                warnings.add("No compatibility information found for: " + dependency);
-                compatibilities.add(new CompatibilityReportDto.DependencyCompatibility(
-                        dependency, "unknown", false, "No compatibility data available"
-                ));
-                allCompatible = false;
-            } else {
-                VersionCompatibility vc = matches.get(0);
+            if (!migrationMatches.isEmpty()) {
+                // Found in migration knowledge base
+                VersionCompatibility vc = migrationMatches.get(0);
                 compatibilities.add(new CompatibilityReportDto.DependencyCompatibility(
                         dependency,
                         vc.getCompatibleVersion(),
                         Boolean.TRUE.equals(vc.getVerified()),
                         vc.getNotes()
                 ));
+                log.debug("Found {} in migration knowledge: version {}", dependency, vc.getCompatibleVersion());
+            } else {
+                // Fall back to spring_boot_compatibility table (spring.io data)
+                String lowerDep = dependency.toLowerCase();
+                Optional<SpringBootCompatibility> springIoMatch = springBootCompatibilities.stream()
+                        .filter(sbc -> {
+                            ProjectVersion pv = sbc.getCompatibleProjectVersion();
+                            String projectSlug = pv.getProject().getSlug().toLowerCase();
+                            String projectName = pv.getProject().getName().toLowerCase();
+                            // Match by project slug or name containing the dependency search term
+                            return projectSlug.contains(lowerDep) ||
+                                   projectName.contains(lowerDep) ||
+                                   lowerDep.contains(projectSlug.replace("spring-", ""));
+                        })
+                        .findFirst();
+
+                if (springIoMatch.isPresent()) {
+                    ProjectVersion pv = springIoMatch.get().getCompatibleProjectVersion();
+                    String compatibleVersion = pv.getVersion();
+                    String projectName = pv.getProject().getName();
+
+                    compatibilities.add(new CompatibilityReportDto.DependencyCompatibility(
+                            projectName,
+                            compatibleVersion,
+                            true, // spring.io data is considered verified
+                            "Compatible with Spring Boot " + springBootVersion +
+                            " (source: spring.io)"
+                    ));
+                    log.debug("Found {} in spring.io compatibility: {} version {}",
+                            dependency, projectName, compatibleVersion);
+                } else {
+                    warnings.add("No compatibility information found for: " + dependency);
+                    compatibilities.add(new CompatibilityReportDto.DependencyCompatibility(
+                            dependency, "unknown", false, "No compatibility data available"
+                    ));
+                    allCompatible = false;
+                    log.debug("No compatibility data found for {}", dependency);
+                }
             }
         }
 

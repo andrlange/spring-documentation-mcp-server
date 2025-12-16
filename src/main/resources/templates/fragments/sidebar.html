@@ -69,12 +69,17 @@
             </li>
             <li class="nav-item" sec:authorize="hasRole('ADMIN')">
                 <a class="nav-link" th:href="@{/users}" th:classappend="${activePage == 'users' or activePage == 'groups'} ? 'active' : ''">
-                    <i class="bi bi-people"></i> Users & Groups
+                    <i class="bi bi-people"></i> Users & Flavor Groups
                 </a>
             </li>
             <li class="nav-item" sec:authorize="hasRole('ADMIN')">
                 <a class="nav-link" th:href="@{/settings}" th:classappend="${activePage == 'settings'} ? 'active' : ''">
                     <i class="bi bi-gear"></i> Settings
+                </a>
+            </li>
+            <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                <a class="nav-link" th:href="@{/monitoring}" th:classappend="${activePage == 'monitoring'} ? 'active' : ''">
+                    <i class="bi bi-activity" style="color: #63b3ed;"></i> Monitoring
                 </a>
             </li>
         </ul>

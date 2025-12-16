@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring Boot Documentation MCP Server
-    version: 1.4.3
+    version: 1.5.0
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.8
@@ -72,7 +72,7 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.4.3"
+        version: "1.5.0"
         instructions: |
           Spring Boot Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 
@@ -168,10 +168,20 @@ spring.lifecycle:
 mcp:
   server:
     name: "Spring Documentation MCP Server"
-    version: "1.1.0"
+    version: "1.4.4"
     sse:
       timeout: 3600000 # 1 hour in milliseconds
       heartbeat-interval: 30000 # 30 seconds in milliseconds
+
+  # MCP Transport 2025-06-18 Protocol Compliance
+  # See: https://spec.modelcontextprotocol.io/2025-06-18/basic/transports/
+  security:
+    # Origin header validation for browser-based clients
+    # Set to false to disable origin checking (useful for CLI tools)
+    validate-origin: ${MCP_VALIDATE_ORIGIN:true}
+    # Comma-separated list of allowed origins, or "*" to allow all
+    # Examples: "https://example.com,https://app.example.com" or "*"
+    allowed-origins: ${MCP_ALLOWED_ORIGINS:*}
 
   documentation:
     base-urls:
@@ -329,7 +339,7 @@ mcp:
       parser:
         connection-timeout-ms: 10000
         read-timeout-ms: 30000
-        user-agent: "Spring-MCP-Server/1.4.3 (Javadoc-Crawler)"
+        user-agent: "Spring-MCP-Server/1.5.0 (Javadoc-Crawler)"
         max-depth: 3
         max-classes-per-package: 500
         max-methods-per-class: 200
