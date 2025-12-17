@@ -41,7 +41,7 @@ dependencies {
 
     // Spring Modulith 2.0 (managed by BOM)
     implementation 'org.springframework.modulith:spring-modulith-starter-core'
-    implementation 'org.springframework.modulith:spring-modulith-events-api'
+    implementation 'org.springframework.modulith:spring-modulith-starter-jpa'  // JPA events with all dependencies
     implementation 'org.springframework.modulith:spring-modulith-actuator'
 
     // OpenAPI Documentation (springdoc-openapi - latest compatible with Spring Boot 4.0)

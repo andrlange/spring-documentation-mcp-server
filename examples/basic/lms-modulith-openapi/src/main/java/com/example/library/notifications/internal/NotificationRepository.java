@@ -40,4 +40,22 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
         @Param("refType") String referenceType,
         @Param("refId") Long referenceId
     );
+
+    // Idempotency checks for event-driven notifications
+    boolean existsByMemberIdAndTypeAndReferenceTypeAndReferenceId(
+        Long memberId,
+        Notification.NotificationType type,
+        String referenceType,
+        Long referenceId
+    );
+
+    @Query("SELECT COUNT(n) > 0 FROM Notification n WHERE n.memberId = :memberId AND n.type = :type AND n.referenceType = 'LOAN' AND n.referenceId = :loanId")
+    boolean existsForLoan(
+        @Param("memberId") Long memberId,
+        @Param("type") Notification.NotificationType type,
+        @Param("loanId") Long loanId
+    );
+
+    @Query("SELECT COUNT(n) > 0 FROM Notification n WHERE n.memberId = :memberId AND n.type = 'WELCOME'")
+    boolean existsWelcomeNotification(@Param("memberId") Long memberId);
 }

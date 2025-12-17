@@ -45,6 +45,25 @@ public interface JavadocClassRepository extends JpaRepository<JavadocClass, Long
             @Param("fqcn") String fqcn);
 
     /**
+     * Find a specific class by library, version, and FQCN with all members eagerly loaded.
+     * Use this when you need to access methods, fields, and constructors.
+     */
+    @Query("""
+        SELECT DISTINCT jc FROM JavadocClass jc
+        JOIN FETCH jc.javadocPackage jp
+        LEFT JOIN FETCH jc.methods
+        LEFT JOIN FETCH jc.fields
+        LEFT JOIN FETCH jc.constructors
+        WHERE jp.libraryName = :libraryName
+        AND jp.version = :version
+        AND jc.fqcn = :fqcn
+        """)
+    Optional<JavadocClass> findByLibraryVersionAndFqcnWithMembers(
+            @Param("libraryName") String libraryName,
+            @Param("version") String version,
+            @Param("fqcn") String fqcn);
+
+    /**
      * Find classes by simple name (any version).
      */
     List<JavadocClass> findBySimpleName(String simpleName);
@@ -85,6 +104,7 @@ public interface JavadocClassRepository extends JpaRepository<JavadocClass, Long
 
     /**
      * Full-text search on classes using tsvector.
+     * Note: This returns classes without eager-loaded package - use searchByKeywordWithPackage for that.
      */
     @Query(value = """
         SELECT jc.* FROM javadoc_classes jc
@@ -102,7 +122,29 @@ public interface JavadocClassRepository extends JpaRepository<JavadocClass, Long
             @Param("limit") int limit);
 
     /**
+     * Full-text search on classes with eager-loaded package.
+     * Uses JPQL with LIKE for compatibility and JOIN FETCH for package.
+     */
+    @Query("""
+        SELECT DISTINCT jc FROM JavadocClass jc
+        JOIN FETCH jc.javadocPackage jp
+        WHERE jp.libraryName = :libraryName
+        AND jp.version = :version
+        AND (LOWER(jc.fqcn) LIKE LOWER(CONCAT('%', :query, '%'))
+             OR LOWER(jc.simpleName) LIKE LOWER(CONCAT('%', :query, '%'))
+             OR LOWER(jc.summary) LIKE LOWER(CONCAT('%', :query, '%'))
+             OR LOWER(jc.description) LIKE LOWER(CONCAT('%', :query, '%')))
+        ORDER BY jc.simpleName
+        """)
+    List<JavadocClass> searchByKeywordWithPackage(
+            @Param("libraryName") String libraryName,
+            @Param("version") String version,
+            @Param("query") String query,
+            Pageable pageable);
+
+    /**
      * Full-text search across all libraries and versions.
+     * Note: This returns classes without eager-loaded package - use searchByKeywordGlobalWithPackage for that.
      */
     @Query(value = """
         SELECT jc.* FROM javadoc_classes jc
@@ -114,6 +156,23 @@ public interface JavadocClassRepository extends JpaRepository<JavadocClass, Long
     List<JavadocClass> searchByKeywordGlobal(
             @Param("query") String query,
             @Param("limit") int limit);
+
+    /**
+     * Full-text search across all libraries and versions with eager-loaded package.
+     * Uses JPQL with LIKE for compatibility and JOIN FETCH for package.
+     */
+    @Query("""
+        SELECT DISTINCT jc FROM JavadocClass jc
+        JOIN FETCH jc.javadocPackage jp
+        WHERE LOWER(jc.fqcn) LIKE LOWER(CONCAT('%', :query, '%'))
+           OR LOWER(jc.simpleName) LIKE LOWER(CONCAT('%', :query, '%'))
+           OR LOWER(jc.summary) LIKE LOWER(CONCAT('%', :query, '%'))
+           OR LOWER(jc.description) LIKE LOWER(CONCAT('%', :query, '%'))
+        ORDER BY jc.simpleName
+        """)
+    List<JavadocClass> searchByKeywordGlobalWithPackage(
+            @Param("query") String query,
+            Pageable pageable);
 
     /**
      * Search by class name pattern.

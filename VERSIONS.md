@@ -6,7 +6,7 @@ This document tracks the version configuration across all project files to ensur
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Application** | 1.5.0 | Spring MCP Server |
+| **Application** | 1.5.1 | Spring MCP Server |
 | **Java (JDK)** | 25 | LTS version |
 | **Spring Boot** | 3.5.8 | Latest stable |
 | **Spring AI** | 1.1.2 | MCP Server support |
@@ -17,7 +17,7 @@ This document tracks the version configuration across all project files to ensur
 
 ### build.gradle
 ```groovy
-version = '1.5.0'
+version = '1.5.1'
 
 java {
     toolchain {
@@ -49,7 +49,7 @@ services:
   postgres:
     image: postgres:18-alpine
   spring-boot-documentation-mcp-server:
-    image: spring-boot-documentation-mcp-server:1.5.0
+    image: spring-boot-documentation-mcp-server:1.5.1
 ```
 
 ### application.yml
@@ -58,7 +58,7 @@ services:
 info:
   app:
     name: Spring MCP Server
-    version: 1.5.0
+    version: 1.5.1
   spring-boot:
     version: 3.5.8
 
@@ -66,12 +66,12 @@ spring:
   ai:
     mcp:
       server:
-        version: "1.5.0"
+        version: "1.5.1"
 ```
 
 ### build-container.sh
 ```bash
-APP_VERSION="1.5.0"
+APP_VERSION="1.5.1"
 JAVA_VERSION="25"
 ```
 
@@ -111,6 +111,11 @@ Update these locations when adding/removing tools:
 - `.claude/memory/project-memory.md` - MCP Tools count
 
 ## Changelog
+
+### v1.5.1 (2025-12-17)
+- Fixed Javadoc MCP tools "Transaction silently rolled back" error
+- Added `@Transactional(propagation = REQUIRES_NEW)` to metrics recording
+- Added eager-loading query methods to prevent lazy loading issues
 
 ### v1.5.0 (2025-12-16)
 - MCP Monitoring Dashboard with real-time metrics and analytics

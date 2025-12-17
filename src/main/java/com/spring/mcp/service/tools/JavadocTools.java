@@ -11,6 +11,7 @@ import org.springaicommunity.mcp.annotation.McpTool;
 import org.springaicommunity.mcp.annotation.McpToolParam;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,8 +60,8 @@ public class JavadocTools {
 
         String ver = resolvedVersion.get();
 
-        // Find the class
-        Optional<JavadocClass> classOpt = classRepository.findByLibraryVersionAndFqcn(library, ver, fqcn);
+        // Find the class with all members eagerly loaded to avoid lazy loading in read-only transaction
+        Optional<JavadocClass> classOpt = classRepository.findByLibraryVersionAndFqcnWithMembers(library, ver, fqcn);
         if (classOpt.isEmpty()) {
             log.debug("Class not found: {}/{}/{}", library, ver, fqcn);
             return ClassDocResult.notFound(library, ver, fqcn);
@@ -219,14 +220,15 @@ public class JavadocTools {
             }
         }
 
-        // Search classes using existing methods
+        // Search classes using eager-loading methods to avoid lazy loading issues in read-only transaction
+        Pageable pageable = PageRequest.of(0, maxResults);
         List<JavadocClass> classResults;
         if (library != null && !library.isBlank() && resolvedVersion != null) {
-            // Search within specific library/version
-            classResults = classRepository.searchByKeyword(library, resolvedVersion, query, maxResults);
+            // Search within specific library/version with eager-loaded package
+            classResults = classRepository.searchByKeywordWithPackage(library, resolvedVersion, query, pageable);
         } else {
-            // Search globally
-            classResults = classRepository.searchByKeywordGlobal(query, maxResults);
+            // Search globally with eager-loaded package
+            classResults = classRepository.searchByKeywordGlobalWithPackage(query, pageable);
         }
 
         for (JavadocClass cls : classResults) {

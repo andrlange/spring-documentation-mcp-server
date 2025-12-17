@@ -55,18 +55,18 @@ rectangle "Library Management System\n<size:16>[Software System]</size>" <<Bound
   component "==Web Module\n<size:16>[Component: Module]</size>" <<Element-RWxlbWVudCxDb21wb25lbnQ=>> as LibraryManagementSystem.LibraryManagementSystem.WebModule
 }
 
-LibraryManagementSystem.LibraryManagementSystem.NotificationsModule --> LibraryManagementSystem.LibraryManagementSystem.LoansModule <<Relationship-UmVsYXRpb25zaGlw>> : "listens to"
-LibraryManagementSystem.LibraryManagementSystem.NotificationsModule --> LibraryManagementSystem.LibraryManagementSystem.CatalogModule <<Relationship-UmVsYXRpb25zaGlw>> : "listens to"
-LibraryManagementSystem.LibraryManagementSystem.NotificationsModule --> LibraryManagementSystem.LibraryManagementSystem.MembersModule <<Relationship-UmVsYXRpb25zaGlw>> : "listens to"
 LibraryManagementSystem.LibraryManagementSystem.LoansModule --> LibraryManagementSystem.LibraryManagementSystem.CatalogModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
 LibraryManagementSystem.LibraryManagementSystem.LoansModule --> LibraryManagementSystem.LibraryManagementSystem.MembersModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
-LibraryManagementSystem.LibraryManagementSystem.ConfigModule --> LibraryManagementSystem.LibraryManagementSystem.CatalogModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
-LibraryManagementSystem.LibraryManagementSystem.ConfigModule --> LibraryManagementSystem.LibraryManagementSystem.MembersModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
-LibraryManagementSystem.LibraryManagementSystem.ConfigModule --> LibraryManagementSystem.LibraryManagementSystem.LoansModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
-LibraryManagementSystem.LibraryManagementSystem.ConfigModule --> LibraryManagementSystem.LibraryManagementSystem.NotificationsModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
 LibraryManagementSystem.LibraryManagementSystem.WebModule --> LibraryManagementSystem.LibraryManagementSystem.CatalogModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
 LibraryManagementSystem.LibraryManagementSystem.WebModule --> LibraryManagementSystem.LibraryManagementSystem.MembersModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
 LibraryManagementSystem.LibraryManagementSystem.WebModule --> LibraryManagementSystem.LibraryManagementSystem.LoansModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
 LibraryManagementSystem.LibraryManagementSystem.WebModule --> LibraryManagementSystem.LibraryManagementSystem.NotificationsModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+LibraryManagementSystem.LibraryManagementSystem.ConfigModule --> LibraryManagementSystem.LibraryManagementSystem.CatalogModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+LibraryManagementSystem.LibraryManagementSystem.ConfigModule --> LibraryManagementSystem.LibraryManagementSystem.MembersModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+LibraryManagementSystem.LibraryManagementSystem.ConfigModule --> LibraryManagementSystem.LibraryManagementSystem.LoansModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+LibraryManagementSystem.LibraryManagementSystem.ConfigModule --> LibraryManagementSystem.LibraryManagementSystem.NotificationsModule <<Relationship-UmVsYXRpb25zaGlw>> : "uses"
+LibraryManagementSystem.LibraryManagementSystem.NotificationsModule --> LibraryManagementSystem.LibraryManagementSystem.LoansModule <<Relationship-UmVsYXRpb25zaGlw>> : "listens to"
+LibraryManagementSystem.LibraryManagementSystem.NotificationsModule --> LibraryManagementSystem.LibraryManagementSystem.MembersModule <<Relationship-UmVsYXRpb25zaGlw>> : "listens to"
+LibraryManagementSystem.LibraryManagementSystem.NotificationsModule --> LibraryManagementSystem.LibraryManagementSystem.CatalogModule <<Relationship-UmVsYXRpb25zaGlw>> : "listens to"
 
 @enduml

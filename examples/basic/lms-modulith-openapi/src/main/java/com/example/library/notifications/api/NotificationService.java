@@ -219,6 +219,38 @@ public class NotificationService {
         return notificationRepository.countByStatus(NotificationStatus.FAILED);
     }
 
+    // Idempotency checks for event-driven notifications
+    // These methods prevent duplicate notifications when events are retried
+
+    /**
+     * Check if a loan confirmation notification already exists.
+     * Used for idempotency in @ApplicationModuleListener handlers.
+     */
+    public boolean existsLoanConfirmation(Long memberId, Long loanId) {
+        return notificationRepository.existsForLoan(memberId, NotificationType.LOAN_CONFIRMATION, loanId);
+    }
+
+    /**
+     * Check if a return confirmation notification already exists.
+     */
+    public boolean existsReturnConfirmation(Long memberId, Long loanId) {
+        return notificationRepository.existsForLoan(memberId, NotificationType.RETURN_CONFIRMATION, loanId);
+    }
+
+    /**
+     * Check if an overdue notice notification already exists.
+     */
+    public boolean existsOverdueNotice(Long memberId, Long loanId) {
+        return notificationRepository.existsForLoan(memberId, NotificationType.OVERDUE_NOTICE, loanId);
+    }
+
+    /**
+     * Check if a welcome notification already exists for a member.
+     */
+    public boolean existsWelcomeNotification(Long memberId) {
+        return notificationRepository.existsWelcomeNotification(memberId);
+    }
+
     // Request DTO
     public record CreateNotificationRequest(
         Long memberId,

@@ -10,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none  # Flyway handles app tables, Spring Modulith handles event_publication
     show-sql: false
     properties:
       hibernate:
@@ -21,6 +21,15 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+
+  # Spring Modulith Event Publication Registry
+  modulith:
+    events:
+      jdbc:
+        schema-initialization:
+          enabled: false  # Using Flyway migration V2
+      # Republish incomplete events on application restart
+      republish-outstanding-events-on-restart: true
 
   # API Versioning Configuration (Spring Framework 7)
   mvc:
@@ -34,18 +43,20 @@ spring:
 
 # Server Configuration
 server:
-  port: 8080
+  port: 8088
 
 # Actuator Configuration
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,modulith,library-stats
+        include: health,info,metrics,modulith,library-stats,eventpublications
   endpoint:
     health:
       show-details: always
       show-components: always
+    eventpublications:
+      enabled: true
 
 # OpenAPI / Swagger Configuration
 springdoc:

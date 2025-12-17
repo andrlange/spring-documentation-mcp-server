@@ -5,6 +5,20 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2025-12-17
+
+### Fixed
+- **Javadoc MCP Tools Transaction Rollback**: Fixed "Transaction silently rolled back because it has been marked as rollback-only" error affecting all 4 Javadoc tools (`listJavadocLibraries`, `searchJavadocs`, `getClassDoc`, `getPackageDoc`)
+    - **Root Cause**: `McpToolMonitoringAspect` was trying to INSERT metrics data within read-only transactions from Javadoc tool methods
+    - **Solution**: Added `@Transactional(propagation = Propagation.REQUIRES_NEW)` to `McpMonitoringService.recordToolCall()` so metrics are recorded in a separate transaction
+    - Also added eager-loading query methods to `JavadocClassRepository` to prevent lazy loading issues:
+        - `findByLibraryVersionAndFqcnWithMembers()` - fetches class with methods, fields, constructors
+        - `searchByKeywordWithPackage()` - searches with eager-loaded package
+        - `searchByKeywordGlobalWithPackage()` - global search with eager-loaded package
+    - Updated `JavadocTools.java` to use the new eager-loading methods
+
+---
+
 ## [1.5.0] - 2025-12-16
 
 ### Added
@@ -341,6 +355,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.5.1 | 2025-12-17 | Javadoc MCP tools transaction rollback fix |
 | 1.5.0 | 2025-12-16 | MCP Monitoring Dashboard, GitHub sync fixes and performance improvements |
 | 1.4.3 | 2025-12-12 | Javadoc sync version filter, login version display, flavor groups fix |
 | 1.4.2 | 2025-12-08 | Javadoc API Documentation feature (4 MCP tools) |

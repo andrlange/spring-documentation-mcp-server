@@ -2,7 +2,7 @@
 
 The Library Management System demonstrates **Spring Boot 4.0.0**, **Spring Modulith 2.0**, **Spring Framework 7 API Versioning**, and **springdoc-openapi 3.0** with a dark-themed Thymeleaf UI.
 
-> **Note**: This demo showcases modular monolith architecture with Named Interfaces, event-driven communication, and modern API documentation using the Spring MCP Server for version info and architecture patterns.
+> **Note**: This demo showcases modular monolith architecture with Named Interfaces, event-driven communication with Event Publication Registry, externalized events for Kafka/RabbitMQ, and modern API documentation using the Spring MCP Server for version info and architecture patterns.
 
 ## Created: `examples/basic/lms-modulith-openapi/`
 
@@ -37,10 +37,13 @@ lms-modulith-openapi/
 │   │   └── internal/               # Event listeners
 │   ├── shared/                     # Shared utilities (open)
 │   ├── config/                     # Configuration (open)
+│   │   ├── OpenApiConfig.java
+│   │   ├── LibraryHealthIndicator.java
+│   │   └── EventPublicationController.java  # Event monitoring API
 │   └── web/                        # Thymeleaf controllers (open)
 └── src/main/resources/
-    ├── application.yml             # Port 8080, DB port 5433
-    ├── db/migration/               # Flyway migrations
+    ├── application.yml             # Port 8088, DB port 5433
+    ├── db/migration/               # Flyway migrations (V1 init, V2 event_publication)
     ├── static/css/dark-theme.css   # Dark Spring.io theme
     └── templates/                  # Thymeleaf templates
         ├── layout/main.html
@@ -65,26 +68,32 @@ docker-compose up -d
 ./gradlew bootRun
 ```
 
-**Web UI**: http://localhost:8080
-**Swagger UI**: http://localhost:8080/swagger-ui.html
-**Health**: http://localhost:8080/actuator/health
+**Web UI**: http://localhost:8088
+**Swagger UI**: http://localhost:8088/swagger-ui.html
+**Health**: http://localhost:8088/actuator/health
 
 **API Endpoints**:
 
 ```bash
 # List all books
-curl http://localhost:8080/api/books
+curl http://localhost:8088/api/books
 
 # Get book by ISBN
-curl http://localhost:8080/api/books/978-1-61729-875-6
+curl http://localhost:8088/api/books/978-1-61729-875-6
 
 # Create a loan
-curl -X POST http://localhost:8080/api/loans \
+curl -X POST http://localhost:8088/api/loans \
   -H "Content-Type: application/json" \
   -d '{"bookIsbn":"978-1-61729-875-6","memberId":1}'
 
 # Check health
-curl http://localhost:8080/actuator/health
+curl http://localhost:8088/actuator/health
+
+# View event publication statistics
+curl http://localhost:8088/api/admin/events/statistics
+
+# List externalized event topics
+curl http://localhost:8088/api/admin/events/topics
 ```
 
 ---
@@ -111,6 +120,9 @@ From the `spring-modulith` flavor:
 | **Module Boundaries** | Each module in its own package with `package-info.java` |
 | **Named Interfaces** | `@NamedInterface("api")` for public APIs |
 | **Event-Driven** | Events published between modules, not direct calls |
+| **Event Publication Registry** | JPA-based persistent events with at-least-once delivery |
+| **Externalized Events** | `@Externalized` annotations for Kafka/RabbitMQ integration |
+| **Idempotent Handlers** | Event listeners check for duplicates before processing |
 | **Internal Encapsulation** | Entities and repositories in `internal/` packages |
 
 From the `spring-openapi-doc-sb4` flavor:
@@ -151,15 +163,36 @@ shows an empty page with the hint to use the api docs. Add read only lists
 to show this info extracted from their main objects.
 ```
 
+### Prompt 4: Spring Modulith 2.0 Event System
+
+```
+Add Spring Modulith 2.0 Event Publication Registry support with:
+- Persistent event storage for at-least-once delivery
+- @Externalized annotations for Kafka/RabbitMQ integration
+- Idempotent event handling for retry safety
+- Event monitoring API endpoints
+```
+
+**Changes implemented:**
+- Added `spring-modulith-starter-jpa` for Event Publication Registry
+- Created `V2__add_event_publication_table.sql` Flyway migration
+- Added `@Externalized` annotations to all domain events
+- Implemented idempotency checks in event listeners
+- Created `EventPublicationController` for event monitoring API
+
 ---
 
 ## Features Implemented
 
 - **Spring Modulith 2.0** - Named Interfaces, module boundaries, event publishing
+- **Event Publication Registry** - JPA-based persistent events with at-least-once delivery
+- **Externalized Events** - `@Externalized` annotations for Kafka/RabbitMQ integration
+- **Idempotent Event Handling** - Listeners check for duplicates before processing
+- **Event Monitoring API** - REST endpoints for event publication statistics and management
 - **Spring Framework 7** - Native API versioning with `@GetMapping(version = "2.0+")`
 - **springdoc-openapi 3.0** - Swagger UI, API groups per module
 - **Dark Theme UI** - Thymeleaf 3.4, Bootstrap 5, HTMX
-- **Custom Actuators** - Library health indicator, info contributor
+- **Custom Actuators** - Library health indicator, info contributor, event publications
 - **Event-Driven** - BookLoanedEvent, MemberRegisteredEvent, etc.
 - **Full Web UI** - Dashboard, books, members, loans with detail/edit pages, notifications, authors, categories
 
@@ -227,10 +260,12 @@ to show this info extracted from their main objects.
 | `MemberService.java` | Member business logic |
 | `LoanController.java` | Loan REST API |
 | `LoanService.java` | Loan processing logic |
-| `NotificationEventListener.java` | Event-driven notifications |
+| `NotificationEventListener.java` | Event-driven notifications with idempotency |
 | `WebController.java` | Thymeleaf web controller |
 | `LibraryHealthIndicator.java` | Custom health indicator |
 | `OpenApiConfig.java` | Swagger UI configuration |
+| `EventPublicationController.java` | Event publication monitoring API |
+| `V2__add_event_publication_table.sql` | Spring Modulith event registry schema |
 | `dark-theme.css` | Spring.io inspired dark theme |
 | `dashboard.html` | Dashboard with statistics |
 | `books/list.html, detail.html, edit.html` | Book pages |
@@ -280,8 +315,11 @@ to show this info extracted from their main objects.
 1. **Spring Modulith 2.0** provides clear module boundaries without microservices complexity
 2. **Named Interfaces** (`@NamedInterface`) control what's exposed between modules
 3. **Event-driven communication** keeps modules loosely coupled
-4. **Spring Framework 7 API versioning** is built-in - no external libraries needed
-5. **springdoc-openapi 3.0** integrates seamlessly with Spring Boot 4
+4. **Event Publication Registry** enables at-least-once delivery with automatic retry
+5. **Externalized Events** (`@Externalized`) prepare events for Kafka/RabbitMQ without code changes
+6. **Idempotent Event Handlers** are essential when events can be replayed
+7. **Spring Framework 7 API versioning** is built-in - no external libraries needed
+8. **springdoc-openapi 3.0** integrates seamlessly with Spring Boot 4
 
 ---
 
@@ -295,4 +333,4 @@ to show this info extracted from their main objects.
 
 ---
 
-*Generated: 2025-12-13*
+*Updated: 2025-12-17*

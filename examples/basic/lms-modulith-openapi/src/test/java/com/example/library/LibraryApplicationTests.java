@@ -11,16 +11,19 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 /**
  * Integration tests for the Library Management System.
  * Uses Testcontainers for PostgreSQL database.
+ *
+ * Note: These tests require Docker to be running.
+ * If Docker is not available, the tests will be skipped automatically.
  */
 @SpringBootTest
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class LibraryApplicationTests {
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
         .withDatabaseName("librarydb")
         .withUsername("library")
-        .withPassword("library");
+        .withPassword("library123");
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {

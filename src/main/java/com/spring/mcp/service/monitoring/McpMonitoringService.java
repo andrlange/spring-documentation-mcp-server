@@ -22,6 +22,7 @@ import com.spring.mcp.repository.MonitoringSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -48,8 +49,10 @@ public class McpMonitoringService {
 
     /**
      * Record a tool call metric.
+     * Uses REQUIRES_NEW to ensure metrics are recorded in a separate transaction,
+     * independent of any read-only transactions from tool methods.
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordToolCall(String toolName, double durationMs, boolean success, String errorMessage) {
         LocalDateTime now = LocalDateTime.now();
 

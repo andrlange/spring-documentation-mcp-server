@@ -19,7 +19,10 @@ A demonstration application showcasing **Spring Boot 4.0.0**, **Spring Modulith 
 - **OpenAPI 3.1 Documentation** - springdoc-openapi 3.0 with Swagger UI
 - **Dark Theme Web UI** - Thymeleaf 3.4, Bootstrap 5, HTMX for dynamic interactions
 - **Custom Actuator Endpoints** - Library metrics and module health
-- **Event-Driven Communication** - Loose coupling between modules
+- **Event-Driven Communication** - Loose coupling between modules via domain events
+- **Event Publication Registry** - Spring Modulith 2.0's at-least-once delivery guarantee
+- **Externalized Events** - Ready for Kafka/RabbitMQ integration via `@Externalized`
+- **Idempotent Event Handling** - Resilient notification processing with retry support
 - **Full CRUD Operations** - Books, Members, Loans, Notifications via REST and Web UI
 
 ## Technology Stack
@@ -72,12 +75,12 @@ java -jar build/libs/library-management-system-1.0.0.jar
 
 | URL | Description |
 |-----|-------------|
-| http://localhost:8080 | Web UI Dashboard |
-| http://localhost:8080/books | Book Catalog |
-| http://localhost:8080/members | Member Management |
-| http://localhost:8080/loans | Loan Management |
-| http://localhost:8080/swagger-ui.html | API Documentation |
-| http://localhost:8080/actuator/health | Health Check |
+| http://localhost:8088 | Web UI Dashboard |
+| http://localhost:8088/books | Book Catalog |
+| http://localhost:8088/members | Member Management |
+| http://localhost:8088/loans | Loan Management |
+| http://localhost:8088/swagger-ui.html | API Documentation |
+| http://localhost:8088/actuator/health | Health Check |
 
 ## Module Architecture
 
@@ -109,6 +112,98 @@ com.example.library
 └── web/                     # Open module - Thymeleaf controllers
 ```
 
+## Event-Driven Architecture
+
+This application showcases Spring Modulith 2.0's **Event Publication Registry** for reliable, transactional event handling.
+
+### Event Flow
+
+```
+┌─────────────────┐     ApplicationEventPublisher     ┌──────────────────────┐
+│   LoanService   │ ─────────────────────────────────▶│ Event Publication    │
+│   publish()     │                                   │ Registry (DB)        │
+└─────────────────┘                                   └──────────────────────┘
+                                                               │
+                                                               ▼
+                                                      ┌──────────────────────┐
+                                                      │ NotificationEvent    │
+                                                      │ Listener (async)     │
+                                                      └──────────────────────┘
+                                                               │
+                                                               ▼
+                                                      ┌──────────────────────┐
+                                                      │ NotificationService  │
+                                                      │ (with idempotency)   │
+                                                      └──────────────────────┘
+```
+
+### Domain Events
+
+All domain events support external messaging via `@Externalized`:
+
+| Event | Topic | Description |
+|-------|-------|-------------|
+| `BookLoanedEvent` | `library.loans.book-loaned` | Published when a book is borrowed |
+| `BookReturnedEvent` | `library.loans.book-returned` | Published when a book is returned |
+| `LoanOverdueEvent` | `library.loans.loan-overdue` | Published when a loan becomes overdue |
+| `MemberRegisteredEvent` | `library.members.member-registered` | Published when a new member joins |
+| `MemberStatusChangedEvent` | `library.members.status-changed` | Published when member status changes |
+
+### Event Publication Registry
+
+The application uses Spring Modulith's JPA-based event publication registry for **at-least-once delivery**:
+
+```yaml
+# application.yml
+modulith:
+  events:
+    jdbc:
+      schema-initialization:
+        enabled: false  # Using Flyway migration
+    republish-outstanding-events-on-restart: true
+```
+
+**Key Benefits:**
+- Events persisted before processing (survives crashes)
+- Automatic retry on application restart
+- Audit trail of all event publications
+- Integration with actuator for monitoring
+
+### Idempotent Event Handling
+
+Event listeners check for duplicate processing before creating notifications:
+
+```java
+@ApplicationModuleListener
+public void onBookLoaned(BookLoanedEvent event) {
+    // Idempotency check: Skip if already processed
+    if (notificationService.existsLoanConfirmation(event.memberId(), event.loanId())) {
+        log.debug("Loan confirmation already exists for loan {}, skipping", event.loanId());
+        return;
+    }
+
+    notificationService.sendLoanConfirmation(
+        event.memberId(),
+        event.bookIsbn(),
+        event.dueDate().toString()
+    );
+}
+```
+
+### External Messaging (Optional)
+
+To enable Kafka/RabbitMQ event externalization, add the appropriate starter:
+
+```groovy
+// For Kafka
+implementation 'org.springframework.modulith:spring-modulith-events-kafka'
+
+// For RabbitMQ
+implementation 'org.springframework.modulith:spring-modulith-events-amqp'
+```
+
+Events marked with `@Externalized` will automatically be published to the configured broker.
+
 ## API Versioning
 
 Spring Framework 7's native API versioning support:
@@ -127,10 +222,10 @@ public List<BookResponseV2> getAllBooksV2() { ... }
 
 ```bash
 # Default (v1.0)
-curl http://localhost:8080/api/books
+curl http://localhost:8088/api/books
 
 # Explicit version via header
-curl -H "API-Version: 2.0" http://localhost:8080/api/books
+curl -H "API-Version: 2.0" http://localhost:8088/api/books
 ```
 
 ## API Endpoints
@@ -174,6 +269,18 @@ curl -H "API-Version: 2.0" http://localhost:8080/api/books
 |----------|--------|-------------|
 | `/api/notifications/member/{memberId}` | GET | Member's notifications |
 | `/api/notifications/{id}/read` | PUT | Mark notification as read |
+
+### Event Publications Admin API
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/admin/events/statistics` | GET | Event publication statistics (total, completed, incomplete) |
+| `/api/admin/events/incomplete` | GET | List pending event publications |
+| `/api/admin/events/completed` | GET | List recent completed publications |
+| `/api/admin/events/by-type/{eventType}` | GET | Filter publications by event type |
+| `/api/admin/events/status` | GET | Event publication system status |
+| `/api/admin/events/topics` | GET | List externalized event topics |
+| `/api/admin/events/completed/older-than/{days}` | DELETE | Delete old completed publications |
 
 ### Web UI Endpoints
 
@@ -249,6 +356,8 @@ curl -H "API-Version: 2.0" http://localhost:8080/api/books
 | `/actuator/info` | Application info with statistics |
 | `/actuator/library` | Custom endpoint with detailed metrics |
 | `/actuator/library/{module}` | Module-specific metrics |
+| `/actuator/modulith` | Spring Modulith module structure |
+| `/actuator/eventpublications` | Event publication registry status |
 
 ### Health Response Example
 
@@ -332,7 +441,8 @@ lms-modulith-openapi/
 │   ├── config/                       # Configuration
 │   │   ├── OpenApiConfig.java
 │   │   ├── LibraryHealthIndicator.java
-│   │   └── LibraryInfoContributor.java
+│   │   ├── LibraryInfoContributor.java
+│   │   └── EventPublicationController.java
 │   │
 │   └── web/                          # Web UI
 │       └── WebController.java
@@ -340,7 +450,8 @@ lms-modulith-openapi/
 ├── src/main/resources/
 │   ├── application.yml
 │   ├── db/migration/
-│   │   └── V1__init_schema.sql
+│   │   ├── V1__init_schema.sql
+│   │   └── V2__add_event_publication_table.sql
 │   ├── static/css/
 │   │   └── dark-theme.css
 │   └── templates/
@@ -364,29 +475,41 @@ lms-modulith-openapi/
 
 ```bash
 # List all books
-curl http://localhost:8080/api/books
+curl http://localhost:8088/api/books
 
 # Get book by ISBN
-curl http://localhost:8080/api/books/978-1-61729-875-6
+curl http://localhost:8088/api/books/978-1-61729-875-6
 
 # Create a new member
-curl -X POST http://localhost:8080/api/members \
+curl -X POST http://localhost:8088/api/members \
   -H "Content-Type: application/json" \
   -d '{"firstName":"Jane","lastName":"Doe","email":"jane@example.com"}'
 
 # Create a loan
-curl -X POST http://localhost:8080/api/loans \
+curl -X POST http://localhost:8088/api/loans \
   -H "Content-Type: application/json" \
   -d '{"bookIsbn":"978-1-61729-875-6","memberId":1}'
 
 # Return a book
-curl -X POST http://localhost:8080/api/loans/1/return
+curl -X POST http://localhost:8088/api/loans/1/return
 
 # Check health
-curl http://localhost:8080/actuator/health
+curl http://localhost:8088/actuator/health
 
 # Get API documentation
-curl http://localhost:8080/v3/api-docs
+curl http://localhost:8088/v3/api-docs
+
+# View event publication statistics
+curl http://localhost:8088/api/admin/events/statistics
+
+# List incomplete (pending) event publications
+curl http://localhost:8088/api/admin/events/incomplete
+
+# View externalized event topics
+curl http://localhost:8088/api/admin/events/topics
+
+# Check event publication system status
+curl http://localhost:8088/api/admin/events/status
 ```
 
 ## Running Tests
@@ -411,7 +534,7 @@ curl http://localhost:8080/v3/api-docs
 | `DB_NAME` | librarydb | Database name |
 | `DB_USER` | library | Database user |
 | `DB_PASS` | library | Database password |
-| `SERVER_PORT` | 8080 | Application port |
+| `SERVER_PORT` | 8088 | Application port |
 
 ## Sample Data
 
@@ -453,6 +576,24 @@ shows an empty page with the hint to use the api docs. Add read only lists
 to show this info extracted from their main objects.
 ```
 
+### Prompt 4: Spring Modulith 2.0 Event System
+
+```
+Add Spring Modulith 2.0 Event Publication Registry support with:
+- Persistent event storage for at-least-once delivery
+- @Externalized annotations for Kafka/RabbitMQ integration
+- Idempotent event handling for retry safety
+- Event monitoring API endpoints
+```
+
+**Changes implemented:**
+- Added `spring-modulith-starter-jpa` for Event Publication Registry (includes Jackson serializer)
+- Created `V2__add_event_publication_table.sql` Flyway migration with Spring Modulith 2.0 schema
+- Added `@Externalized` annotations to all domain events for Kafka/RabbitMQ
+- Implemented idempotency checks in event listeners (retry-safe)
+- Created `EventPublicationController` for event monitoring API
+- Updated actuator endpoints for event publications
+
 ---
 
 ## MCP Tools Used
@@ -468,14 +609,17 @@ This project was created using the Spring MCP Server with the following tools:
 | `initializrGetDependency` | Get Gradle snippets |
 | `searchFlavors` | Find modulith, openapi, testing patterns |
 | `getFlavorByName` | Get detailed implementation guidelines |
+| `searchSpringDocs` | Search Spring Modulith 2.0 event documentation |
+| `getBreakingChanges` | Get Spring Modulith 2.0 migration info |
 
 ### Flavors Used
 
 | Flavor | Purpose |
 |--------|---------|
-| `spring-modulith` | Module structure, Named Interfaces, Events |
+| `spring-modulith` | Module structure, Named Interfaces, Event Publication Registry |
 | `spring-openapi-doc-sb4` | springdoc-openapi 3.0 configuration |
 | `rest-test-client` | Testing patterns with RestTestClient |
+| `event-driven-modulith` | Event externalization, idempotency patterns |
 
 ---
 

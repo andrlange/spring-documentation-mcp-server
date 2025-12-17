@@ -3,7 +3,13 @@
 |Base package
 |`com.example.library.config`
 |Spring components
-|* `c.e.l.c.ApiVersionConfig`
+|_Controllers_
+
+* `c.e.l.c.EventPublicationController`
+
+_Others_
+
+* `c.e.l.c.ApiVersionConfig`
 * `c.e.l.c.LibraryHealthIndicator`
 * `c.e.l.c.LibraryInfoContributor`
 * `c.e.l.c.LibraryMetricsEndpoint`
