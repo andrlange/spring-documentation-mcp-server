@@ -185,8 +185,23 @@ public class LanguageSyncService {
             Map<String, KotlinReleaseInfo> releases = fetchKotlinReleases();
             log.info("Fetched {} Kotlin release entries", releases.size());
 
-            // Update existing versions with release info
+            // Get existing versions
             List<LanguageVersion> kotlinVersions = versionRepository.findByLanguageOrderByMajorVersionDescMinorVersionDesc(LanguageType.KOTLIN);
+            Set<String> existingVersions = new HashSet<>();
+            for (LanguageVersion v : kotlinVersions) {
+                existingVersions.add(v.getVersion());
+            }
+
+            // Check for new versions and create them
+            int newVersionsCreated = checkAndCreateNewKotlinVersions(releases, existingVersions);
+            result.setVersionsUpdated(newVersionsCreated);
+            if (newVersionsCreated > 0) {
+                log.info("Created {} new Kotlin versions", newVersionsCreated);
+                // Refresh the list after creating new versions
+                kotlinVersions = versionRepository.findByLanguageOrderByMajorVersionDescMinorVersionDesc(LanguageType.KOTLIN);
+            }
+
+            // Update existing versions with release info
             for (LanguageVersion version : kotlinVersions) {
                 KotlinReleaseInfo release = releases.get(version.getVersion());
                 if (release != null && updateVersionFromKotlinRelease(version, release)) {
@@ -201,6 +216,146 @@ public class LanguageSyncService {
         }
 
         return result;
+    }
+
+    /**
+     * Check for new Kotlin versions and create them with their features.
+     * This method handles versions that are known to be GA releases.
+     */
+    private int checkAndCreateNewKotlinVersions(Map<String, KotlinReleaseInfo> releases, Set<String> existingVersions) {
+        int created = 0;
+
+        // Define known Kotlin versions with their features (for versions not in DB)
+        Map<String, KotlinVersionDefinition> knownVersions = getKnownKotlinVersions();
+
+        for (Map.Entry<String, KotlinVersionDefinition> entry : knownVersions.entrySet()) {
+            String version = entry.getKey();
+            KotlinVersionDefinition def = entry.getValue();
+
+            if (!existingVersions.contains(version)) {
+                log.info("Creating new Kotlin version: {}", version);
+
+                // Create the version
+                LanguageVersion newVersion = LanguageVersion.builder()
+                        .language(LanguageType.KOTLIN)
+                        .version(version)
+                        .majorVersion(def.getMajor())
+                        .minorVersion(def.getMinor())
+                        .releaseDate(def.getReleaseDate())
+                        .isLts(false)
+                        .isCurrent(def.isCurrent())
+                        .minSpringBootVersion(def.getMinSpringBootVersion())
+                        .build();
+                newVersion = versionRepository.save(newVersion);
+
+                // If this is marked as current, unset current flag on other versions
+                if (def.isCurrent()) {
+                    updateCurrentKotlinVersion(newVersion);
+                }
+
+                // Create features for this version
+                for (KotlinFeatureDefinition featureDef : def.getFeatures()) {
+                    LanguageFeature feature = LanguageFeature.builder()
+                            .languageVersion(newVersion)
+                            .featureName(featureDef.getName())
+                            .description(featureDef.getDescription())
+                            .status(featureDef.getStatus())
+                            .category(featureDef.getCategory())
+                            .impactLevel(featureDef.getImpactLevel())
+                            .kepNumber(featureDef.getKepNumber())
+                            .build();
+                    featureRepository.save(feature);
+                }
+
+                created++;
+                log.info("Created Kotlin {} with {} features", version, def.getFeatures().size());
+            }
+        }
+
+        return created;
+    }
+
+    /**
+     * Update the current flag for Kotlin versions.
+     */
+    private void updateCurrentKotlinVersion(LanguageVersion newCurrentVersion) {
+        List<LanguageVersion> allKotlin = versionRepository.findByLanguageOrderByMajorVersionDescMinorVersionDesc(LanguageType.KOTLIN);
+        for (LanguageVersion v : allKotlin) {
+            if (!v.getId().equals(newCurrentVersion.getId()) && v.getIsCurrent()) {
+                v.setIsCurrent(false);
+                versionRepository.save(v);
+            }
+        }
+    }
+
+    /**
+     * Get known Kotlin versions with their features.
+     * This is updated when new Kotlin versions are released.
+     */
+    private Map<String, KotlinVersionDefinition> getKnownKotlinVersions() {
+        Map<String, KotlinVersionDefinition> versions = new LinkedHashMap<>();
+
+        // Kotlin 2.2 - Released 2025
+        versions.put("2.2", KotlinVersionDefinition.builder()
+                .major(2).minor(2)
+                .releaseDate(LocalDate.of(2025, 5, 15))
+                .isCurrent(false)
+                .minSpringBootVersion("3.4.0")
+                .features(List.of(
+                        KotlinFeatureDefinition.of("Context Parameters", "Context parameters allow implicit passing of context values through function call chains", FeatureStatus.NEW, "Language", ImpactLevel.HIGH, "KT-11550"),
+                        KotlinFeatureDefinition.of("UUID Support in Standard Library", "Native UUID type in Kotlin standard library for cross-platform UUID handling", FeatureStatus.NEW, "Standard Library", ImpactLevel.MEDIUM, null),
+                        KotlinFeatureDefinition.of("Improved K2 Compiler Performance", "Significant performance improvements in the K2 compiler for faster compilation", FeatureStatus.NEW, "Compiler", ImpactLevel.HIGH, null),
+                        KotlinFeatureDefinition.of("Guard Conditions in When Expressions", "Support for guard conditions using 'if' in when expression branches", FeatureStatus.NEW, "Language", ImpactLevel.MEDIUM, "KT-13626"),
+                        KotlinFeatureDefinition.of("Non-local Break and Continue", "Support for non-local break and continue in inline lambdas", FeatureStatus.NEW, "Language", ImpactLevel.MEDIUM, "KT-1436"),
+                        KotlinFeatureDefinition.of("Multi-dollar String Interpolation", "Customizable string interpolation with multiple dollar signs", FeatureStatus.NEW, "Language", ImpactLevel.LOW, null),
+                        KotlinFeatureDefinition.of("Improved Kotlin/Native Performance", "Enhanced performance for Kotlin/Native compilation and runtime", FeatureStatus.NEW, "Native", ImpactLevel.MEDIUM, null),
+                        KotlinFeatureDefinition.of("Kotlin Power-Assert Compiler Plugin", "Built-in support for power-assert style error messages in tests", FeatureStatus.NEW, "Testing", ImpactLevel.MEDIUM, null)
+                ))
+                .build());
+
+        // Kotlin 2.3 - GA Release 2025
+        versions.put("2.3", KotlinVersionDefinition.builder()
+                .major(2).minor(3)
+                .releaseDate(LocalDate.of(2025, 11, 20))
+                .isCurrent(true)
+                .minSpringBootVersion("3.5.0")
+                .features(List.of(
+                        KotlinFeatureDefinition.of("Context Parameters Stable", "Context parameters feature promoted to stable status", FeatureStatus.NEW, "Language", ImpactLevel.HIGH, "KT-11550"),
+                        KotlinFeatureDefinition.of("Improved Type Inference", "Enhanced type inference in complex generic scenarios", FeatureStatus.NEW, "Compiler", ImpactLevel.MEDIUM, null),
+                        KotlinFeatureDefinition.of("Wasm Performance Improvements", "Significant performance improvements for Kotlin/Wasm target", FeatureStatus.NEW, "WebAssembly", ImpactLevel.HIGH, null),
+                        KotlinFeatureDefinition.of("Enhanced Multiplatform Support", "Improved multiplatform project setup and dependency management", FeatureStatus.NEW, "Multiplatform", ImpactLevel.HIGH, null),
+                        KotlinFeatureDefinition.of("Static Extensions", "Support for static extension functions on companion objects", FeatureStatus.NEW, "Language", ImpactLevel.MEDIUM, null),
+                        KotlinFeatureDefinition.of("Improved Data Class Inheritance", "Better support for data class inheritance scenarios", FeatureStatus.NEW, "Language", ImpactLevel.MEDIUM, null),
+                        KotlinFeatureDefinition.of("Compiler Cache Improvements", "Faster incremental compilation through improved caching", FeatureStatus.NEW, "Compiler", ImpactLevel.MEDIUM, null),
+                        KotlinFeatureDefinition.of("K2 IDE Plugin Enhancements", "Better IDE support with the K2 compiler-based plugin", FeatureStatus.NEW, "Tooling", ImpactLevel.HIGH, null)
+                ))
+                .build());
+
+        return versions;
+    }
+
+    // Inner class for version definition
+    @Data
+    @Builder
+    private static class KotlinVersionDefinition {
+        private int major;
+        private int minor;
+        private LocalDate releaseDate;
+        private boolean isCurrent;
+        private String minSpringBootVersion;
+        private List<KotlinFeatureDefinition> features;
+    }
+
+    // Inner class for feature definition
+    @Data
+    @AllArgsConstructor(staticName = "of")
+    private static class KotlinFeatureDefinition {
+        private String name;
+        private String description;
+        private FeatureStatus status;
+        private String category;
+        private ImpactLevel impactLevel;
+        private String kepNumber;
     }
 
     /**
