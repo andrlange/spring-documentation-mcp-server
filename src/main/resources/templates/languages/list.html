@@ -285,16 +285,33 @@
                         </td>
                         <td th:text="${feature.category ?: '-'}">Pattern Matching</td>
                         <td>
-                            <a th:if="${feature.jepNumber != null}"
-                               th:href="${feature.enhancementProposalUrl}"
-                               th:text="${'JEP ' + feature.jepNumber}"
-                               target="_blank"
-                               class="text-decoration-none">JEP 441</a>
-                            <a th:if="${feature.kepNumber != null}"
-                               th:href="${feature.enhancementProposalUrl}"
-                               th:text="${'KEP-' + feature.kepNumber}"
-                               target="_blank"
-                               class="text-decoration-none">KEP-123</a>
+                            <th:block th:if="${feature.jepNumber != null}">
+                                <a th:href="@{'/languages/jep/' + ${feature.jepNumber}}"
+                                   th:text="${'JEP ' + feature.jepNumber}"
+                                   class="text-decoration-none me-1"
+                                   title="View JEP details">JEP 441</a>
+                                <a th:href="${feature.enhancementProposalUrl}"
+                                   target="_blank"
+                                   rel="noopener"
+                                   class="text-muted"
+                                   title="Open on OpenJDK">
+                                    <i class="bi bi-box-arrow-up-right" style="font-size: 0.75rem;"></i>
+                                </a>
+                            </th:block>
+                            <th:block th:if="${feature.kepNumber != null}">
+                                <a th:href="@{'/languages/kep/' + ${feature.kepNumber}}"
+                                   th:text="${'KEP ' + feature.kepNumber}"
+                                   class="text-decoration-none me-1"
+                                   title="View KEP details">KEP KT-11550</a>
+                                <a th:if="${feature.enhancementProposalUrl != null}"
+                                   th:href="${feature.enhancementProposalUrl}"
+                                   target="_blank"
+                                   rel="noopener"
+                                   class="text-muted"
+                                   title="Open source">
+                                    <i class="bi bi-box-arrow-up-right" style="font-size: 0.75rem;"></i>
+                                </a>
+                            </th:block>
                             <span th:if="${feature.jepNumber == null and feature.kepNumber == null}">-</span>
                         </td>
                         <td class="text-center">
@@ -416,9 +433,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             // Show code example if available (prominently displayed)
                             if (data.codeExample) {
+                                const sourceType = data.exampleSourceType || 'OFFICIAL';
+                                const badgeClass = sourceType === 'OFFICIAL' ? 'bg-success' : 'bg-secondary';
+                                const badgeText = sourceType === 'OFFICIAL' ? 'Official' : 'Synthesized';
+                                const badgeIcon = sourceType === 'OFFICIAL' ? 'bi-patch-check-fill' : 'bi-pencil-square';
                                 html += `
                                     <div class="mb-4">
-                                        <h6 class="mb-3"><i class="bi bi-lightning-charge text-warning"></i> Quick Example</h6>
+                                        <h6 class="mb-3">
+                                            <i class="bi bi-lightning-charge text-warning"></i> Quick Example
+                                            <span class="badge ${badgeClass} ms-2" style="font-size: 0.7rem;">
+                                                <i class="bi ${badgeIcon} me-1"></i>${badgeText}
+                                            </span>
+                                        </h6>
                                         <pre class="p-3 rounded" style="background-color: #1e1e1e; color: #d4d4d4; font-size: 0.85rem;"><code>${escapeHtml(data.codeExample)}</code></pre>
                                     </div>
                                 `;

@@ -41,7 +41,6 @@ import java.util.regex.Pattern;
  * @since 2025-11-29
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class LanguageSyncService {
 
@@ -50,6 +49,25 @@ public class LanguageSyncService {
     private final LanguageCodePatternRepository codePatternRepository;
     private final SpringBootLanguageRequirementRepository requirementRepository;
     private final SpringBootVersionRepository springBootVersionRepository;
+    private final JepFetcherService jepFetcherService;
+    private final KepFetcherService kepFetcherService;
+
+    public LanguageSyncService(
+            LanguageVersionRepository versionRepository,
+            LanguageFeatureRepository featureRepository,
+            LanguageCodePatternRepository codePatternRepository,
+            SpringBootLanguageRequirementRepository requirementRepository,
+            SpringBootVersionRepository springBootVersionRepository,
+            @org.springframework.lang.Nullable JepFetcherService jepFetcherService,
+            @org.springframework.lang.Nullable KepFetcherService kepFetcherService) {
+        this.versionRepository = versionRepository;
+        this.featureRepository = featureRepository;
+        this.codePatternRepository = codePatternRepository;
+        this.requirementRepository = requirementRepository;
+        this.springBootVersionRepository = springBootVersionRepository;
+        this.jepFetcherService = jepFetcherService;
+        this.kepFetcherService = kepFetcherService;
+    }
 
     @Value("${mcp.features.language-evolution.sync.timeout:30000}")
     private int fetchTimeout;
@@ -95,34 +113,41 @@ public class LanguageSyncService {
 
         try {
             // Phase 1: Sync Java versions and features
-            log.info("Phase 1/4: Syncing Java data...");
+            log.info("Phase 1/5: Syncing Java data...");
             JavaSyncResult javaResult = syncJavaData();
             result.addVersionsUpdated(javaResult.getVersionsUpdated());
             result.addFeaturesUpdated(javaResult.getFeaturesUpdated());
             result.addErrorsEncountered(javaResult.getErrors());
 
             // Phase 2: Sync Kotlin versions and features
-            log.info("Phase 2/4: Syncing Kotlin data...");
+            log.info("Phase 2/5: Syncing Kotlin data...");
             KotlinSyncResult kotlinResult = syncKotlinData();
             result.addVersionsUpdated(kotlinResult.getVersionsUpdated());
             result.addFeaturesUpdated(kotlinResult.getFeaturesUpdated());
             result.addErrorsEncountered(kotlinResult.getErrors());
 
             // Phase 3: Update Spring Boot compatibility mappings
-            log.info("Phase 3/4: Updating Spring Boot compatibility...");
+            log.info("Phase 3/5: Updating Spring Boot compatibility...");
             int compatUpdated = updateSpringBootCompatibility();
             result.addCompatibilityUpdated(compatUpdated);
 
             // Phase 4: Load code examples from curated data file
-            log.info("Phase 4/4: Loading code examples...");
+            log.info("Phase 4/5: Loading code examples...");
             int examplesUpdated = loadCodeExamples();
             result.addCodeExamplesUpdated(examplesUpdated);
             log.info("Loaded {} code examples", examplesUpdated);
 
+            // Phase 5: Sync JEP/KEP specifications
+            log.info("Phase 5/5: Syncing JEP/KEP specifications...");
+            int specsUpdated = syncSpecifications();
+            result.addSpecsUpdated(specsUpdated);
+            log.info("Synced {} specifications", specsUpdated);
+
             result.setSuccess(true);
             result.setMessage(String.format(
-                    "Sync completed: %d versions, %d features, %d compatibility mappings, %d code examples updated",
-                    result.getVersionsUpdated(), result.getFeaturesUpdated(), result.getCompatibilityUpdated(), result.getCodeExamplesUpdated()));
+                    "Sync completed: %d versions, %d features, %d compatibility mappings, %d code examples, %d specs updated",
+                    result.getVersionsUpdated(), result.getFeaturesUpdated(), result.getCompatibilityUpdated(),
+                    result.getCodeExamplesUpdated(), result.getSpecsUpdated()));
 
         } catch (Exception e) {
             log.error("Error during language sync", e);
@@ -639,6 +664,7 @@ public class LanguageSyncService {
 
             String codeExample = exampleNode.has("example") ? exampleNode.get("example").asText() : null;
             String title = exampleNode.has("title") ? exampleNode.get("title").asText() : null;
+            String sourceType = exampleNode.has("sourceType") ? exampleNode.get("sourceType").asText() : "SYNTHESIZED";
 
             if (codeExample == null || codeExample.isBlank()) {
                 continue;
@@ -666,9 +692,10 @@ public class LanguageSyncService {
                 // Only update if example is different or not set
                 if (feature.getCodeExample() == null || !feature.getCodeExample().equals(codeExample)) {
                     feature.setCodeExample(codeExample);
+                    feature.setExampleSourceType(sourceType);
                     featureRepository.save(feature);
                     updated++;
-                    log.debug("Updated code example for {}: {}", isJepNumber ? "JEP " + key : key, feature.getFeatureName());
+                    log.debug("Updated code example for {}: {} ({})", isJepNumber ? "JEP " + key : key, feature.getFeatureName(), sourceType);
                 }
             }
         }
@@ -685,6 +712,7 @@ public class LanguageSyncService {
 
         // Get all Kotlin features
         List<LanguageFeature> kotlinFeatures = featureRepository.findByLanguage(LanguageType.KOTLIN);
+        log.info("Found {} Kotlin features in database", kotlinFeatures.size());
 
         Iterator<String> featureKeys = kotlinExamples.fieldNames();
         while (featureKeys.hasNext()) {
@@ -693,25 +721,40 @@ public class LanguageSyncService {
 
             String codeExample = exampleNode.has("example") ? exampleNode.get("example").asText() : null;
             String title = exampleNode.has("title") ? exampleNode.get("title").asText() : null;
+            String sourceType = exampleNode.has("sourceType") ? exampleNode.get("sourceType").asText() : "SYNTHESIZED";
 
             if (codeExample == null || codeExample.isBlank()) {
+                log.debug("Skipping {} - no example content", featureKey);
                 continue;
             }
 
             // Match by converting feature name to key format
+            boolean matched = false;
             for (LanguageFeature feature : kotlinFeatures) {
                 String normalizedName = normalizeFeatureName(feature.getFeatureName());
-                if (normalizedName.equals(featureKey) ||
-                    (title != null && feature.getFeatureName().equalsIgnoreCase(title))) {
+                boolean keyMatch = normalizedName.equals(featureKey);
+                boolean titleMatch = title != null && feature.getFeatureName().equalsIgnoreCase(title);
 
+                if (keyMatch || titleMatch) {
+                    matched = true;
                     if (feature.getCodeExample() == null || !feature.getCodeExample().equals(codeExample)) {
                         feature.setCodeExample(codeExample);
+                        feature.setExampleSourceType(sourceType);
                         featureRepository.save(feature);
                         updated++;
-                        log.debug("Updated code example for Kotlin feature: {}", feature.getFeatureName());
+                        log.info("✓ Updated Kotlin example: '{}' via {} (version: {})",
+                            feature.getFeatureName(),
+                            keyMatch ? "key=" + featureKey : "title=" + title,
+                            feature.getLanguageVersion().getVersion());
+                    } else {
+                        log.debug("Kotlin example unchanged: '{}'", feature.getFeatureName());
                     }
                     break;
                 }
+            }
+
+            if (!matched) {
+                log.warn("✗ No match for Kotlin example: key='{}', title='{}'", featureKey, title);
             }
         }
 
@@ -783,12 +826,48 @@ public class LanguageSyncService {
         private int featuresUpdated;
         private int compatibilityUpdated;
         private int codeExamplesUpdated;
+        private int specsUpdated;
         private int errorsEncountered;
 
         public void addVersionsUpdated(int count) { versionsUpdated += count; }
         public void addFeaturesUpdated(int count) { featuresUpdated += count; }
         public void addCompatibilityUpdated(int count) { compatibilityUpdated += count; }
         public void addCodeExamplesUpdated(int count) { codeExamplesUpdated += count; }
+        public void addSpecsUpdated(int count) { specsUpdated += count; }
         public void addErrorsEncountered(int count) { errorsEncountered += count; }
+    }
+
+    /**
+     * Sync JEP and KEP specifications for all features.
+     * Only fetches specs that haven't been fetched yet (content is static).
+     *
+     * @return number of specifications synced
+     */
+    private int syncSpecifications() {
+        int synced = 0;
+
+        // Sync JEP specifications
+        if (jepFetcherService != null) {
+            try {
+                int jepsSynced = jepFetcherService.syncAllJeps();
+                synced += jepsSynced;
+                log.info("Synced {} JEP specifications", jepsSynced);
+            } catch (Exception e) {
+                log.warn("Error syncing JEP specifications: {}", e.getMessage());
+            }
+        }
+
+        // Sync KEP specifications
+        if (kepFetcherService != null) {
+            try {
+                int kepsSynced = kepFetcherService.syncAllKeps();
+                synced += kepsSynced;
+                log.info("Synced {} KEP specifications", kepsSynced);
+            } catch (Exception e) {
+                log.warn("Error syncing KEP specifications: {}", e.getMessage());
+            }
+        }
+
+        return synced;
     }
 }

@@ -13,6 +13,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -62,7 +65,7 @@ class JavadocToolsTest {
             JavadocClass cls = createTestClass(pkg);
 
             when(versionService.resolveVersion(LIBRARY, VERSION)).thenReturn(Optional.of(VERSION));
-            when(classRepository.findByLibraryVersionAndFqcn(LIBRARY, VERSION, CLASS_FQCN))
+            when(classRepository.findByLibraryVersionAndFqcnWithMembers(LIBRARY, VERSION, CLASS_FQCN))
                     .thenReturn(Optional.of(cls));
 
             // When
@@ -112,7 +115,7 @@ class JavadocToolsTest {
         void shouldReturnNotFoundWhenClassNotFound() {
             // Given
             when(versionService.resolveVersion(LIBRARY, VERSION)).thenReturn(Optional.of(VERSION));
-            when(classRepository.findByLibraryVersionAndFqcn(LIBRARY, VERSION, CLASS_FQCN))
+            when(classRepository.findByLibraryVersionAndFqcnWithMembers(LIBRARY, VERSION, CLASS_FQCN))
                     .thenReturn(Optional.empty());
 
             // When
@@ -133,7 +136,7 @@ class JavadocToolsTest {
             cls.setDeprecatedMessage("Use new API");
 
             when(versionService.resolveVersion(LIBRARY, VERSION)).thenReturn(Optional.of(VERSION));
-            when(classRepository.findByLibraryVersionAndFqcn(LIBRARY, VERSION, CLASS_FQCN))
+            when(classRepository.findByLibraryVersionAndFqcnWithMembers(LIBRARY, VERSION, CLASS_FQCN))
                     .thenReturn(Optional.of(cls));
 
             // When
@@ -166,7 +169,7 @@ class JavadocToolsTest {
             cls.getMethods().add(methodA);
 
             when(versionService.resolveVersion(LIBRARY, VERSION)).thenReturn(Optional.of(VERSION));
-            when(classRepository.findByLibraryVersionAndFqcn(LIBRARY, VERSION, CLASS_FQCN))
+            when(classRepository.findByLibraryVersionAndFqcnWithMembers(LIBRARY, VERSION, CLASS_FQCN))
                     .thenReturn(Optional.of(cls));
 
             // When
@@ -283,7 +286,7 @@ class JavadocToolsTest {
             JavadocClass cls = createTestClass(pkg);
 
             when(versionService.resolveVersion(LIBRARY, VERSION)).thenReturn(Optional.of(VERSION));
-            when(classRepository.searchByKeyword(LIBRARY, VERSION, "chat", 10))
+            when(classRepository.searchByKeywordWithPackage(eq(LIBRARY), eq(VERSION), eq("chat"), any(Pageable.class)))
                     .thenReturn(List.of(cls));
 
             // When
@@ -302,7 +305,7 @@ class JavadocToolsTest {
             JavadocPackage pkg = createTestPackage();
             JavadocClass cls = createTestClass(pkg);
 
-            when(classRepository.searchByKeywordGlobal("chat", 10))
+            when(classRepository.searchByKeywordGlobalWithPackage(eq("chat"), any(Pageable.class)))
                     .thenReturn(List.of(cls));
 
             // When
@@ -310,7 +313,7 @@ class JavadocToolsTest {
 
             // Then
             assertThat(results).hasSize(1);
-            verify(classRepository).searchByKeywordGlobal("chat", 10);
+            verify(classRepository).searchByKeywordGlobalWithPackage(eq("chat"), any(Pageable.class));
         }
 
         @Test
@@ -353,14 +356,16 @@ class JavadocToolsTest {
             JavadocPackage pkg = createTestPackage();
             JavadocClass cls = createTestClass(pkg);
 
-            when(classRepository.searchByKeywordGlobal("chat", 50))
+            when(classRepository.searchByKeywordGlobalWithPackage(eq("chat"), any(Pageable.class)))
                     .thenReturn(List.of(cls));
 
             // When - request 100 results
             List<JavadocSearchResult> results = javadocTools.searchJavadocs(null, null, "chat", 100);
 
             // Then - should cap at 50
-            verify(classRepository).searchByKeywordGlobal("chat", 50);
+            ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+            verify(classRepository).searchByKeywordGlobalWithPackage(eq("chat"), pageableCaptor.capture());
+            assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(50);
         }
 
         @Test
@@ -370,14 +375,16 @@ class JavadocToolsTest {
             JavadocPackage pkg = createTestPackage();
             JavadocClass cls = createTestClass(pkg);
 
-            when(classRepository.searchByKeywordGlobal("chat", 10))
+            when(classRepository.searchByKeywordGlobalWithPackage(eq("chat"), any(Pageable.class)))
                     .thenReturn(List.of(cls));
 
             // When
             List<JavadocSearchResult> results = javadocTools.searchJavadocs(null, null, "chat", null);
 
             // Then
-            verify(classRepository).searchByKeywordGlobal("chat", 10);
+            ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+            verify(classRepository).searchByKeywordGlobalWithPackage(eq("chat"), pageableCaptor.capture());
+            assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(10);
         }
 
         @Test
@@ -388,7 +395,7 @@ class JavadocToolsTest {
             JavadocClass cls = createTestClass(pkg);
 
             when(versionService.resolveVersion(LIBRARY, VERSION)).thenReturn(Optional.of(VERSION));
-            when(classRepository.searchByKeyword(LIBRARY, VERSION, "chat", 10))
+            when(classRepository.searchByKeywordWithPackage(eq(LIBRARY), eq(VERSION), eq("chat"), any(Pageable.class)))
                     .thenReturn(List.of(cls)); // Returns 1 result
             when(packageRepository.searchByKeyword(LIBRARY, VERSION, "chat", 9))
                     .thenReturn(List.of(pkg)); // Search remaining 9 slots

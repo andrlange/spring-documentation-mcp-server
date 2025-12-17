@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title th:text="${pageTitle} + ' - Spring MCP Server'">JEP Detail - Spring MCP Server</title>
+    <style>
+        .jep-content {
+            background-color: #1a1d21;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+        .jep-content h1, .jep-content h2, .jep-content h3,
+        .jep-content h4, .jep-content h5, .jep-content h6 {
+            color: #e9ecef;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .jep-content h1:first-child, .jep-content h2:first-child {
+            margin-top: 0;
+        }
+        .jep-content p {
+            color: #adb5bd;
+            margin-bottom: 1rem;
+        }
+        .jep-content pre {
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .jep-content code {
+            color: #7ee787;
+            background-color: #161b22;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+        }
+        .jep-content pre code {
+            padding: 0;
+            background: transparent;
+            color: #e6edf3;
+        }
+        .jep-content ul, .jep-content ol {
+            color: #adb5bd;
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .jep-content table {
+            width: 100%;
+            margin-bottom: 1rem;
+            border-collapse: collapse;
+        }
+        .jep-content table th,
+        .jep-content table td {
+            padding: 0.5rem;
+            border: 1px solid #30363d;
+            color: #adb5bd;
+        }
+        .jep-content table th {
+            background-color: #161b22;
+            color: #e9ecef;
+        }
+        .jep-content table td {
+            background-color: #0d1117;
+        }
+        .section-card {
+            background-color: #1a1d21;
+            border: 1px solid #30363d;
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .section-title {
+            color: var(--spring-green, #6db33f);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-card p, .section-card li {
+            color: #adb5bd;
+        }
+        .section-card strong {
+            color: #e9ecef;
+        }
+        .status-badge {
+            font-size: 0.85rem;
+            padding: 0.35em 0.65em;
+        }
+        /* Dark theme cards */
+        .card.border-0.shadow-sm {
+            background-color: #1a1d21 !important;
+            border: 1px solid #30363d !important;
+        }
+        .card-header.bg-transparent {
+            background-color: #1a1d21 !important;
+            border-bottom: 1px solid #30363d !important;
+        }
+        .card-header h5 {
+            color: #e9ecef;
+        }
+        .card-body {
+            background-color: #1a1d21;
+        }
+        /* Table styling */
+        .table {
+            --bs-table-bg: #0d1117;
+            --bs-table-color: #adb5bd;
+            --bs-table-border-color: #30363d;
+            --bs-table-hover-bg: #161b22;
+            --bs-table-hover-color: #e9ecef;
+        }
+        .table thead th {
+            background-color: #161b22;
+            color: #e9ecef;
+            border-bottom: 2px solid #30363d;
+        }
+        .table tbody td {
+            border-color: #30363d;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #161b22;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Back Navigation -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a th:href="@{/languages}" class="text-decoration-none">
+                    <i class="bi bi-braces"></i> Language Evolution
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <span th:text="'JEP ' + ${jep?.jepNumber ?: 'Not Found'}">JEP 444</span>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Error State -->
+    <div th:if="${error != null}" class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span th:text="${error}">JEP not found</span>
+        <div class="mt-3">
+            <a th:href="@{/languages}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Languages
+            </a>
+        </div>
+    </div>
+
+    <!-- JEP Content -->
+    <div th:if="${jep != null}">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-2 mb-4 border-bottom">
+            <div>
+                <h1 class="h2 mb-2">
+                    <i class="bi bi-file-earmark-text text-warning me-2"></i>
+                    <span th:text="'JEP ' + ${jep.jepNumber}">JEP 444</span>
+                </h1>
+                <p class="lead mb-0 text-muted" th:text="${jep.title}">Virtual Threads</p>
+            </div>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <span th:if="${jep.status}" class="badge status-badge me-2"
+                      th:classappend="${jep.status?.contains('Closed') or jep.status?.contains('Delivered') ? 'bg-success' :
+                                       jep.status?.contains('Draft') ? 'bg-warning text-dark' :
+                                       jep.status?.contains('Targeted') ? 'bg-info' : 'bg-secondary'}"
+                      th:text="${jep.status}">Closed / Delivered</span>
+                <span th:if="${jep.targetVersion}" class="badge bg-primary status-badge me-2">
+                    <i class="bi bi-tag me-1"></i>
+                    <span th:text="'Java ' + ${jep.targetVersion}">Java 21</span>
+                </span>
+                <a th:href="${jep.externalUrl}" target="_blank" rel="noopener"
+                   class="btn btn-sm btn-outline-light">
+                    <i class="bi bi-box-arrow-up-right me-1"></i> OpenJDK
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Info Row -->
+        <div class="row mb-4">
+            <div class="col-md-3" th:if="${jep.summary}">
+                <div class="section-card h-100">
+                    <div class="section-title">
+                        <i class="bi bi-card-text"></i> Summary
+                    </div>
+                    <p class="mb-0 small" th:text="${jep.summary}">Brief summary</p>
+                </div>
+            </div>
+            <div class="col-md-3" th:if="${jep.goals}">
+                <div class="section-card h-100">
+                    <div class="section-title">
+                        <i class="bi bi-bullseye"></i> Goals
+                    </div>
+                    <p class="mb-0 small" th:utext="${#strings.replace(#strings.replace(jep.goals, '&#10;', '<br/>'), '&#13;', '')}">Goals text</p>
+                </div>
+            </div>
+            <div class="col-md-3" th:if="${jep.nonGoals}">
+                <div class="section-card h-100">
+                    <div class="section-title">
+                        <i class="bi bi-x-circle"></i> Non-Goals
+                    </div>
+                    <p class="mb-0 small" th:utext="${#strings.replace(#strings.replace(jep.nonGoals, '&#10;', '<br/>'), '&#13;', '')}">Non-goals text</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="section-card h-100">
+                    <div class="section-title">
+                        <i class="bi bi-info-circle"></i> Metadata
+                    </div>
+                    <ul class="list-unstyled mb-0 small">
+                        <li th:if="${jep.targetVersion}">
+                            <strong>Release:</strong> Java <span th:text="${jep.targetVersion}">21</span>
+                        </li>
+                        <li th:if="${jep.status}">
+                            <strong>Status:</strong> <span th:text="${jep.status}">Delivered</span>
+                        </li>
+                        <li th:if="${jep.fetchedAt}">
+                            <strong>Fetched:</strong>
+                            <span th:text="${#temporals.format(jep.fetchedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Features -->
+        <div th:if="${relatedFeatures != null and !relatedFeatures.isEmpty()}" class="mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="bi bi-link-45deg me-2 text-spring-green"></i>
+                        Related Language Features
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Version</th>
+                                <th>Status</th>
+                                <th>Category</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="feature : ${relatedFeatures}">
+                                <td>
+                                    <a th:href="@{/languages(search=${feature.featureName})}"
+                                       class="text-decoration-none"
+                                       th:text="${feature.featureName}">Virtual Threads</a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-warning text-dark"
+                                          th:text="${feature.languageVersion.displayName}">Java 21</span>
+                                </td>
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${feature.status.badgeClass}"
+                                          th:text="${feature.status.displayName}">New</span>
+                                </td>
+                                <td th:text="${feature.category}">Concurrency</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Motivation Section -->
+        <div th:if="${jep.motivation}" class="mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightbulb me-2 text-warning"></i>
+                        Motivation
+                    </h5>
+                </div>
+                <div class="card-body jep-content">
+                    <p th:utext="${#strings.replace(#strings.replace(jep.motivation, '&#10;', '<br/>'), '&#13;', '')}">Motivation text</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description Section -->
+        <div th:if="${jep.description}" class="mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-text me-2 text-info"></i>
+                        Description
+                    </h5>
+                </div>
+                <div class="card-body jep-content">
+                    <p th:utext="${#strings.replace(#strings.replace(jep.description, '&#10;', '<br/>'), '&#13;', '')}">Description text</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full HTML Content -->
+        <div th:if="${jep.htmlContent}" class="mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="bi bi-journal-text me-2 text-spring-green"></i>
+                        Full Specification
+                    </h5>
+                </div>
+                <div class="card-body jep-content" th:utext="${jep.htmlContent}">
+                    Full HTML content here
+                </div>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="mt-4 pt-3 border-top">
+            <a th:href="@{/languages}" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left me-1"></i> Back to Language Evolution
+            </a>
+            <a th:href="${jep.externalUrl}" target="_blank" rel="noopener"
+               class="btn btn-outline-warning ms-2">
+                <i class="bi bi-box-arrow-up-right me-1"></i> View on OpenJDK
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

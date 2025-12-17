@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title th:text="${pageTitle} + ' - Spring MCP Server'">KEP Detail - Spring MCP Server</title>
+    <style>
+        .kep-content {
+            background-color: #1a1d21;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+        .kep-content h1, .kep-content h2, .kep-content h3,
+        .kep-content h4, .kep-content h5, .kep-content h6 {
+            color: #e9ecef;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .kep-content h1:first-child, .kep-content h2:first-child {
+            margin-top: 0;
+        }
+        .kep-content p {
+            color: #adb5bd;
+            margin-bottom: 1rem;
+        }
+        .kep-content pre {
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .kep-content code {
+            color: #7ee787;
+            background-color: #161b22;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+        }
+        .kep-content pre code {
+            padding: 0;
+            background: transparent;
+            color: #e6edf3;
+        }
+        .kep-content ul, .kep-content ol {
+            color: #adb5bd;
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .kep-content table {
+            width: 100%;
+            margin-bottom: 1rem;
+            border-collapse: collapse;
+        }
+        .kep-content table th,
+        .kep-content table td {
+            padding: 0.5rem;
+            border: 1px solid #30363d;
+            color: #adb5bd;
+        }
+        .kep-content table th {
+            background-color: #161b22;
+            color: #e9ecef;
+        }
+        .kep-content table td {
+            background-color: #0d1117;
+        }
+        .section-card {
+            background-color: #1a1d21;
+            border: 1px solid #30363d;
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .section-title {
+            color: var(--spring-green, #6db33f);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-card p, .section-card li {
+            color: #adb5bd;
+        }
+        .section-card strong {
+            color: #e9ecef;
+        }
+        .status-badge {
+            font-size: 0.85rem;
+            padding: 0.35em 0.65em;
+        }
+        .source-badge {
+            font-size: 0.75rem;
+            padding: 0.25em 0.5em;
+        }
+        /* Dark theme cards */
+        .card.border-0.shadow-sm {
+            background-color: #1a1d21 !important;
+            border: 1px solid #30363d !important;
+        }
+        .card-header.bg-transparent {
+            background-color: #1a1d21 !important;
+            border-bottom: 1px solid #30363d !important;
+        }
+        .card-header h5 {
+            color: #e9ecef;
+        }
+        .card-body {
+            background-color: #1a1d21;
+        }
+        /* Table styling */
+        .table {
+            --bs-table-bg: #0d1117;
+            --bs-table-color: #adb5bd;
+            --bs-table-border-color: #30363d;
+            --bs-table-hover-bg: #161b22;
+            --bs-table-hover-color: #e9ecef;
+        }
+        .table thead th {
+            background-color: #161b22;
+            color: #e9ecef;
+            border-bottom: 2px solid #30363d;
+        }
+        .table tbody td {
+            border-color: #30363d;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #161b22;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Back Navigation -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a th:href="@{/languages}" class="text-decoration-none">
+                    <i class="bi bi-braces"></i> Language Evolution
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <span th:text="${kep?.kepNumber ?: 'KEP Not Found'}">KEP KT-11550</span>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Error State -->
+    <div th:if="${error != null}" class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span th:text="${error}">KEP not found</span>
+        <div class="mt-3">
+            <a th:href="@{/languages}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Languages
+            </a>
+        </div>
+    </div>
+
+    <!-- KEP Content -->
+    <div th:if="${kep != null}">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-2 mb-4 border-bottom">
+            <div>
+                <h1 class="h2 mb-2">
+                    <i class="bi bi-file-earmark-code text-info me-2"></i>
+                    <span th:text="${kep.kepNumber}">KEP KT-11550</span>
+                </h1>
+                <p class="lead mb-0 text-muted" th:text="${kep.title}">Context Parameters</p>
+            </div>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <span th:if="${kep.status}" class="badge status-badge me-2"
+                      th:classappend="${kep.status?.contains('Stable') or kep.status?.contains('Released') ? 'bg-success' :
+                                       kep.status?.contains('Prototype') or kep.status?.contains('Experimental') ? 'bg-warning text-dark' :
+                                       kep.status?.contains('Draft') ? 'bg-info' : 'bg-secondary'}"
+                      th:text="${kep.status}">Stable</span>
+                <span th:if="${kep.sourceType}" class="badge source-badge me-2"
+                      th:classappend="${kep.sourceType == 'KEEP' ? 'bg-primary' : 'bg-secondary'}"
+                      th:text="${kep.sourceType}">KEEP</span>
+                <a th:if="${kep.sourceUrl}" th:href="${kep.sourceUrl}" target="_blank" rel="noopener"
+                   class="btn btn-sm btn-outline-light">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>
+                    <span th:text="${kep.sourceType == 'KEEP' ? 'GitHub KEEP' : 'YouTrack'}">Source</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Info Row -->
+        <div class="row mb-4">
+            <div class="col-md-4" th:if="${kep.summary}">
+                <div class="section-card h-100">
+                    <div class="section-title">
+                        <i class="bi bi-card-text"></i> Summary
+                    </div>
+                    <p class="mb-0 small" th:text="${kep.summary}">Brief summary</p>
+                </div>
+            </div>
+            <div class="col-md-4" th:if="${kep.motivation}">
+                <div class="section-card h-100">
+                    <div class="section-title">
+                        <i class="bi bi-lightbulb"></i> Motivation
+                    </div>
+                    <p class="mb-0 small" th:utext="${#strings.abbreviate(#strings.replace(#strings.replace(kep.motivation, '&#10;', ' '), '&#13;', ''), 300)}">Motivation text</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="section-card h-100">
+                    <div class="section-title">
+                        <i class="bi bi-info-circle"></i> Metadata
+                    </div>
+                    <ul class="list-unstyled mb-0 small">
+                        <li th:if="${kep.kepNumber}">
+                            <strong>ID:</strong> <span th:text="${kep.kepNumber}">KT-11550</span>
+                        </li>
+                        <li th:if="${kep.status}">
+                            <strong>Status:</strong> <span th:text="${kep.status}">Stable</span>
+                        </li>
+                        <li th:if="${kep.sourceType}">
+                            <strong>Source:</strong> <span th:text="${kep.sourceType == 'KEEP' ? 'GitHub KEEP Repository' : 'JetBrains YouTrack'}">GitHub KEEP</span>
+                        </li>
+                        <li th:if="${kep.fetchedAt}">
+                            <strong>Fetched:</strong>
+                            <span th:text="${#temporals.format(kep.fetchedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Features -->
+        <div th:if="${relatedFeatures != null and !relatedFeatures.isEmpty()}" class="mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="bi bi-link-45deg me-2 text-spring-green"></i>
+                        Related Language Features
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Version</th>
+                                <th>Status</th>
+                                <th>Category</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="feature : ${relatedFeatures}">
+                                <td>
+                                    <a th:href="@{/languages(search=${feature.featureName})}"
+                                       class="text-decoration-none"
+                                       th:text="${feature.featureName}">Context Parameters</a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info text-dark"
+                                          th:text="${feature.languageVersion.displayName}">Kotlin 2.1</span>
+                                </td>
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${feature.status.badgeClass}"
+                                          th:text="${feature.status.displayName}">New</span>
+                                </td>
+                                <td th:text="${feature.category}">Functions</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description Section -->
+        <div th:if="${kep.description}" class="mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-text me-2 text-info"></i>
+                        Description
+                    </h5>
+                </div>
+                <div class="card-body kep-content">
+                    <p th:utext="${#strings.replace(#strings.replace(kep.description, '&#10;', '<br/>'), '&#13;', '')}">Description text</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full HTML Content (from parsed Markdown or YouTrack) -->
+        <div th:if="${kep.htmlContent}" class="mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="bi bi-journal-text me-2 text-spring-green"></i>
+                        Full Specification
+                    </h5>
+                </div>
+                <div class="card-body kep-content" th:utext="${kep.htmlContent}">
+                    Full HTML content here
+                </div>
+            </div>
+        </div>
+
+        <!-- Markdown Content (raw, if available and no HTML) -->
+        <div th:if="${kep.markdownContent != null and kep.htmlContent == null}" class="mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="bi bi-markdown me-2 text-spring-green"></i>
+                        Specification (Markdown)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <pre class="mb-0"><code th:text="${kep.markdownContent}">Markdown content here</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="mt-4 pt-3 border-top">
+            <a th:href="@{/languages}" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left me-1"></i> Back to Language Evolution
+            </a>
+            <a th:if="${kep.sourceUrl}" th:href="${kep.sourceUrl}" target="_blank" rel="noopener"
+               class="btn btn-outline-info ms-2">
+                <i class="bi bi-box-arrow-up-right me-1"></i>
+                <span th:text="${kep.sourceType == 'KEEP' ? 'View on GitHub' : 'View on YouTrack'}">View Source</span>
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
