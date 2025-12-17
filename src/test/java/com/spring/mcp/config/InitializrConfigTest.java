@@ -39,7 +39,7 @@ class InitializrConfigTest {
             var defaults = properties.getDefaults();
 
             assertThat(defaults.getBootVersion()).isEqualTo("3.5.8");
-            assertThat(defaults.getJavaVersion()).isEqualTo("21");
+            assertThat(defaults.getJavaVersion()).isEqualTo("25");
             assertThat(defaults.getLanguage()).isEqualTo("java");
             assertThat(defaults.getPackaging()).isEqualTo("jar");
             assertThat(defaults.getBuildType()).isEqualTo("gradle-project");

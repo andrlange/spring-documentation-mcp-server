@@ -17,7 +17,7 @@ import java.util.List;
  * Provides access to language features, deprecations, and removals.
  *
  * @author Spring MCP Server
- * @version 1.2.0
+ * @version 1.5.2
  * @since 2025-11-29
  */
 @Repository
@@ -79,6 +79,11 @@ public interface LanguageFeatureRepository extends JpaRepository<LanguageFeature
      * Find features by JEP number
      */
     List<LanguageFeature> findByJepNumber(String jepNumber);
+
+    /**
+     * Find features by KEP number
+     */
+    List<LanguageFeature> findByKepNumber(String kepNumber);
 
     /**
      * Count features by status

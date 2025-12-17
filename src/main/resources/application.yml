@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring Boot Documentation MCP Server
-    version: 1.5.1
+    version: 1.5.2
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.8
@@ -72,11 +72,11 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.5.1"
+        version: "1.5.2"
         instructions: |
           Spring Boot Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 
-          Total: 43 tools available (10 documentation + 7 migration + 6 language evolution + 8 flavors + 3 flavor groups + 5 initializr + 4 javadoc)
+          Total: 44 tools available (10 documentation + 7 migration + 7 language evolution + 8 flavors + 3 flavor groups + 5 initializr + 4 javadoc)
 
           Documentation Tools (10):
           1. searchSpringDocs: Search across all Spring documentation
@@ -260,7 +260,7 @@ mcp:
     language-evolution:
       enabled: ${LANGUAGE_EVOLUTION_ENABLED:true}
       sync:
-        enabled: ${LANGUAGE_SYNC_ENABLED:false}  # Disabled by default - enable via UI
+        enabled: ${LANGUAGE_SYNC_ENABLED:true}  # Disabled by default - enable via UI
         default-frequency: DAILY
         default-time: "04:00"
       sources:

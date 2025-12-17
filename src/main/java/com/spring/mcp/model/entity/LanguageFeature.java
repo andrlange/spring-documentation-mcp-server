@@ -94,6 +94,13 @@ public class LanguageFeature {
     private String codeExample;
 
     /**
+     * Source type for the code example: OFFICIAL (from specification) or SYNTHESIZED (manually curated)
+     */
+    @Column(name = "example_source_type", length = 20)
+    @Builder.Default
+    private String exampleSourceType = "OFFICIAL";
+
+    /**
      * URL to official documentation
      */
     @Column(name = "documentation_url", length = 500)
@@ -148,9 +155,36 @@ public class LanguageFeature {
     }
 
     /**
-     * Check if this feature has code examples
+     * Check if this feature has code patterns
      */
     public boolean hasCodePatterns() {
         return codePatterns != null && !codePatterns.isEmpty();
     }
+
+    /**
+     * Check if this feature has a code example
+     */
+    public boolean hasCodeExample() {
+        return codeExample != null && !codeExample.isBlank();
+    }
+
+    /**
+     * Check if the code example is synthesized (manually curated)
+     */
+    public boolean isSynthesizedExample() {
+        return "SYNTHESIZED".equals(exampleSourceType);
+    }
+
+    /**
+     * Check if the code example is official (from specification)
+     */
+    public boolean isOfficialExample() {
+        return "OFFICIAL".equals(exampleSourceType) || exampleSourceType == null;
+    }
+
+    /**
+     * Constants for example source types
+     */
+    public static final String EXAMPLE_SOURCE_OFFICIAL = "OFFICIAL";
+    public static final String EXAMPLE_SOURCE_SYNTHESIZED = "SYNTHESIZED";
 }

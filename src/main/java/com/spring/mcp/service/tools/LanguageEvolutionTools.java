@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * features, deprecations, and modern coding patterns.
  *
  * @author Spring MCP Server
- * @version 1.2.0
+ * @version 1.5.2
  * @since 2025-11-29
  */
 @Service
@@ -84,13 +84,18 @@ public class LanguageEvolutionTools {
         log.info("Tool: getLanguageFeatures - language={}, version={}, status={}, category={}", language, version, status, category);
 
         LanguageType langType = parseLanguageType(language);
-        FeatureStatus featureStatus = status != null ? FeatureStatus.fromString(status) : null;
+
+        // Handle "null" string passed by MCP clients
+        String effectiveStatus = (status != null && !status.isBlank() && !"null".equalsIgnoreCase(status)) ? status : null;
+        String effectiveCategory = (category != null && !category.isBlank() && !"null".equalsIgnoreCase(category)) ? category : null;
+
+        FeatureStatus featureStatus = effectiveStatus != null ? FeatureStatus.fromString(effectiveStatus) : null;
 
         List<LanguageFeature> features;
-        if (version != null && !version.isBlank()) {
+        if (version != null && !version.isBlank() && !"null".equalsIgnoreCase(version)) {
             features = languageEvolutionService.getFeatures(langType, version);
         } else {
-            features = languageEvolutionService.searchFeatures(langType, version, featureStatus, category, null);
+            features = languageEvolutionService.searchFeatures(langType, null, featureStatus, effectiveCategory, null);
         }
 
         // Apply additional filters if provided
@@ -99,9 +104,9 @@ public class LanguageEvolutionTools {
                     .filter(f -> f.getStatus() == featureStatus)
                     .collect(Collectors.toList());
         }
-        if (category != null && !category.isBlank()) {
+        if (effectiveCategory != null) {
             features = features.stream()
-                    .filter(f -> category.equalsIgnoreCase(f.getCategory()))
+                    .filter(f -> effectiveCategory.equalsIgnoreCase(f.getCategory()))
                     .collect(Collectors.toList());
         }
 
@@ -264,6 +269,110 @@ public class LanguageEvolutionTools {
     }
 
     /**
+     * Get code example for a specific language feature
+     */
+    @McpTool(description = """
+        Get a code example for a specific language feature.
+        Search by JEP number (e.g., '444'), KEP number (e.g., 'KT-11550'),
+        or feature name (e.g., 'Virtual Threads', 'Records').
+        Returns practical code example with feature description and source type.
+        """)
+    public LanguageFeatureExampleResponse getLanguageFeatureExample(
+            @McpToolParam(description = "Language type: 'JAVA', 'KOTLIN', or null for auto-detect (optional)") String language,
+            @McpToolParam(description = "JEP/KEP number or feature name (required, e.g., '444', 'KT-11550', 'Virtual Threads')") String featureIdentifier) {
+
+        log.info("Tool: getLanguageFeatureExample - language={}, featureIdentifier={}", language, featureIdentifier);
+
+        if (featureIdentifier == null || featureIdentifier.isBlank()) {
+            return LanguageFeatureExampleResponse.error("featureIdentifier parameter is required");
+        }
+
+        String identifier = featureIdentifier.trim();
+        LanguageFeature feature = null;
+
+        // Try to find by JEP number (just digits or "JEP XXX" format)
+        String jepNumber = null;
+        if (identifier.matches("\\d+") || identifier.toUpperCase().startsWith("JEP ")) {
+            jepNumber = identifier.replaceAll("(?i)^JEP\\s*", "");
+            List<LanguageFeature> jepFeatures = featureRepository.findByJepNumber(jepNumber);
+            if (!jepFeatures.isEmpty()) {
+                feature = jepFeatures.get(0);
+            }
+        }
+
+        // Try to find by KEP number (KT-XXXXX format or just the name)
+        if (feature == null && (identifier.toUpperCase().startsWith("KT-") || identifier.toUpperCase().startsWith("KEP "))) {
+            String kepNumber = identifier.replaceAll("(?i)^KEP\\s*", "");
+            List<LanguageFeature> kepFeatures = featureRepository.findByKepNumber(kepNumber);
+            if (!kepFeatures.isEmpty()) {
+                feature = kepFeatures.get(0);
+            }
+        }
+
+        // Try to find by feature name
+        if (feature == null) {
+            LanguageType langType = (language != null && !language.isBlank()) ? parseLanguageTypeOrNull(language) : null;
+            List<LanguageFeature> matchingFeatures;
+
+            if (langType != null) {
+                matchingFeatures = featureRepository.findByLanguage(langType);
+            } else {
+                matchingFeatures = featureRepository.findAll();
+            }
+
+            // Case-insensitive name match
+            for (LanguageFeature f : matchingFeatures) {
+                if (f.getFeatureName().equalsIgnoreCase(identifier)) {
+                    feature = f;
+                    break;
+                }
+            }
+
+            // Partial match if exact match not found
+            if (feature == null) {
+                String lowerIdentifier = identifier.toLowerCase();
+                for (LanguageFeature f : matchingFeatures) {
+                    if (f.getFeatureName().toLowerCase().contains(lowerIdentifier)) {
+                        feature = f;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (feature == null) {
+            return LanguageFeatureExampleResponse.error("Feature not found: " + featureIdentifier);
+        }
+
+        // Build internal detail page URL
+        String detailPageUrl = null;
+        if (feature.getJepNumber() != null && !feature.getJepNumber().isBlank()) {
+            detailPageUrl = "/languages/jep/" + feature.getJepNumber();
+        } else if (feature.getKepNumber() != null && !feature.getKepNumber().isBlank()) {
+            detailPageUrl = "/languages/kep/" + feature.getKepNumber();
+        }
+
+        long patternCount = codePatternRepository.countByFeatureId(feature.getId());
+
+        return LanguageFeatureExampleResponse.builder()
+                .language(feature.getLanguageVersion().getLanguage().getDisplayName())
+                .version(feature.getLanguageVersion().getVersion())
+                .featureName(feature.getFeatureName())
+                .description(feature.getDescription())
+                .codeExample(feature.getCodeExample())
+                .exampleSourceType(feature.getExampleSourceType())
+                .jepNumber(feature.getJepNumber())
+                .kepNumber(feature.getKepNumber())
+                .specificationUrl(feature.getEnhancementProposalUrl())
+                .detailPageUrl(detailPageUrl)
+                .category(feature.getCategory())
+                .status(feature.getStatus() != null ? feature.getStatus().name() : null)
+                .impactLevel(feature.getImpactLevel() != null ? feature.getImpactLevel().name() : null)
+                .hasPatterns(patternCount > 0)
+                .build();
+    }
+
+    /**
      * Search language features by keyword
      */
     @McpTool(description = """
@@ -311,6 +420,13 @@ public class LanguageEvolutionTools {
             throw new IllegalArgumentException("Invalid language: " + language + ". Use 'JAVA' or 'KOTLIN'.");
         }
         return langType;
+    }
+
+    private LanguageType parseLanguageTypeOrNull(String language) {
+        if (language == null || language.isBlank()) {
+            return null;
+        }
+        return LanguageType.fromString(language);
     }
 
     private LanguageVersionsResponse.VersionInfo mapVersionToInfo(LanguageVersion v) {

@@ -102,7 +102,7 @@ public class ToolGroupDto {
                 "bi-code-slash", "success",
                 List.of("getLanguageFeatures", "getLanguageVersionDiff", "getLanguageVersions",
                         "getModernPatterns", "getSpringBootLanguageRequirements",
-                        "searchLanguageFeatures")),
+                        "searchLanguageFeatures", "getLanguageFeatureExample")),
 
         FLAVORS("Flavors", "Company guidelines and architecture patterns",
                 "bi-palette", "secondary",

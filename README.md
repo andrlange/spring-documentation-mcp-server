@@ -10,7 +10,7 @@
 >
 > **Purpose**: My main goal is to create demo applications using my own specifications to explore AI-assisted development workflows.
 
-### (Current Version 1.5.1 - Javadoc Tools Fix)
+### (Current Version 1.5.2 - Language Evolution Enhancement)
 
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
@@ -70,6 +70,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
+| **1.5.2** | 2025-12-17 | JEP/KEP specs, detail pages, getLanguageFeatureExample tool  |
 | **1.5.1** | 2025-12-17 | Javadoc MCP tools transaction rollback fix                   |
 | **1.5.0** | 2025-12-16 | MCP Monitoring Dashboard with real-time metrics and analytics |
 | **1.4.3** | 2025-12-12 | Javadoc sync version filter, login version, flavor groups fix |
@@ -86,7 +87,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 | **1.0.2** | 2025-11-27 | Spring Boot 3.5.8, example app                               |
 | **1.0.1** | 2025-11-26 | Initial release (10 MCP tools)                               |
 
-**MCP Tools**: 10 (docs) + 7 (migration) + 6 (language) + 8 (flavors) + 3 (groups) + 5 (initializr) + 4 (javadocs) = **43 total**
+**MCP Tools**: 10 (docs) + 7 (migration) + 7 (language) + 8 (flavors) + 3 (groups) + 5 (initializr) + 4 (javadocs) = **44 total**
 
 ## Quick Start
 

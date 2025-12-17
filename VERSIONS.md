@@ -6,7 +6,7 @@ This document tracks the version configuration across all project files to ensur
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Application** | 1.5.1 | Spring MCP Server |
+| **Application** | 1.5.2 | Spring MCP Server |
 | **Java (JDK)** | 25 | LTS version |
 | **Spring Boot** | 3.5.8 | Latest stable |
 | **Spring AI** | 1.1.2 | MCP Server support |
@@ -15,9 +15,12 @@ This document tracks the version configuration across all project files to ensur
 
 ## Files with Version References
 
+### CHANGELOG.md
+Needs to track the changelog  
+
 ### build.gradle
 ```groovy
-version = '1.5.1'
+version = '1.5.2'
 
 java {
     toolchain {
@@ -49,7 +52,7 @@ services:
   postgres:
     image: postgres:18-alpine
   spring-boot-documentation-mcp-server:
-    image: spring-boot-documentation-mcp-server:1.5.1
+    image: spring-boot-documentation-mcp-server:1.5.2
 ```
 
 ### application.yml
@@ -58,7 +61,7 @@ services:
 info:
   app:
     name: Spring MCP Server
-    version: 1.5.1
+    version: 1.5.2
   spring-boot:
     version: 3.5.8
 
@@ -66,12 +69,12 @@ spring:
   ai:
     mcp:
       server:
-        version: "1.5.1"
+        version: "1.5.2"
 ```
 
 ### build-container.sh
 ```bash
-APP_VERSION="1.5.1"
+APP_VERSION="1.5.2"
 JAVA_VERSION="25"
 ```
 
@@ -102,7 +105,7 @@ When updating versions, ensure all files listed above are updated consistently:
 
 ## MCP Tools Count
 
-Current: **39 tools** (10 documentation + 7 migration + 6 language evolution + 8 flavors + 3 flavor groups + 5 initializr)
+Current: **44 tools** (10 documentation + 7 migration + 7 language evolution + 8 flavors + 3 flavor groups + 5 initializr + 4 javadoc)
 
 Update these locations when adding/removing tools:
 - `application.yml` - `spring.ai.mcp.server.instructions`
@@ -111,6 +114,17 @@ Update these locations when adding/removing tools:
 - `.claude/memory/project-memory.md` - MCP Tools count
 
 ## Changelog
+
+### v1.5.2 (2025-12-17)
+- Language Evolution Enhancement: JEP/KEP specification storage and detail pages
+- New JEP/KEP detail routes: `/languages/jep/{number}` and `/languages/kep/{number}`
+- JEP fetcher: Downloads full JEP content from openjdk.org
+- KEP fetcher: Downloads from GitHub KEEP repo + YouTrack fallback
+- Synthesized code examples for all missing language features
+- Official/Synthesized badges on code examples in UI
+- Internal JEP/KEP links with external link icons
+- New MCP tool: `getLanguageFeatureExample` - Get code example for a feature by JEP/KEP number or name
+- Total MCP tools: 44 (was 43)
 
 ### v1.5.1 (2025-12-17)
 - Fixed Javadoc MCP tools "Transaction silently rolled back" error

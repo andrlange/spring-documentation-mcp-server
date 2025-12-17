@@ -4,6 +4,8 @@ import com.spring.mcp.model.entity.*;
 import com.spring.mcp.model.enums.FeatureStatus;
 import com.spring.mcp.model.enums.LanguageType;
 import com.spring.mcp.repository.*;
+import com.spring.mcp.service.language.JepFetcherService;
+import com.spring.mcp.service.language.KepFetcherService;
 import com.spring.mcp.service.language.LanguageEvolutionService;
 import com.spring.mcp.service.language.LanguageSyncService;
 import com.spring.mcp.service.scheduler.LanguageSchedulerService;
@@ -25,7 +27,7 @@ import java.util.stream.Collectors;
  * Displays Java and Kotlin version information, features, and code patterns.
  *
  * @author Spring MCP Server
- * @version 1.2.0
+ * @version 1.5.2
  * @since 2025-11-29
  */
 @Controller
@@ -40,6 +42,10 @@ public class LanguagesController {
     private final LanguageVersionRepository versionRepository;
     private final LanguageFeatureRepository featureRepository;
     private final LanguageCodePatternRepository codePatternRepository;
+    private final Optional<JepFetcherService> jepFetcherService;
+    private final Optional<KepFetcherService> kepFetcherService;
+    private final JepSpecificationRepository jepRepository;
+    private final KepSpecificationRepository kepRepository;
 
     @Autowired
     public LanguagesController(
@@ -48,13 +54,21 @@ public class LanguagesController {
             Optional<LanguageSchedulerService> languageSchedulerService,
             LanguageVersionRepository versionRepository,
             LanguageFeatureRepository featureRepository,
-            LanguageCodePatternRepository codePatternRepository) {
+            LanguageCodePatternRepository codePatternRepository,
+            Optional<JepFetcherService> jepFetcherService,
+            Optional<KepFetcherService> kepFetcherService,
+            JepSpecificationRepository jepRepository,
+            KepSpecificationRepository kepRepository) {
         this.languageEvolutionService = languageEvolutionService;
         this.languageSyncService = languageSyncService;
         this.languageSchedulerService = languageSchedulerService;
         this.versionRepository = versionRepository;
         this.featureRepository = featureRepository;
         this.codePatternRepository = codePatternRepository;
+        this.jepFetcherService = jepFetcherService;
+        this.kepFetcherService = kepFetcherService;
+        this.jepRepository = jepRepository;
+        this.kepRepository = kepRepository;
     }
 
     /**
@@ -215,6 +229,7 @@ public class LanguagesController {
         response.put("impactLevel", feature.getImpactLevel() != null ? feature.getImpactLevel().name() : null);
         response.put("version", feature.getLanguageVersion().getDisplayName());
         response.put("codeExample", feature.getCodeExample());
+        response.put("exampleSourceType", feature.getExampleSourceType());
 
         List<Map<String, Object>> patternsList = patterns.stream()
                 .map(p -> {
@@ -352,6 +367,78 @@ public class LanguagesController {
         response.put("removedFeatures", removedFeatures);
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Display JEP specification detail page.
+     * Fetches the JEP content on-demand if not already cached.
+     */
+    @GetMapping("/jep/{number}")
+    @PreAuthorize("isAuthenticated()")
+    public String showJepDetail(@PathVariable String number, Model model) {
+        log.debug("JEP detail page: number={}", number);
+
+        model.addAttribute("activePage", "languages");
+
+        // Try to find existing JEP or fetch on-demand
+        Optional<JepSpecification> jepOpt;
+        if (jepFetcherService.isPresent()) {
+            jepOpt = jepFetcherService.get().getJep(number);
+        } else {
+            jepOpt = jepRepository.findByJepNumber(number);
+        }
+
+        if (jepOpt.isEmpty()) {
+            model.addAttribute("error", "JEP " + number + " not found");
+            model.addAttribute("pageTitle", "JEP Not Found");
+            return "languages/jep-detail";
+        }
+
+        JepSpecification jep = jepOpt.get();
+        model.addAttribute("jep", jep);
+        model.addAttribute("pageTitle", "JEP " + number + ": " + (jep.getTitle() != null ? jep.getTitle() : "Unknown"));
+
+        // Find related features
+        List<LanguageFeature> relatedFeatures = featureRepository.findByJepNumber(number);
+        model.addAttribute("relatedFeatures", relatedFeatures);
+
+        return "languages/jep-detail";
+    }
+
+    /**
+     * Display KEP specification detail page.
+     * Fetches the KEP content on-demand if not already cached.
+     */
+    @GetMapping("/kep/{number}")
+    @PreAuthorize("isAuthenticated()")
+    public String showKepDetail(@PathVariable String number, Model model) {
+        log.debug("KEP detail page: number={}", number);
+
+        model.addAttribute("activePage", "languages");
+
+        // Try to find existing KEP or fetch on-demand
+        Optional<KepSpecification> kepOpt;
+        if (kepFetcherService.isPresent()) {
+            kepOpt = kepFetcherService.get().getKep(number);
+        } else {
+            kepOpt = kepRepository.findByKepNumber(number);
+        }
+
+        if (kepOpt.isEmpty()) {
+            model.addAttribute("error", "KEP " + number + " not found");
+            model.addAttribute("pageTitle", "KEP Not Found");
+            return "languages/kep-detail";
+        }
+
+        KepSpecification kep = kepOpt.get();
+        model.addAttribute("kep", kep);
+        model.addAttribute("pageTitle", "KEP " + number + ": " + (kep.getTitle() != null ? kep.getTitle() : "Unknown"));
+
+        // Find related features
+        List<LanguageFeature> relatedFeatures = featureRepository.findByKepNumber(number);
+        model.addAttribute("relatedFeatures", relatedFeatures);
+
+        return "languages/kep-detail";
     }
 
     // ==================== Helper Methods ====================

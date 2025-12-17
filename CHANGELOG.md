@@ -5,6 +5,49 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.2] - 2025-12-17
+
+### Added
+- **Language Evolution Enhancement**: JEP/KEP specification storage and detail pages
+    - **JEP Specifications**: Download and store full JEP content from openjdk.org
+    - **KEP Specifications**: Fetch from GitHub KEEP repository with YouTrack fallback
+    - **Detail Pages**: New routes `/languages/jep/{number}` and `/languages/kep/{number}` with dark theme
+    - **Synthesized Examples**: Code examples for all missing language features marked as SYNTHESIZED
+    - **UI Improvements**: Internal JEP/KEP links with external link icons, Official/Synthesized badges on code examples
+- **New MCP Tool**: `getLanguageFeatureExample` - Get code example for a feature
+    - Search by JEP number (e.g., '444'), KEP number (e.g., 'KT-11550'), or feature name (e.g., 'Virtual Threads')
+    - Returns code example with feature description, source type (Official/Synthesized), and metadata
+    - Language Evolution tools: 6 → 7 tools
+- **Database Migration**: `V18__jep_kep_specifications.sql`
+    - New tables: `jep_specifications`, `kep_specifications`
+    - New column: `example_source_type` on `language_features`
+    - Full-text search indexes for JEP/KEP content
+- **New Entities**: `JepSpecification`, `KepSpecification`
+- **New Services**: `JepFetcherService`, `KepFetcherService`
+- **Enhanced LanguageSyncService**: Phase 5 for JEP/KEP specification sync
+- **Debug Logging**: Added detailed logging to `loadKotlinExamples()` for code example matching troubleshooting
+
+### Changed
+- Language evolution code examples now track source type (OFFICIAL vs SYNTHESIZED)
+- JEP/KEP links in features list are now internal with external link option
+- Total MCP tools: 43 → 44
+
+### Fixed
+- **JEP/KEP Detail Page Thymeleaf Error**: Fixed `T(System).lineSeparator()` causing "Instantiation of new objects and access to static classes is forbidden" error
+    - Replaced forbidden static class access with HTML entity matching (`&#10;` for newline, `&#13;` for carriage return)
+    - Affected templates: `jep-detail.html` (4 occurrences), `kep-detail.html` (2 occurrences)
+- **JEP/KEP Detail Page Dark Theme**: Fixed light/white backgrounds not matching dark theme
+    - Updated CSS in both `jep-detail.html` and `kep-detail.html` with proper dark colors
+    - Section cards, tables, content areas now use consistent dark theme colors (#1a1d21, #0d1117, #161b22)
+- **KepFetcherService Bean Creation Error**: Fixed "No default constructor found" error at startup
+    - Root cause: Lombok `@RequiredArgsConstructor` conflicted with manual 2-parameter constructor
+    - Solution: Removed `@RequiredArgsConstructor` annotation, kept manual constructor
+- **Kotlin Code Examples Not Loading**: Fixed code examples not matching Kotlin 2.1/2.2/2.3 features
+    - Added missing `multi-dollar-string-interpolation-preview` entry to `language-examples.json`
+    - All 21 Kotlin features for versions 2.1-2.3 now have code examples
+
+---
+
 ## [1.5.1] - 2025-12-17
 
 ### Fixed
@@ -355,6 +398,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.5.2 | 2025-12-17 | JEP/KEP detail pages, synthesized code examples, dark theme fixes |
 | 1.5.1 | 2025-12-17 | Javadoc MCP tools transaction rollback fix |
 | 1.5.0 | 2025-12-16 | MCP Monitoring Dashboard, GitHub sync fixes and performance improvements |
 | 1.4.3 | 2025-12-12 | Javadoc sync version filter, login version display, flavor groups fix |
@@ -379,4 +423,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **v1.3.0**: +8 flavors tools = 31 total
 - **v1.3.3**: +3 flavor groups tools = 34 total
 - **v1.4.0**: +5 initializr tools = 39 total
-- **v1.4.2**: +4 javadoc tools = **43 total**
+- **v1.4.2**: +4 javadoc tools = 43 total
+- **v1.5.2**: +1 language feature example tool = **44 total**
