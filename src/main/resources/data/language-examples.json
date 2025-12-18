@@ -92,15 +92,15 @@
       "sourceType": "OFFICIAL",
       "example": "// Stream Gatherers (Preview in Java 22)\nList<List<Integer>> result = Stream.of(1, 2, 3, 4, 5)\n    .gather(Gatherers.windowFixed(2))\n    .toList();\n// [[1, 2], [3, 4]] - groups elements into windows"
     },
-    "501": {
+    "513": {
       "title": "Flexible Constructor Bodies (Standard)",
       "sourceType": "OFFICIAL",
-      "example": "// Flexible Constructor Bodies (Java 25 - Standard)\nclass Rectangle extends Shape {\n    private final int width, height;\n    \n    Rectangle(int width, int height) {\n        // Validate BEFORE calling super()\n        if (width <= 0 || height <= 0) {\n            throw new IllegalArgumentException(\"Invalid dimensions\");\n        }\n        super(); // Now allowed after validation\n        this.width = width;\n        this.height = height;\n    }\n}"
+      "example": "// JEP 513: Flexible Constructor Bodies (Java 25 - Standard)\nclass Rectangle extends Shape {\n    private final int width, height;\n    \n    Rectangle(int width, int height) {\n        // Validate BEFORE calling super()\n        if (width <= 0 || height <= 0) {\n            throw new IllegalArgumentException(\"Invalid dimensions\");\n        }\n        super(); // Now allowed after validation\n        this.width = width;\n        this.height = height;\n    }\n}"
     },
     "511": {
-      "title": "Module Import Declarations",
+      "title": "Module Import Declarations (Standard)",
       "sourceType": "OFFICIAL",
-      "example": "// Module Import Declarations (Preview Java 25)\n// Import all exported packages from a module\nimport module java.base;\nimport module java.sql;\n\n// Now can use classes without individual imports\nvar list = new ArrayList<String>();\nvar conn = DriverManager.getConnection(url);"
+      "example": "// JEP 511: Module Import Declarations (Java 25 - Standard)\n// Import all exported packages from a module\nimport module java.base;\nimport module java.sql;\n\n// Now can use classes without individual imports\nvar list = new ArrayList<String>();\nvar conn = DriverManager.getConnection(url);"
     },
     "507": {
       "title": "Primitive Types in Patterns (3rd Preview)",
@@ -108,14 +108,34 @@
       "example": "// Primitive Types in Patterns (Java 25 Preview)\nObject obj = 42;\nString result = switch (obj) {\n    case int i when i > 0 -> \"positive: \" + i;\n    case int i when i < 0 -> \"negative: \" + i;\n    case int _ -> \"zero\";\n    default -> \"not an int\";\n};"
     },
     "502": {
-      "title": "Scoped Values",
+      "title": "Stable Values (Preview)",
       "sourceType": "OFFICIAL",
-      "example": "// Scoped Values (Preview Java 25)\n// Thread-safe, immutable alternative to ThreadLocal\nfinal static ScopedValue<User> CURRENT_USER = ScopedValue.newInstance();\n\nvoid handleRequest(User user) {\n    ScopedValue.where(CURRENT_USER, user)\n        .run(() -> processRequest());\n}\n\nvoid processRequest() {\n    User user = CURRENT_USER.get(); // Available in scope\n}"
+      "example": "// JEP 502: Stable Values (Java 25 Preview)\n// Immutable holders with deferred initialization\nimport java.lang.StableValue;\n\nclass Config {\n    // Computed once on first access, then cached\n    private static final StableValue<Properties> CONFIG = \n        StableValue.of(() -> loadProperties());\n    \n    public static Properties getConfig() {\n        return CONFIG.get(); // Lazily initialized, then stable\n    }\n}"
+    },
+    "506": {
+      "title": "Scoped Values (Standard)",
+      "sourceType": "OFFICIAL",
+      "example": "// JEP 506: Scoped Values (Java 25 - Standard)\n// Thread-safe, immutable alternative to ThreadLocal - now finalized\nfinal static ScopedValue<User> CURRENT_USER = ScopedValue.newInstance();\n\nvoid handleRequest(User user) {\n    ScopedValue.where(CURRENT_USER, user)\n        .run(() -> processRequest());\n}\n\nvoid processRequest() {\n    User user = CURRENT_USER.get(); // Available in scope\n}"
     },
     "505": {
-      "title": "Structured Concurrency",
+      "title": "Structured Concurrency (5th Preview)",
       "sourceType": "OFFICIAL",
-      "example": "// Structured Concurrency (Preview Java 25)\nResponse handle() throws InterruptedException {\n    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {\n        Subtask<User> user = scope.fork(() -> fetchUser());\n        Subtask<Order> order = scope.fork(() -> fetchOrder());\n        \n        scope.join().throwIfFailed();\n        \n        return new Response(user.get(), order.get());\n    }\n}"
+      "example": "// JEP 505: Structured Concurrency (Java 25 - 5th Preview)\nResponse handle() throws InterruptedException {\n    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {\n        Subtask<User> user = scope.fork(() -> fetchUser());\n        Subtask<Order> order = scope.fork(() -> fetchOrder());\n        \n        scope.join().throwIfFailed();\n        \n        return new Response(user.get(), order.get());\n    }\n}"
+    },
+    "512": {
+      "title": "Compact Source Files and Instance Main Methods (Standard)",
+      "sourceType": "OFFICIAL",
+      "example": "// JEP 512: Compact Source Files (Java 25 - Standard)\n// No class declaration needed for simple programs!\n\n// File: HelloWorld.java\nvoid main() {\n    System.out.println(\"Hello, World!\");\n}\n\n// Instance main method with arguments:\nvoid main(String[] args) {\n    System.out.println(\"Args: \" + Arrays.toString(args));\n}"
+    },
+    "510": {
+      "title": "Key Derivation Function API",
+      "sourceType": "OFFICIAL",
+      "example": "// JEP 510: Key Derivation Function API (Java 25)\nimport javax.crypto.KDF;\nimport javax.crypto.spec.HKDFParameterSpec;\n\n// HKDF key derivation\nKDF hkdf = KDF.getInstance(\"HKDF-SHA256\");\nSecretKey inputKey = ...; // Your input key material\nbyte[] salt = ...; // Optional salt\nbyte[] info = ...; // Context info\n\nHKDFParameterSpec params = HKDFParameterSpec.ofExtract()\n    .thenExpand(info, 32);\nSecretKey derivedKey = hkdf.deriveKey(\"AES\", params);"
+    },
+    "519": {
+      "title": "Compact Object Headers",
+      "sourceType": "OFFICIAL",
+      "example": "// JEP 519: Compact Object Headers (Java 25)\n// Reduces object header size from 96-128 bits to 64 bits\n// This is a JVM optimization - no code changes needed!\n\n// Benefits:\n// - Reduced memory footprint (especially for small objects)\n// - Better cache utilization\n// - Improved GC performance\n\n// Enable with: -XX:+UseCompactObjectHeaders (default in Java 25)"
     },
     "484": {
       "title": "Class-File API (2nd Preview)",
@@ -461,6 +481,16 @@
       "title": "Stream API",
       "sourceType": "OFFICIAL",
       "example": "// Stream API (Java 8)\nList<String> result = names.stream()\n    .filter(n -> n.startsWith(\"A\"))  // filter\n    .map(String::toUpperCase)         // transform\n    .sorted()                          // sort\n    .distinct()                        // unique\n    .limit(10)                         // limit\n    .collect(Collectors.toList());     // collect\n\n// Parallel processing\nlong count = list.parallelStream()\n    .filter(s -> s.length() > 5)\n    .count();"
+    },
+    "503": {
+      "title": "32-bit x86 Port Removed",
+      "sourceType": "SYNTHESIZED",
+      "example": "// JEP 503: 32-bit x86 Port Removed (Java 25)\n// The 32-bit x86 port has been removed from OpenJDK.\n// This is a platform change - no code modifications needed.\n\n// Impact:\n// - Cannot build/run Java 25+ on 32-bit x86 Linux\n// - 64-bit platforms (x86-64, ARM64) unaffected\n// - Windows 32-bit was already removed in Java 21\n\n// Migration:\n// - Upgrade to 64-bit operating system\n// - Use Java 24 or earlier for legacy 32-bit systems\n\n// Check your architecture:\n// System.out.println(System.getProperty(\"os.arch\"));\n// Expected: amd64, x86_64, aarch64 (not x86 or i386)"
+    },
+    "470": {
+      "title": "PEM Encodings of Cryptographic Objects (Preview)",
+      "sourceType": "SYNTHESIZED",
+      "example": "// JEP 470: PEM Encodings of Cryptographic Objects (Java 25 Preview)\n// API for encoding/decoding keys and certificates in PEM format\n\nimport java.security.*;\nimport java.security.spec.*;\n\n// Encode a public key to PEM format\nKeyPairGenerator kpg = KeyPairGenerator.getInstance(\"RSA\");\nkpg.initialize(2048);\nKeyPair keyPair = kpg.generateKeyPair();\n\n// Export to PEM (Preview API)\nString pemPublicKey = PEMEncoder.of().encodeToString(keyPair.getPublic());\n// Output:\n// -----BEGIN PUBLIC KEY-----\n// MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A...\n// -----END PUBLIC KEY-----\n\n// Decode PEM back to key\nPublicKey decoded = PEMDecoder.of().decode(pemPublicKey, PublicKey.class);\n\n// Also works with certificates, private keys, and CRLs\n// Supports PKCS#8, X.509, and encrypted private keys"
     }
   },
   "kotlin": {
