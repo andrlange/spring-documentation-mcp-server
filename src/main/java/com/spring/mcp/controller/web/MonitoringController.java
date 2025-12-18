@@ -187,6 +187,24 @@ public class MonitoringController {
     // ==================== HTMX Fragment Endpoints ====================
 
     /**
+     * Refresh endpoint for AJAX partial updates.
+     * Returns the full page HTML which is then parsed client-side to update specific sections.
+     * This preserves expanded/collapsed state of groups.
+     *
+     * @param period Time period for metrics
+     * @param model Spring MVC model
+     * @return view name "monitoring/index"
+     */
+    @GetMapping("/refresh")
+    public String refresh(
+            @RequestParam(value = "period", defaultValue = "FIVE_MIN") String period,
+            Model model) {
+
+        // Reuse the main index logic
+        return index(period, model);
+    }
+
+    /**
      * Get overview cards fragment (for HTMX refresh).
      */
     @GetMapping("/fragments/overview")

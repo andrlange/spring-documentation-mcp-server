@@ -5,7 +5,7 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.5.2] - 2025-12-17
+## [1.5.2] - 2025-12-17 - HotFix 1 - 2025-12-18
 
 ### Added
 - **Language Evolution Enhancement**: JEP/KEP specification storage and detail pages
@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Kotlin Code Examples Not Loading**: Fixed code examples not matching Kotlin 2.1/2.2/2.3 features
     - Added missing `multi-dollar-string-interpolation-preview` entry to `language-examples.json`
     - All 21 Kotlin features for versions 2.1-2.3 now have code examples
-
+- **Monitoring page creates flickering by css events**: Fixed by removing looping events from css objects
 ---
 
 ## [1.5.1] - 2025-12-17

@@ -8,11 +8,9 @@
     <style>
         /* Dark Theme Monitoring Dashboard */
         .monitoring-container {
-            background: #0f1318; /* Solid color instead of gradient to reduce GPU load */
+            background: #0f1318;
             min-height: calc(100vh - 60px);
             padding: 1.5rem;
-            contain: layout style; /* Isolate repaints to this container */
-            overflow-x: hidden; /* Prevent horizontal overflow causing render issues */
         }
 
         /* Period Selector */
@@ -34,12 +32,6 @@
             font-size: 0.875rem;
             font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.15s ease, color 0.15s ease; /* Specific properties */
-        }
-
-        .period-btn:hover {
-            background: rgba(99, 179, 237, 0.1);
-            color: #e2e8f0;
         }
 
         .period-btn.active {
@@ -53,14 +45,8 @@
             border-radius: 12px;
             border: 1px solid rgba(99, 179, 237, 0.15);
             padding: 1.25rem;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease; /* Specific properties, not 'all' */
             height: 100%;
-            will-change: auto; /* Only promote to GPU layer on interaction */
-        }
-
-        .metric-card:hover {
-            border-color: rgba(99, 179, 237, 0.3);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Reduced shadow complexity */
+            /* Removed hover transitions to prevent flickering */
         }
 
         .metric-card.success { border-left: 3px solid #48bb78; }
@@ -102,11 +88,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             margin-bottom: 1rem;
             overflow: hidden;
-            transition: border-color 0.2s ease; /* Specific property */
-        }
-
-        .tool-group-card:hover {
-            border-color: rgba(99, 179, 237, 0.3);
+            /* Removed hover transition to prevent flickering */
         }
 
         .tool-group-header {
@@ -116,11 +98,7 @@
             justify-content: space-between;
             align-items: center;
             background: rgba(0, 0, 0, 0.2);
-            transition: background-color 0.15s ease; /* Specific property */
-        }
-
-        .tool-group-header:hover {
-            background: rgba(99, 179, 237, 0.1);
+            /* Removed hover transition to prevent flickering */
         }
 
         .tool-group-title {
@@ -178,11 +156,7 @@
             background: rgba(0, 0, 0, 0.2);
             border-radius: 8px;
             margin-bottom: 0.5rem;
-            transition: background-color 0.15s ease; /* Specific property */
-        }
-
-        .tool-item:hover {
-            background: rgba(99, 179, 237, 0.1);
+            /* Removed hover transition to prevent flickering */
         }
 
         .tool-item:last-child {
@@ -221,13 +195,20 @@
 
         /* Chevron animation */
         .chevron {
-            transition: transform 0.2s ease;
             color: #718096;
-            backface-visibility: hidden; /* Reduce repaints during animation */
         }
 
         .chevron.expanded {
             transform: rotate(180deg);
+        }
+
+        /* CSS-based collapse - simplified without transitions to prevent flickering */
+        .collapsible-body {
+            display: none;
+        }
+
+        .collapsible-body.expanded {
+            display: block;
         }
 
         /* Status indicators - simplified shadows */
@@ -272,7 +253,7 @@
 </head>
 
 <body>
-<div layout:fragment="content" class="monitoring-container" x-data="monitoringDashboard()">
+<div layout:fragment="content" class="monitoring-container" x-data="monitoringDashboard()" x-init="init()">
 
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -433,9 +414,11 @@
     </h4>
 
     <div id="tool-groups" th:if="${toolGroups != null and !toolGroups.isEmpty()}">
-        <div th:each="group : ${toolGroups}" class="tool-group-card" x-data="{ expanded: false }">
+        <div th:each="group, groupStat : ${toolGroups}" class="tool-group-card">
             <!-- Group Header -->
-            <div class="tool-group-header" @click="expanded = !expanded">
+            <div class="tool-group-header"
+                 th:data-group-id="${groupStat.index}"
+                 @click="toggleGroup($event.currentTarget.dataset.groupId)">
                 <div class="tool-group-title">
                     <div class="tool-group-icon" th:classappend="${group.colorClass}">
                         <i th:class="'bi ' + ${group.iconClass}"></i>
@@ -460,12 +443,14 @@
                             <span th:text="${#numbers.formatDecimal(group.errorRate, 1, 1)} + '%'">0.0%</span> errors
                         </div>
                     </div>
-                    <i class="bi bi-chevron-down chevron" :class="{ 'expanded': expanded }"></i>
+                    <i class="bi bi-chevron-down chevron" th:id="'chevron-' + ${groupStat.index}" :class="{ 'expanded': isGroupExpanded($el.id.replace('chevron-', '')) }"></i>
                 </div>
             </div>
 
-            <!-- Group Body (Tools List) -->
-            <div class="tool-group-body" x-show="expanded" x-collapse>
+            <!-- Group Body (Tools List) - CSS-based collapse -->
+            <div class="tool-group-body collapsible-body"
+                 th:id="'group-body-' + ${groupStat.index}"
+                 :class="{ 'expanded': isGroupExpanded($el.id.replace('group-body-', '')) }">
                 <div th:if="${group.tools == null or group.tools.isEmpty()}" class="text-muted text-center py-3">
                     No activity in this period
                 </div>
@@ -526,7 +511,7 @@
                 </div>
             </div>
             <div class="tool-group-body p-0">
-                <table class="table table-dark table-hover mb-0" style="background: transparent;">
+                <table class="table table-dark mb-0" style="background: transparent;">
                     <thead>
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
                             <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Name</th>
@@ -563,8 +548,8 @@
         </div>
 
         <!-- Other API Keys (Expandable) -->
-        <div class="tool-group-card" th:if="${apiKeyUsage.otherKeys != null and !apiKeyUsage.otherKeys.isEmpty()}" x-data="{ expanded: false }">
-            <div class="tool-group-header" @click="expanded = !expanded">
+        <div class="tool-group-card" th:if="${apiKeyUsage.otherKeys != null and !apiKeyUsage.otherKeys.isEmpty()}">
+            <div class="tool-group-header" @click="toggleGroup('other-api-keys')">
                 <div class="tool-group-title">
                     <div class="tool-group-icon secondary">
                         <i class="bi bi-list-ul"></i>
@@ -574,10 +559,11 @@
                         <div class="text-muted small" th:text="${#lists.size(apiKeyUsage.otherKeys)} + ' additional keys'">0 additional keys</div>
                     </div>
                 </div>
-                <i class="bi bi-chevron-down chevron" :class="{ 'expanded': expanded }"></i>
+                <i class="bi bi-chevron-down chevron" :class="{ 'expanded': isGroupExpanded('other-api-keys') }"></i>
             </div>
-            <div class="tool-group-body p-0" x-show="expanded" x-collapse>
-                <table class="table table-dark table-hover mb-0" style="background: transparent;">
+            <div class="tool-group-body p-0 collapsible-body" id="group-body-other-api-keys"
+                 :class="{ 'expanded': isGroupExpanded('other-api-keys') }">
+                <table class="table table-dark mb-0" style="background: transparent;">
                     <thead>
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
                             <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Name</th>
@@ -647,7 +633,7 @@
                 </div>
             </div>
             <div class="tool-group-body p-0">
-                <table class="table table-dark table-hover mb-0" style="background: transparent;">
+                <table class="table table-dark mb-0" style="background: transparent;">
                     <thead>
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
                             <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Client</th>
@@ -679,8 +665,8 @@
         </div>
 
         <!-- Other Clients (Expandable) -->
-        <div class="tool-group-card" th:if="${clientUsage.otherClients != null and !clientUsage.otherClients.isEmpty()}" x-data="{ expanded: false }">
-            <div class="tool-group-header" @click="expanded = !expanded">
+        <div class="tool-group-card" th:if="${clientUsage.otherClients != null and !clientUsage.otherClients.isEmpty()}">
+            <div class="tool-group-header" @click="toggleGroup('other-clients')">
                 <div class="tool-group-title">
                     <div class="tool-group-icon secondary">
                         <i class="bi bi-list-ul"></i>
@@ -690,10 +676,11 @@
                         <div class="text-muted small" th:text="${#lists.size(clientUsage.otherClients)} + ' additional clients'">0 additional clients</div>
                     </div>
                 </div>
-                <i class="bi bi-chevron-down chevron" :class="{ 'expanded': expanded }"></i>
+                <i class="bi bi-chevron-down chevron" :class="{ 'expanded': isGroupExpanded('other-clients') }"></i>
             </div>
-            <div class="tool-group-body p-0" x-show="expanded" x-collapse>
-                <table class="table table-dark table-hover mb-0" style="background: transparent;">
+            <div class="tool-group-body p-0 collapsible-body" id="group-body-other-clients"
+                 :class="{ 'expanded': isGroupExpanded('other-clients') }">
+                <table class="table table-dark mb-0" style="background: transparent;">
                     <thead>
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
                             <th class="text-muted" style="font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.75rem 1rem;">Client</th>
@@ -743,11 +730,55 @@
                 autoRefreshInterval: /*[[${autoRefreshSeconds}]]*/ 30,
                 refreshTimer: null,
                 lastUpdated: new Date().toLocaleTimeString(),
+                expandedGroups: new Set(),
+                storageKey: 'monitoring-expanded-groups',
 
                 init() {
+                    // Restore expanded states from localStorage
+                    this.loadExpandedStates();
+
                     if (this.autoRefresh) {
                         this.startAutoRefresh();
                     }
+
+                    // Update the last updated timestamp
+                    this.updateTimestamp();
+                },
+
+                loadExpandedStates() {
+                    try {
+                        const saved = localStorage.getItem(this.storageKey);
+                        if (saved) {
+                            const arr = JSON.parse(saved);
+                            this.expandedGroups = new Set(arr);
+                        }
+                    } catch (e) {
+                        console.warn('Could not load expanded states:', e);
+                        this.expandedGroups = new Set();
+                    }
+                },
+
+                saveExpandedStates() {
+                    try {
+                        localStorage.setItem(this.storageKey, JSON.stringify([...this.expandedGroups]));
+                    } catch (e) {
+                        console.warn('Could not save expanded states:', e);
+                    }
+                },
+
+                toggleGroup(groupId) {
+                    if (this.expandedGroups.has(groupId)) {
+                        this.expandedGroups.delete(groupId);
+                    } else {
+                        this.expandedGroups.add(groupId);
+                    }
+                    // Force reactivity update
+                    this.expandedGroups = new Set(this.expandedGroups);
+                    this.saveExpandedStates();
+                },
+
+                isGroupExpanded(groupId) {
+                    return this.expandedGroups.has(groupId);
                 },
 
                 changePeriod(period) {
@@ -766,7 +797,7 @@
                 startAutoRefresh() {
                     this.stopAutoRefresh();
                     this.refreshTimer = setInterval(() => {
-                        window.location.reload();
+                        this.refreshData();
                     }, this.autoRefreshInterval * 1000);
                 },
 
@@ -775,6 +806,77 @@
                         clearInterval(this.refreshTimer);
                         this.refreshTimer = null;
                     }
+                },
+
+                async refreshData() {
+                    try {
+                        // Fetch updated HTML fragment via HTMX-style request
+                        const response = await fetch('/monitoring/refresh?period=' + this.selectedPeriod, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'text/html'
+                            }
+                        });
+
+                        if (response.ok) {
+                            const html = await response.text();
+                            this.updateContent(html);
+                            this.updateTimestamp();
+                        }
+                    } catch (error) {
+                        console.warn('Auto-refresh failed:', error);
+                        // Fall back to full page reload on error
+                        // window.location.reload();
+                    }
+                },
+
+                updateContent(html) {
+                    // Parse the response and update specific sections
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // Update overview cards
+                    const newOverview = doc.getElementById('overview-cards');
+                    const currentOverview = document.getElementById('overview-cards');
+                    if (newOverview && currentOverview) {
+                        currentOverview.innerHTML = newOverview.innerHTML;
+                    }
+
+                    // Update tool groups metrics (but preserve expanded state via CSS classes)
+                    const newToolGroups = doc.getElementById('tool-groups');
+                    const currentToolGroups = document.getElementById('tool-groups');
+                    if (newToolGroups && currentToolGroups) {
+                        // Update each group's stats and metrics without losing expanded state
+                        const newGroups = newToolGroups.querySelectorAll('.tool-group-card');
+                        const currentGroups = currentToolGroups.querySelectorAll('.tool-group-card');
+
+                        newGroups.forEach((newGroup, index) => {
+                            if (currentGroups[index]) {
+                                // Update stats in header
+                                const newStats = newGroup.querySelector('.tool-group-stats');
+                                const currentStats = currentGroups[index].querySelector('.tool-group-stats');
+                                if (newStats && currentStats) {
+                                    currentStats.innerHTML = newStats.innerHTML;
+                                }
+
+                                // Update tools in body (preserve expanded state)
+                                const newBody = newGroup.querySelector('.tool-group-body');
+                                const currentBody = currentGroups[index].querySelector('.tool-group-body');
+                                if (newBody && currentBody) {
+                                    const wasExpanded = currentBody.classList.contains('expanded');
+                                    currentBody.innerHTML = newBody.innerHTML;
+                                    // Re-apply expanded class
+                                    if (wasExpanded) {
+                                        currentBody.classList.add('expanded');
+                                    }
+                                }
+                            }
+                        });
+                    }
+                },
+
+                updateTimestamp() {
+                    this.lastUpdated = new Date().toLocaleTimeString();
                 },
 
                 destroy() {
