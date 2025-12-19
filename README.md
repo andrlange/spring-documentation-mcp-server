@@ -10,7 +10,7 @@
 >
 > **Purpose**: My main goal is to create demo applications using my own specifications to explore AI-assisted development workflows.
 
-### (Current Version 1.5.2 - HotFix 2 - Language Evolution Enhancement, Monitoring Page Issues solved, JEP Mismatches)
+### (Current Version 1.5.3 - User Display Name, Spring Boot 3.5.9)
 
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
@@ -70,6 +70,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
+| **1.5.3** | 2025-12-19 | User display name, Spring Boot 3.5.9                         |
 | **1.5.2** | 2025-12-17 | JEP/KEP specs, detail pages, getLanguageFeatureExample tool  |
 | **1.5.1** | 2025-12-17 | Javadoc MCP tools transaction rollback fix                   |
 | **1.5.0** | 2025-12-16 | MCP Monitoring Dashboard with real-time metrics and analytics |
@@ -725,7 +726,7 @@ Query Java and Kotlin language evolution:
 
 > use spring to find all deprecated features since Java 8
 
-> use spring to get the Java version requirements for Spring Boot 3.5.8
+> use spring to get the Java version requirements for Spring Boot 3.5.9
 
 > use spring to search for pattern matching features in Java
 ```
@@ -791,9 +792,9 @@ Get dependency information and project setup assistance:
 
 > use spring to show all dependencies in the Security category
 
-> use spring to show AI dependencies compatible with Spring Boot 3.5.8
+> use spring to show AI dependencies compatible with Spring Boot 3.5.9
 
-> use spring to list all dependency categories for Spring Boot 4.0.0
+> use spring to list all dependency categories for Spring Boot 4.0.1
 ```
 
 **Available Initializr Tools**:
@@ -1016,7 +1017,7 @@ lsof -ti :8080 | xargs kill -9
 ## Roadmap
 
 ### Completed
-- [x] Spring Boot 3.5.8 with Spring AI 1.1.1 MCP Server
+- [x] Spring Boot 3.5.9 with Spring AI 1.1.2 MCP Server
 - [x] PostgreSQL database with full-text search
 - [x] 43 MCP tools (documentation, migration, language, flavors, groups, initializr, javadocs)
 - [x] Web management UI with all features

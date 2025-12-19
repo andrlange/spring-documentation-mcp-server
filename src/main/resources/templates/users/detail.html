@@ -72,6 +72,18 @@
 
                     <div class="row mb-3">
                         <div class="col-md-4">
+                            <strong><i class="bi bi-person-badge"></i> Display Name:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            <span th:text="${user.displayName ?: 'Not set'}"
+                                  th:classappend="${user.displayName == null} ? 'text-muted fst-italic'">
+                                John Doe
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
                             <strong><i class="bi bi-envelope"></i> Email:</strong>
                         </div>
                         <div class="col-md-8">

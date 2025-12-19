@@ -97,6 +97,27 @@
                             <div class="form-text">Unique username for login. Only letters, numbers, and . _ - allowed</div>
                         </div>
 
+                        <!-- Display Name -->
+                        <div class="mb-3">
+                            <label for="displayName" class="form-label">Display Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-person-badge"></i>
+                                </span>
+                                <input type="text"
+                                       class="form-control"
+                                       th:classappend="${#fields.hasErrors('displayName')} ? 'is-invalid'"
+                                       id="displayName"
+                                       th:field="*{displayName}"
+                                       placeholder="e.g., John Doe"
+                                       maxlength="100">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('displayName')}">
+                                    <span th:errors="*{displayName}">Display name error</span>
+                                </div>
+                            </div>
+                            <div class="form-text">Optional friendly name shown in the UI instead of the username</div>
+                        </div>
+
                         <!-- Email -->
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
@@ -239,6 +260,9 @@
                 <div class="card-body">
                     <h6>Username</h6>
                     <p class="small">Choose a unique username. It must be alphanumeric and can include dots (.), underscores (_), and hyphens (-).</p>
+
+                    <h6>Display Name</h6>
+                    <p class="small">Optional friendly name displayed in the UI. If set, this will be shown instead of the username in greetings and headers.</p>
 
                     <h6>Password Security</h6>
                     <p class="small">Passwords must be at least 8 characters long. Use a combination of letters, numbers, and special characters for better security.</p>

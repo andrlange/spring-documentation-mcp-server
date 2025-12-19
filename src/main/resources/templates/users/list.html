@@ -61,11 +61,12 @@
                                 <th scope="col" style="width: 5%;">
                                     <i class="bi bi-person text-spring-green"></i>
                                 </th>
-                                <th scope="col" style="width: 20%;">Username</th>
-                                <th scope="col" style="width: 30%;">Email</th>
-                                <th scope="col" style="width: 15%;">Role</th>
+                                <th scope="col" style="width: 15%;">Username</th>
+                                <th scope="col" style="width: 15%;">Display Name</th>
+                                <th scope="col" style="width: 20%;">Email</th>
+                                <th scope="col" style="width: 12%;">Role</th>
                                 <th scope="col" style="width: 10%;" class="text-center">Status</th>
-                                <th scope="col" style="width: 20%;">Actions</th>
+                                <th scope="col" style="width: 13%;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -82,6 +83,12 @@
                                        th:text="${user.username}">
                                         admin
                                     </a>
+                                </td>
+                                <td class="align-middle">
+                                    <span th:if="${user.displayName != null and !user.displayName.isBlank()}"
+                                          th:text="${user.displayName}">John Doe</span>
+                                    <span th:if="${user.displayName == null or user.displayName.isBlank()}"
+                                          class="text-muted fst-italic">—</span>
                                 </td>
                                 <td class="align-middle">
                                     <span th:text="${user.email ?: 'N/A'}">admin@springmcp.local</span>

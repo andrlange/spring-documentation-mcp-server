@@ -80,10 +80,10 @@ public class ProjectMetadata {
 
     /**
      * Spring Boot version.
-     * Default: Current stable version (e.g., "3.5.8")
+     * Default: Current stable version (e.g., "3.5.9")
      */
     @Builder.Default
-    private String bootVersion = "3.5.8";
+    private String bootVersion = "3.5.9";
 
     /**
      * Java version.

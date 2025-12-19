@@ -268,6 +268,7 @@ public class UsersController {
 
                 // Update fields
                 existingUser.setUsername(user.getUsername());
+                existingUser.setDisplayName(user.getDisplayName());
                 existingUser.setEmail(user.getEmail());
                 existingUser.setRole(user.getRole());
                 existingUser.setEnabled(user.getEnabled());

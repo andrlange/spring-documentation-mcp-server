@@ -37,7 +37,7 @@ public final class VersionRangeUtil {
     /**
      * Check if a version is within a Maven version range.
      *
-     * @param version the version to check (e.g., "3.5.8")
+     * @param version the version to check (e.g., "3.5.9")
      * @param range the Maven version range (e.g., "[3.0.0,4.0.0)")
      * @return true if version is within range, false otherwise
      */
@@ -118,7 +118,7 @@ public final class VersionRangeUtil {
      * Normalize a version string by removing qualifiers.
      *
      * @param version the version string (e.g., "3.5.8-SNAPSHOT")
-     * @return normalized version (e.g., "3.5.8")
+     * @return normalized version (e.g., "3.5.9")
      */
     public static String normalizeVersion(String version) {
         if (version == null) {

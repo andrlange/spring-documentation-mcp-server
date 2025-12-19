@@ -21,7 +21,7 @@ import java.time.LocalDate;
 public class VersionData {
 
     /**
-     * Version number (e.g., "3.5.8", "1.1.0")
+     * Version number (e.g., "3.5.9", "1.1.2")
      */
     private String version;
 

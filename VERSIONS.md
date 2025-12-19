@@ -6,9 +6,9 @@ This document tracks the version configuration across all project files to ensur
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Application** | 1.5.2 | Spring MCP Server |
+| **Application** | 1.5.3 | Spring MCP Server |
 | **Java (JDK)** | 25 | LTS version |
-| **Spring Boot** | 3.5.8 | Latest stable |
+| **Spring Boot** | 3.5.9 | Latest stable |
 | **Spring AI** | 1.1.2 | MCP Server support |
 | **PostgreSQL** | 18-alpine | Docker image |
 | **Gradle** | 9.2.0 | Build tool |
@@ -20,7 +20,7 @@ Needs to track the changelog
 
 ### build.gradle
 ```groovy
-version = '1.5.2'
+version = '1.5.3'
 
 java {
     toolchain {
@@ -52,7 +52,7 @@ services:
   postgres:
     image: postgres:18-alpine
   spring-boot-documentation-mcp-server:
-    image: spring-boot-documentation-mcp-server:1.5.2
+    image: spring-boot-documentation-mcp-server:1.5.3
 ```
 
 ### application.yml
@@ -61,20 +61,20 @@ services:
 info:
   app:
     name: Spring MCP Server
-    version: 1.5.2
+    version: 1.5.3
   spring-boot:
-    version: 3.5.8
+    version: 3.5.9
 
 spring:
   ai:
     mcp:
       server:
-        version: "1.5.2"
+        version: "1.5.3"
 ```
 
 ### build-container.sh
 ```bash
-APP_VERSION="1.5.2"
+APP_VERSION="1.5.3"
 JAVA_VERSION="25"
 ```
 
@@ -114,6 +114,11 @@ Update these locations when adding/removing tools:
 - `.claude/memory/project-memory.md` - MCP Tools count
 
 ## Changelog
+
+### v1.5.3 (2025-12-19)
+- Added optional Display Name field for users (shown in header and dashboard welcome message)
+- Bumped Spring Boot from 3.5.8 to 3.5.9
+- Database migration V20 for display_name column
 
 ### v1.5.2 (2025-12-17)
 - Language Evolution Enhancement: JEP/KEP specification storage and detail pages

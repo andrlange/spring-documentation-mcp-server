@@ -37,6 +37,9 @@ public class User {
     @Column(length = 255)
     private String email;
 
+    @Column(name = "display_name", length = 100)
+    private String displayName;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     @Builder.Default
@@ -70,5 +73,12 @@ public class User {
      */
     public boolean isViewer() {
         return role == UserRole.VIEWER;
+    }
+
+    /**
+     * Get display name if set, otherwise return username
+     */
+    public String getDisplayNameOrUsername() {
+        return displayName != null && !displayName.isBlank() ? displayName : username;
     }
 }

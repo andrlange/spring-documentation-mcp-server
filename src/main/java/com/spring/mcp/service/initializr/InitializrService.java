@@ -162,7 +162,7 @@ public class InitializrService {
      * <p>Returns only categories that have at least one compatible dependency,
      * with each category's content filtered to only include compatible dependencies.</p>
      *
-     * @param bootVersion the Spring Boot version to filter by (e.g., "3.5.8", "4.0.0")
+     * @param bootVersion the Spring Boot version to filter by (e.g., "3.5.9", "4.0.1")
      * @return list of categories with compatible dependencies only
      */
     public List<DependencyCategory> getDependencyCategoriesForVersion(String bootVersion) {

@@ -4,9 +4,14 @@ import com.spring.mcp.config.FlavorsFeatureConfig;
 import com.spring.mcp.config.InitializrProperties;
 import com.spring.mcp.config.LanguageEvolutionFeatureConfig;
 import com.spring.mcp.config.OpenRewriteFeatureConfig;
+import com.spring.mcp.model.entity.User;
+import com.spring.mcp.repository.UserRepository;
 import com.spring.mcp.service.SettingsService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
@@ -21,6 +26,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
  */
 @ControllerAdvice
 @RequiredArgsConstructor
+@Slf4j
 public class GlobalModelAttributesAdvice {
 
     private final SettingsService settingsService;
@@ -28,6 +34,7 @@ public class GlobalModelAttributesAdvice {
     private final LanguageEvolutionFeatureConfig languageEvolutionFeatureConfig;
     private final FlavorsFeatureConfig flavorsFeatureConfig;
     private final InitializrProperties initializrProperties;
+    private final UserRepository userRepository;
 
     @Value("${info.app.name:Spring MCP Server}")
     private String appName;
@@ -35,7 +42,7 @@ public class GlobalModelAttributesAdvice {
     @Value("${info.app.version:1.0.0}")
     private String appVersion;
 
-    @Value("${info.spring-boot.version:3.5.8}")
+    @Value("${info.spring-boot.version:3.5.9}")
     private String springBootVersion;
 
     /**
@@ -154,5 +161,30 @@ public class GlobalModelAttributesAdvice {
     @ModelAttribute("springBootVersion")
     public String addSpringBootVersion() {
         return springBootVersion;
+    }
+
+    /**
+     * Adds the current user's display name (or username as fallback) to all models.
+     * This allows templates to show a personalized greeting.
+     *
+     * @return the display name if set, otherwise the username, or null if not authenticated
+     */
+    @ModelAttribute("currentUserDisplayName")
+    public String addCurrentUserDisplayName() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return null;
+        }
+
+        String username = authentication.getName();
+        return userRepository.findByUsername(username)
+                .map(user -> {
+                    String result = user.getDisplayNameOrUsername();
+                    log.debug("User '{}' displayName='{}', returning='{}'",
+                            username, user.getDisplayName(), result);
+                    return result;
+                })
+                .orElse(username);
     }
 }

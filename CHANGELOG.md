@@ -5,6 +5,26 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.3] - 2025-12-19
+
+### Added
+- **User Display Name**: Optional display name field for users
+    - New `displayName` column in users table (max 100 characters)
+    - Display name shown in header navbar and dashboard welcome message
+    - Falls back to username if display name is not set
+    - User form updated with Display Name input field
+    - User detail page shows Display Name (or "Not set" if empty)
+    - Helper method `getDisplayNameOrUsername()` for unified access
+- **Database Migration**: `V20__user_display_name.sql` adds display_name column
+
+### Changed
+- **Spring Boot**: Bumped from 3.5.8 to 3.5.9
+- Header fragment now uses global model attribute `currentUserDisplayName` instead of `sec:authentication="name"`
+- Dashboard welcome banner now shows display name (if set) instead of username
+- UsersController now saves displayName field on user update
+
+---
+
 ## [1.5.2] - 2025-12-17 - HotFix 1 & HotFix 2 - 2025-12-18
 
 ### Added
@@ -400,6 +420,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.5.3 | 2025-12-19 | User display name, Spring Boot 3.5.9 |
 | 1.5.2 | 2025-12-17 | JEP/KEP detail pages, synthesized code examples, dark theme fixes |
 | 1.5.1 | 2025-12-17 | Javadoc MCP tools transaction rollback fix |
 | 1.5.0 | 2025-12-16 | MCP Monitoring Dashboard, GitHub sync fixes and performance improvements |

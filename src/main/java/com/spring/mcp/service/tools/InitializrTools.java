@@ -138,7 +138,7 @@ public class InitializrTools {
     public CompatibilityResult initializrCheckCompatibility(
             @McpToolParam(description = "Dependency ID to check (e.g., 'web', 'data-jpa')")
             String dependencyId,
-            @McpToolParam(description = "Spring Boot version to check against (e.g., '3.5.8', '4.0.0')")
+            @McpToolParam(description = "Spring Boot version to check against (e.g., '3.5.9', '4.0.0')")
             String bootVersion
     ) {
         log.info("Tool: initializrCheckCompatibility - dependencyId={}, bootVersion={}", dependencyId, bootVersion);

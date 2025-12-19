@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
  *
  * <p>Version types include:</p>
  * <ul>
- *   <li>GA (General Availability) - Stable releases (e.g., 3.5.8)</li>
+ *   <li>GA (General Availability) - Stable releases (e.g., 3.5.9)</li>
  *   <li>RC (Release Candidate) - Pre-release versions (e.g., 4.0.0-RC1)</li>
  *   <li>M (Milestone) - Development snapshots (e.g., 4.0.0-M3)</li>
  *   <li>SNAPSHOT - Nightly builds (e.g., 4.0.0-SNAPSHOT)</li>
@@ -33,12 +33,12 @@ import lombok.NoArgsConstructor;
 public class BootVersion {
 
     /**
-     * Version identifier (e.g., "3.5.8", "4.0.0-RC1", "3.6.0-SNAPSHOT").
+     * Version identifier (e.g., "3.5.9", "4.0.0-RC1", "3.6.0-SNAPSHOT").
      */
     private String id;
 
     /**
-     * Display name for the version (e.g., "3.5.8 (SNAPSHOT)", "4.0.0 (RC1)").
+     * Display name for the version (e.g., "3.5.9 (SNAPSHOT)", "4.0.0 (RC1)").
      */
     private String name;
 
@@ -99,7 +99,7 @@ public class BootVersion {
     /**
      * Extract the major version number.
      *
-     * @return major version (e.g., 3 for "3.5.8")
+     * @return major version (e.g., 3 for "3.5.9")
      */
     public int getMajorVersion() {
         if (id == null) return 0;
@@ -113,7 +113,7 @@ public class BootVersion {
     /**
      * Extract the minor version number.
      *
-     * @return minor version (e.g., 5 for "3.5.8")
+     * @return minor version (e.g., 5 for "3.5.9")
      */
     public int getMinorVersion() {
         if (id == null) return 0;
@@ -127,7 +127,7 @@ public class BootVersion {
     /**
      * Extract the patch version number.
      *
-     * @return patch version (e.g., 8 for "3.5.8")
+     * @return patch version (e.g., 8 for "3.5.9")
      */
     public int getPatchVersion() {
         if (id == null) return 0;

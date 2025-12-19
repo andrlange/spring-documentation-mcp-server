@@ -32,8 +32,8 @@ public class MigrationTools {
         Use this BEFORE generating code for a specific Spring Boot version.
         """)
     public MigrationGuideDto getSpringMigrationGuide(
-            @McpToolParam(description = "Source Spring Boot version (e.g., '3.5.8')") String fromVersion,
-            @McpToolParam(description = "Target Spring Boot version (e.g., '4.0.0')") String toVersion
+            @McpToolParam(description = "Source Spring Boot version (e.g., '3.5.9')") String fromVersion,
+            @McpToolParam(description = "Target Spring Boot version (e.g., '4.0.1')") String toVersion
     ) {
         log.info("Tool: getSpringMigrationGuide - from {} to {}", fromVersion, toVersion);
 
