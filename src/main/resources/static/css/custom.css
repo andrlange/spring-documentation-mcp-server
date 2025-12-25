@@ -859,3 +859,145 @@ code.bg-light {
 .modal-header.bg-warning .btn-close {
     filter: none;
 }
+
+/* ============================================
+   Collapsible Sidebar
+   ============================================ */
+
+/* Sidebar Toggle Button Container */
+.sidebar-toggle-container {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--spring-border-dark);
+    margin-bottom: 0.5rem;
+}
+
+.sidebar-toggle-btn {
+    background-color: transparent;
+    border: 1px solid var(--spring-border-dark);
+    color: var(--text-secondary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-toggle-btn:hover {
+    background-color: var(--spring-hover-bg);
+    color: var(--spring-green);
+    border-color: var(--spring-green);
+}
+
+.sidebar-toggle-btn i {
+    transition: transform 0.3s ease;
+}
+
+/* Nav text styling */
+.sidebar .nav-link .nav-text {
+    margin-left: 0.5rem;
+    transition: opacity 0.2s ease, width 0.2s ease;
+    white-space: nowrap;
+}
+
+/* Sidebar icons - ensure consistent sizing */
+.sidebar .nav-link i {
+    width: 1.25rem;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Sidebar collapsed state */
+.sidebar.collapsed {
+    width: 60px !important;
+    min-width: 60px !important;
+    max-width: 60px !important;
+}
+
+.sidebar.collapsed .nav-text {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    display: none;
+}
+
+.sidebar.collapsed .nav-link {
+    justify-content: center;
+    padding: 0.75rem 0.5rem;
+}
+
+.sidebar.collapsed .nav-link i {
+    margin-right: 0;
+    font-size: 1.1rem;
+}
+
+.sidebar.collapsed .sidebar-toggle-container {
+    justify-content: center;
+    padding: 0.5rem 0.25rem;
+}
+
+.sidebar.collapsed .sidebar-toggle-btn i {
+    transform: rotate(180deg);
+}
+
+/* Tooltip for collapsed sidebar items */
+.sidebar.collapsed .nav-link {
+    position: relative;
+}
+
+.sidebar.collapsed .nav-link::after {
+    content: attr(data-title);
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--spring-nav-bg);
+    color: var(--text-primary);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    z-index: 1000;
+    margin-left: 0.5rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--spring-border-dark);
+    font-size: 0.875rem;
+}
+
+.sidebar.collapsed .nav-link:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Main content area adjustment when sidebar is collapsed */
+main {
+    transition: all 0.3s ease;
+}
+
+main.sidebar-collapsed {
+    flex: 0 0 calc(100% - 60px) !important;
+    max-width: calc(100% - 60px) !important;
+    width: calc(100% - 60px) !important;
+}
+
+/* Smooth transition for sidebar width */
+.sidebar {
+    transition: width 0.3s ease, min-width 0.3s ease, max-width 0.3s ease;
+}
+
+/* Hide hr separator in collapsed state */
+.sidebar.collapsed hr {
+    margin: 0.5rem 0.25rem;
+}
+
+/* Responsive adjustments for collapsed sidebar */
+@media (max-width: 768px) {
+    .sidebar.collapsed {
+        width: 50px !important;
+        min-width: 50px !important;
+    }
+}

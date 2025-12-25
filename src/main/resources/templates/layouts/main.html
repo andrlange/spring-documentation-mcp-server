@@ -22,6 +22,50 @@
 
     <!-- Custom CSS -->
     <link th:href="@{/css/custom.css}" rel="stylesheet">
+
+    <!-- Early sidebar state application to prevent flicker -->
+    <script>
+        (function() {
+            var isCollapsed = localStorage.getItem('spring-mcp-sidebar-collapsed') === 'true';
+            if (isCollapsed) {
+                document.documentElement.classList.add('sidebar-is-collapsed');
+            }
+        })();
+    </script>
+    <style>
+        /* Apply collapsed state immediately via CSS when class is on html element */
+        .sidebar-is-collapsed .sidebar {
+            width: 60px !important;
+            min-width: 60px !important;
+            max-width: 60px !important;
+        }
+        .sidebar-is-collapsed .sidebar .nav-text {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+            display: none;
+        }
+        .sidebar-is-collapsed .sidebar .nav-link {
+            justify-content: center;
+            padding: 0.75rem 0.5rem;
+        }
+        .sidebar-is-collapsed .sidebar .nav-link i {
+            margin-right: 0;
+            font-size: 1.1rem;
+        }
+        .sidebar-is-collapsed .sidebar .sidebar-toggle-container {
+            justify-content: center;
+            padding: 0.5rem 0.25rem;
+        }
+        .sidebar-is-collapsed .sidebar .sidebar-toggle-btn i {
+            transform: rotate(180deg);
+        }
+        .sidebar-is-collapsed main {
+            flex: 0 0 calc(100% - 60px) !important;
+            max-width: calc(100% - 60px) !important;
+            width: calc(100% - 60px) !important;
+        }
+    </style>
 </head>
 <body class="d-flex flex-column min-vh-100">
 

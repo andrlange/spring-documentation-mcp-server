@@ -290,6 +290,9 @@ public class SpringProjectPageCrawlerService {
             // Parse version to extract major, minor, patch
             VersionParser.ParsedVersion parsed = VersionParser.parse(version);
 
+            // Determine the state of the incoming version
+            VersionState incomingState = determineVersionState(version);
+
             // Find or create the version record
             Optional<ProjectVersion> existingVersion = projectVersionRepository
                 .findByProjectAndVersion(project, version);
@@ -301,18 +304,44 @@ public class SpringProjectPageCrawlerService {
                 log.debug("Found existing version: {}, updating with crawled data", version);
                 projectVersion = existingVersion.get();
             } else {
-                log.debug("Version {} not found, creating new record", version);
-                projectVersion = new ProjectVersion();
-                projectVersion.setProject(project);
-                projectVersion.setVersion(version);
-                projectVersion.setMajorVersion(parsed.getMajorVersion());
-                projectVersion.setMinorVersion(parsed.getMinorVersion());
-                projectVersion.setPatchVersion(parsed.getPatchVersion());
+                // For GA versions, check if there's a corresponding SNAPSHOT version to replace
+                if (incomingState == VersionState.GA) {
+                    String snapshotVersion = version + "-SNAPSHOT";
+                    Optional<ProjectVersion> snapshotVersionOpt = projectVersionRepository
+                        .findByProjectAndVersion(project, snapshotVersion);
 
-                // Set default state based on version string
-                projectVersion.setState(determineVersionState(version));
-
-                isNew = true;
+                    if (snapshotVersionOpt.isPresent()) {
+                        // Update the SNAPSHOT version to become the GA version
+                        log.info("Upgrading SNAPSHOT version {} to GA version {} for project: {}",
+                            snapshotVersion, version, project.getName());
+                        projectVersion = snapshotVersionOpt.get();
+                        projectVersion.setVersion(version);
+                        projectVersion.setState(VersionState.GA);
+                        // Patch version might have changed (e.g., 2.0.1 vs 2.0.0)
+                        projectVersion.setPatchVersion(parsed.getPatchVersion());
+                        isNew = false;
+                    } else {
+                        log.debug("Version {} not found, creating new record", version);
+                        projectVersion = new ProjectVersion();
+                        projectVersion.setProject(project);
+                        projectVersion.setVersion(version);
+                        projectVersion.setMajorVersion(parsed.getMajorVersion());
+                        projectVersion.setMinorVersion(parsed.getMinorVersion());
+                        projectVersion.setPatchVersion(parsed.getPatchVersion());
+                        projectVersion.setState(incomingState);
+                        isNew = true;
+                    }
+                } else {
+                    log.debug("Version {} not found, creating new record", version);
+                    projectVersion = new ProjectVersion();
+                    projectVersion.setProject(project);
+                    projectVersion.setVersion(version);
+                    projectVersion.setMajorVersion(parsed.getMajorVersion());
+                    projectVersion.setMinorVersion(parsed.getMinorVersion());
+                    projectVersion.setPatchVersion(parsed.getPatchVersion());
+                    projectVersion.setState(incomingState);
+                    isNew = true;
+                }
             }
 
             boolean updated = false;
@@ -353,11 +382,17 @@ public class SpringProjectPageCrawlerService {
                 updated = true;
             }
 
-            if (updated || isNew) {
+            // Track if this was a SNAPSHOT upgrade (for logging)
+            boolean wasSnapshotUpgrade = !isNew && projectVersion.getState() == VersionState.GA
+                && version.equals(projectVersion.getVersion());
+
+            if (updated || isNew || wasSnapshotUpgrade) {
                 projectVersionRepository.save(projectVersion);
                 updatedCount++;
                 if (isNew) {
                     log.info("Created new version: {} for project: {}", version, project.getName());
+                } else if (wasSnapshotUpgrade) {
+                    log.info("Upgraded version to GA: {} for project: {}", version, project.getName());
                 } else {
                     log.debug("Updated version: {} for project: {}", version, project.getName());
                 }
