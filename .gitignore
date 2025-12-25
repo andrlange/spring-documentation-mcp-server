@@ -57,6 +57,7 @@ PHASE*.md
 docs/CRAWLER_DESIGN.md
 CLAUDE.md
 .claude/
+.auto-claude/
 docs/
 .vols/
 .fastRequest/

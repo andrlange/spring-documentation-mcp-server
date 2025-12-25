@@ -201,5 +201,10 @@
     </div>
 
     <script th:src="@{/vendor/bootstrap/bootstrap.bundle.min.js}"></script>
+
+    <!-- Reset sidebar state on login page (ensures expanded menu after fresh login) -->
+    <script>
+        localStorage.removeItem('spring-mcp-sidebar-collapsed');
+    </script>
 </body>
 </html>

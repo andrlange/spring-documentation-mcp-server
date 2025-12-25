@@ -6,7 +6,7 @@ This document tracks the version configuration across all project files to ensur
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Application** | 1.5.3 | Spring MCP Server |
+| **Application** | 1.5.4 | Spring MCP Server |
 | **Java (JDK)** | 25 | LTS version |
 | **Spring Boot** | 3.5.9 | Latest stable |
 | **Spring AI** | 1.1.2 | MCP Server support |
@@ -20,7 +20,7 @@ Needs to track the changelog
 
 ### build.gradle
 ```groovy
-version = '1.5.3'
+version = '1.5.4'
 
 java {
     toolchain {
@@ -39,20 +39,13 @@ FROM eclipse-temurin:25-jdk-alpine AS builder
 FROM eclipse-temurin:25-jre-alpine
 ```
 
-### docker-compose.yml
-```yaml
-services:
-  postgres:
-    image: postgres:18-alpine
-```
-
 ### docker-compose-all.yaml
 ```yaml
 services:
   postgres:
     image: postgres:18-alpine
   spring-boot-documentation-mcp-server:
-    image: spring-boot-documentation-mcp-server:1.5.3
+    image: spring-boot-documentation-mcp-server:1.5.4
 ```
 
 ### application.yml
@@ -61,7 +54,7 @@ services:
 info:
   app:
     name: Spring MCP Server
-    version: 1.5.3
+    version: 1.5.4
   spring-boot:
     version: 3.5.9
 
@@ -69,12 +62,12 @@ spring:
   ai:
     mcp:
       server:
-        version: "1.5.3"
+        version: "1.5.4"
 ```
 
 ### build-container.sh
 ```bash
-APP_VERSION="1.5.3"
+APP_VERSION="1.5.4"
 JAVA_VERSION="25"
 ```
 
@@ -114,6 +107,12 @@ Update these locations when adding/removing tools:
 - `.claude/memory/project-memory.md` - MCP Tools count
 
 ## Changelog
+
+### v1.5.4 (2025-12-25)
+- Added collapsible sidebar menu with toggle button
+- Sidebar state persisted in localStorage
+- Icons-only view when collapsed with tooltips on hover
+- Smooth CSS transitions for collapse/expand animation
 
 ### v1.5.3 (2025-12-19)
 - Added optional Display Name field for users (shown in header and dashboard welcome message)
