@@ -80,7 +80,9 @@ When updating versions, ensure all files listed above are updated consistently:
    - `application.yml` - `info.app.version` and `spring.ai.mcp.server.version`
    - `build-container.sh` - `APP_VERSION`
    - `docker-compose-all.yaml` - `spring-boot-documentation-mcp-server` image tag
-   - `README.md` - jar filename and changelog
+   - `README.md` - version header, jar filename, and Recent Releases table
+   - `CHANGELOG.md` - add new version entry and update Version Summary table
+   - `VERSIONS.md` - update changelog section at the bottom
 
 2. **Spring Boot Version Update**:
    - `build.gradle` - Spring Boot plugin version

@@ -5,6 +5,38 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.4] - 2025-12-25
+
+### Added
+- **Collapsible Sidebar Menu**: New toggle button to collapse/expand the sidebar navigation
+    - Toggle button (chevron icon) at the top of the sidebar
+    - When collapsed: Shows only icons (60px width) with tooltips on hover
+    - When expanded: Shows full menu items with icons and text
+    - Main content area dynamically expands/contracts when sidebar is toggled
+    - Smooth CSS transitions (0.3s) for both sidebar and main content
+- **State Persistence**: Sidebar collapsed/expanded state saved to localStorage
+    - State persists across page navigations without flicker
+    - Early state application via inline script prevents visual flickering during navigation
+- **Session-Aware Reset**: Sidebar state automatically resets to expanded on the login page
+    - Ensures a consistent expanded menu after logout and fresh login
+
+### Fixed
+- **SNAPSHOT → GA Version Transition**: Fixed bug where SNAPSHOT versions remained orphaned when GA versions were released
+    - Example: Spring Modulith 2.0.1-SNAPSHOT was not being upgraded to 2.0.1 GA during sync
+    - The sync now properly detects corresponding SNAPSHOT versions and upgrades them in-place
+    - Preserves existing data (compatibility mappings, documentation links) during the upgrade
+
+### Changed
+- Files modified:
+    - `src/main/resources/templates/fragments/sidebar.html` - Added toggle button and wrapped menu text in span elements
+    - `src/main/resources/templates/layouts/main.html` - Added inline script and CSS for early state application
+    - `src/main/resources/templates/login.html` - Added localStorage reset script
+    - `src/main/resources/static/css/custom.css` - Added collapsible sidebar styles
+    - `src/main/resources/static/js/app.js` - Added toggle functionality with localStorage persistence
+    - `src/main/java/com/spring/mcp/service/sync/SpringProjectPageCrawlerService.java` - Added SNAPSHOT → GA upgrade logic
+
+---
+
 ## [1.5.3] - 2025-12-19
 
 ### Added
@@ -420,6 +452,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.5.4 | 2025-12-25 | Collapsible sidebar menu, SNAPSHOT → GA version sync fix |
 | 1.5.3 | 2025-12-19 | User display name, Spring Boot 3.5.9 |
 | 1.5.2 | 2025-12-17 | JEP/KEP detail pages, synthesized code examples, dark theme fixes |
 | 1.5.1 | 2025-12-17 | Javadoc MCP tools transaction rollback fix |
