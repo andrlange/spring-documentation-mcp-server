@@ -35,7 +35,7 @@ public class DocumentationServiceImpl implements DocumentationService {
     private final SpringProjectRepository projectRepository;
     private final ProjectVersionRepository versionRepository;
 
-    @Value("${mcp.documentation.search.default-limit:20}")
+    @Value("${mcp.documentation.search.default-limit:5}")
     private int defaultLimit;
 
     @Value("${mcp.documentation.search.max-results:50}")

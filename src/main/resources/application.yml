@@ -221,7 +221,7 @@ mcp:
 
     search:
       max-results: 50
-      default-limit: 20
+      default-limit: 5
       cache-ttl: 3600 # 1 hour
       highlight: true
 

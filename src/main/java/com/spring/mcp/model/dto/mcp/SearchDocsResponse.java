@@ -21,6 +21,30 @@ public class SearchDocsResponse {
     private Integer returnedResults;
     private Long executionTimeMs;
     private List<DocumentationResult> results;
+    private PaginationInfo pagination;
+
+    // Constructor without pagination (for backward compatibility)
+    public SearchDocsResponse(String query, SearchFilters filters, Long totalResults,
+                              Integer returnedResults, Long executionTimeMs,
+                              List<DocumentationResult> results) {
+        this.query = query;
+        this.filters = filters;
+        this.totalResults = totalResults;
+        this.returnedResults = returnedResults;
+        this.executionTimeMs = executionTimeMs;
+        this.results = results;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class PaginationInfo {
+        private Integer currentPage;
+        private Integer pageSize;
+        private Integer totalPages;
+        private Boolean hasMore;
+    }
 
     @Data
     @NoArgsConstructor

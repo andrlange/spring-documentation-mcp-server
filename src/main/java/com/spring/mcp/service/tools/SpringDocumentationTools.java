@@ -52,23 +52,32 @@ public class SpringDocumentationTools {
      * Search Spring documentation with full-text search
      */
     @McpTool(description = """
-        Search across all Spring documentation. Supports filtering by project, version, and documentation type.
+        Search across all Spring documentation with pagination support.
+        Supports filtering by project, version, and documentation type.
         Returns relevant documentation links and snippets with relevance ranking.
+        Use pagination (page parameter) to navigate through large result sets.
         """)
     public SearchDocsResponse searchSpringDocs(
             @McpToolParam(description = "Search query string (required)") String query,
             @McpToolParam(description = "Project slug filter (optional, e.g., 'spring-boot', 'spring-framework')") String project,
             @McpToolParam(description = "Version filter (optional, e.g., '3.5.7')") String version,
-            @McpToolParam(description = "Documentation type filter (optional, e.g., 'reference', 'api')") String docType) {
+            @McpToolParam(description = "Documentation type filter (optional, e.g., 'reference', 'api')") String docType,
+            @McpToolParam(description = "Results per page (optional, default 5, max 10)") Integer limit,
+            @McpToolParam(description = "Page number starting from 1 (optional, default 1). Use with limit for pagination.") Integer page) {
 
-        log.info("Tool: searchSpringDocs - query={}, project={}, version={}, docType={}", query, project, version, docType);
+        int pageSize = (limit != null && limit > 0) ? Math.min(limit, 10) : 5;
+        int pageNum = (page != null && page > 0) ? page : 1;
+        int offset = (pageNum - 1) * pageSize;
+
+        log.info("Tool: searchSpringDocs - query={}, project={}, version={}, docType={}, page={}, pageSize={}",
+                query, project, version, docType, pageNum, pageSize);
         Instant startTime = Instant.now();
 
         if (query == null || query.isBlank()) {
             throw new IllegalArgumentException("Query parameter is required");
         }
 
-        List<DocumentationDto> results = documentationService.search(query, project, version, docType);
+        List<DocumentationDto> results = documentationServiceImpl.searchDocumentation(query, project, version, docType, pageSize, offset);
         long totalResults = documentationServiceImpl.countSearchResults(query, project, version, docType);
         long executionTimeMs = Duration.between(startTime, Instant.now()).toMillis();
 
@@ -82,7 +91,14 @@ public class SpringDocumentationTools {
             .map(this::mapToDocumentationResult)
             .collect(Collectors.toList());
 
-        return new SearchDocsResponse(
+        // Calculate pagination info
+        int totalPages = (int) Math.ceil((double) totalResults / pageSize);
+        boolean hasMore = pageNum < totalPages;
+        SearchDocsResponse.PaginationInfo pagination = new SearchDocsResponse.PaginationInfo(
+            pageNum, pageSize, totalPages, hasMore
+        );
+
+        SearchDocsResponse response = new SearchDocsResponse(
             query,
             filters,
             totalResults,
@@ -90,6 +106,8 @@ public class SpringDocumentationTools {
             executionTimeMs,
             docResults
         );
+        response.setPagination(pagination);
+        return response;
     }
 
     /**
