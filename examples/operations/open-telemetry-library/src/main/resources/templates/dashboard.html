@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-graph-up text-otel me-2"></i>Dashboard</h2>
+        <span class="text-muted" th:text="${#temporals.format(#temporals.createNow(), 'EEEE, MMMM d, yyyy')}">Today's Date</span>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card otel">
+                <div class="card-body">
+                    <div class="stat-icon"><i class="bi bi-book"></i></div>
+                    <div class="stat-value text-primary" th:text="${stats.totalBooks}">0</div>
+                    <div class="stat-label">Total Books</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card otel">
+                <div class="card-body">
+                    <div class="stat-icon"><i class="bi bi-people"></i></div>
+                    <div class="stat-value text-success" th:text="${stats.activeMembers}">0</div>
+                    <div class="stat-label">Active Members</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card otel">
+                <div class="card-body">
+                    <div class="stat-icon"><i class="bi bi-arrow-left-right"></i></div>
+                    <div class="stat-value text-info" th:text="${stats.activeLoans}">0</div>
+                    <div class="stat-label">Active Loans</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card otel">
+                <div class="card-body">
+                    <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div class="stat-value text-danger" th:text="${stats.overdueLoans}">0</div>
+                    <div class="stat-label">Overdue Loans</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-book-half me-2"></i>Catalog Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Total Book Copies</span>
+                        <span th:text="${stats.totalBooks}">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Available Copies</span>
+                        <span th:text="${stats.availableBooks}">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Categories</span>
+                        <span th:text="${stats.totalCategories}">0</span>
+                    </div>
+                    <div class="progress mt-3" style="height: 8px;">
+                        <div class="progress-bar bg-success" role="progressbar"
+                             th:style="'width: ' + (${stats.totalBooks > 0} ? ${(stats.availableBooks * 100 / stats.totalBooks)} : 0) + '%'">
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        <span th:text="${stats.totalBooks > 0 ? #numbers.formatDecimal(stats.availableBooks * 100.0 / stats.totalBooks, 1, 1) : 0}">0</span>% availability
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-person-check me-2"></i>Member Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Total Members</span>
+                        <span th:text="${stats.totalMembers}">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Active Members</span>
+                        <span class="badge bg-success" th:text="${stats.activeMembers}">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Inactive Members</span>
+                        <span th:text="${stats.totalMembers - stats.activeMembers}">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-graph-up me-2 text-otel"></i>Observability</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Metrics</span>
+                        <span class="badge bg-otel">OTLP</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Traces</span>
+                        <span class="badge bg-otel">Tempo</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Logs</span>
+                        <span class="badge bg-otel">Loki</span>
+                    </div>
+                    <a href="http://localhost:3000" target="_blank" class="btn btn-grafana btn-sm mt-3 w-100">
+                        <i class="bi bi-bar-chart-fill me-2"></i>Open Grafana
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions & Recent Activity -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a th:href="@{/simulation}" class="btn btn-otel">
+                            <i class="bi bi-activity me-2"></i>Run Simulation
+                        </a>
+                        <a th:href="@{/status}" class="btn btn-outline-light">
+                            <i class="bi bi-clipboard-data me-2"></i>View Status
+                        </a>
+                        <a href="http://localhost:3000/explore" target="_blank" class="btn btn-grafana">
+                            <i class="bi bi-search me-2"></i>Explore Traces
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Loans</h6>
+                    <a th:href="@{/loans}" class="btn btn-sm btn-outline-light">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Book</th>
+                                    <th>Member</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="loan : ${recentLoans}">
+                                    <td th:text="${loan.bookIsbn()}">ISBN</td>
+                                    <td th:text="${loan.memberId()}">Member</td>
+                                    <td th:text="${#temporals.format(loan.dueDate(), 'MMM d')}">Date</td>
+                                    <td>
+                                        <span class="badge"
+                                              th:classappend="${loan.isOverdue()} ? 'bg-danger' : 'bg-success'"
+                                              th:text="${loan.isOverdue()} ? 'Overdue' : 'Active'">Status</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(recentLoans)}">
+                                    <td colspan="4" class="text-center text-muted py-3">No recent loans</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

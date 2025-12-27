@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-people me-2"></i>Members</h2>
+        <span class="badge bg-primary" th:text="${#lists.size(members)} + ' members'">0 members</span>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Search members..."
+                               id="searchInput" onkeyup="filterMembers()">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="typeFilter" onchange="filterMembers()">
+                        <option value="">All Types</option>
+                        <option value="STUDENT">Student</option>
+                        <option value="FACULTY">Faculty</option>
+                        <option value="STAFF">Staff</option>
+                        <option value="PUBLIC">Public</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter" onchange="filterMembers()">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Members Grid -->
+    <div class="row g-4" id="membersGrid">
+        <div class="col-md-6 col-lg-4" th:each="member : ${members}"
+             th:data-type="${member.membershipType().name()}"
+             th:data-active="${member.active()}">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="card-title mb-1" th:text="${member.name()}">Member Name</h5>
+                            <small class="text-muted" th:text="${member.email()}">email@example.com</small>
+                        </div>
+                        <span class="badge"
+                              th:classappend="${member.active()} ? 'bg-success' : 'bg-secondary'"
+                              th:text="${member.active()} ? 'Active' : 'Inactive'">Status</span>
+                    </div>
+                    <div class="mb-3">
+                        <span class="badge bg-info me-1" th:text="${member.membershipType().name()}">Type</span>
+                        <small class="text-muted">
+                            Max loans: <span th:text="${member.membershipType().getMaxLoans()}">0</span>
+                        </small>
+                    </div>
+                    <div class="d-flex justify-content-between text-muted small">
+                        <span>
+                            <i class="bi bi-calendar me-1"></i>
+                            Joined <span th:text="${#temporals.format(member.joinDate(), 'MMM yyyy')}">Date</span>
+                        </span>
+                        <span>
+                            <i class="bi bi-book me-1"></i>
+                            <span th:text="${member.currentLoans()}">0</span> active loans
+                        </span>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar"
+                             th:classappend="${member.currentLoans() >= member.membershipType().getMaxLoans()} ? 'bg-danger' : 'bg-success'"
+                             role="progressbar"
+                             th:style="'width: ' + (${member.membershipType().getMaxLoans() > 0} ? ${member.currentLoans() * 100 / member.membershipType().getMaxLoans()} : 0) + '%'">
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        Loan capacity: <span th:text="${member.currentLoans()}">0</span>/<span th:text="${member.membershipType().getMaxLoans()}">0</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function filterMembers() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const typeFilter = document.getElementById('typeFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            const cards = document.querySelectorAll('#membersGrid > div');
+
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                const memberType = card.dataset.type;
+                const isActive = card.dataset.active === 'true';
+
+                let show = true;
+
+                if (searchTerm && !text.includes(searchTerm)) {
+                    show = false;
+                }
+                if (typeFilter && memberType !== typeFilter) {
+                    show = false;
+                }
+                if (statusFilter === 'active' && !isActive) {
+                    show = false;
+                }
+                if (statusFilter === 'inactive' && isActive) {
+                    show = false;
+                }
+
+                card.style.display = show ? '' : 'none';
+            });
+        }
+    </script>
+</th:block>
+</body>
+</html>

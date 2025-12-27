@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-book me-2"></i>Books Catalog</h2>
+        <span class="badge bg-primary" th:text="${#lists.size(books)} + ' books'">0 books</span>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Search books..."
+                               id="searchInput" onkeyup="filterBooks()">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="categoryFilter" onchange="filterBooks()">
+                        <option value="">All Categories</option>
+                        <option th:each="category : ${categories}"
+                                th:value="${category.name()}"
+                                th:text="${category.name()}">Category</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="availabilityFilter" onchange="filterBooks()">
+                        <option value="">All Availability</option>
+                        <option value="available">Available</option>
+                        <option value="borrowed">Borrowed</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Books Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0" id="booksTable">
+                    <thead>
+                        <tr>
+                            <th>ISBN</th>
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>Category</th>
+                            <th>Year</th>
+                            <th class="text-center">Copies</th>
+                            <th class="text-center">Available</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="book : ${books}"
+                            th:data-category="${book.category()}"
+                            th:data-available="${book.availableCopies() > 0}">
+                            <td><code th:text="${book.isbn()}">ISBN</code></td>
+                            <td th:text="${book.title()}">Title</td>
+                            <td th:text="${book.author()}">Author</td>
+                            <td>
+                                <span class="badge bg-info" th:text="${book.category()}">Category</span>
+                            </td>
+                            <td th:text="${book.publishYear()}">Year</td>
+                            <td class="text-center" th:text="${book.totalCopies()}">0</td>
+                            <td class="text-center">
+                                <span class="badge"
+                                      th:classappend="${book.availableCopies() > 0} ? 'bg-success' : 'bg-danger'"
+                                      th:text="${book.availableCopies()}">0</span>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${book.availableCopies() > 0} ? 'bg-success' : 'bg-warning'"
+                                      th:text="${book.availableCopies() > 0} ? 'Available' : 'All Borrowed'">Status</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function filterBooks() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const availabilityFilter = document.getElementById('availabilityFilter').value;
+
+            const rows = document.querySelectorAll('#booksTable tbody tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const category = row.dataset.category;
+                const isAvailable = row.dataset.available === 'true';
+
+                let show = true;
+
+                if (searchTerm && !text.includes(searchTerm)) {
+                    show = false;
+                }
+                if (categoryFilter && category !== categoryFilter) {
+                    show = false;
+                }
+                if (availabilityFilter === 'available' && !isAvailable) {
+                    show = false;
+                }
+                if (availabilityFilter === 'borrowed' && isAvailable) {
+                    show = false;
+                }
+
+                row.style.display = show ? '' : 'none';
+            });
+        }
+    </script>
+</th:block>
+</body>
+</html>

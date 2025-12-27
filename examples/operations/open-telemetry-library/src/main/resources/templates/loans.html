@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="bi bi-arrow-left-right me-2"></i>
+            <span th:text="${currentPage == 'overdue'} ? 'Overdue Loans' : 'All Loans'">Loans</span>
+        </h2>
+        <div>
+            <a th:href="@{/loans}" class="btn btn-sm"
+               th:classappend="${currentPage == 'loans'} ? 'btn-otel' : 'btn-outline-light'">
+                All Loans
+            </a>
+            <a th:href="@{/loans/overdue}" class="btn btn-sm"
+               th:classappend="${currentPage == 'overdue'} ? 'btn-danger' : 'btn-outline-light'">
+                <i class="bi bi-exclamation-triangle me-1"></i>Overdue
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card otel">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-value h4 mb-0" th:text="${#lists.size(loans)}">0</div>
+                            <div class="stat-label small">Showing</div>
+                        </div>
+                        <i class="bi bi-list-ul fs-3 text-muted"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loans Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Loan ID</th>
+                            <th>Book ISBN</th>
+                            <th>Member ID</th>
+                            <th>Loan Date</th>
+                            <th>Due Date</th>
+                            <th>Return Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="loan : ${loans}"
+                            th:classappend="${loan.isOverdue()} ? 'table-danger' : ''">
+                            <td><code th:text="${loan.id()}">ID</code></td>
+                            <td>
+                                <i class="bi bi-book me-1"></i>
+                                <span th:text="${loan.bookIsbn()}">ISBN</span>
+                            </td>
+                            <td>
+                                <i class="bi bi-person me-1"></i>
+                                <span th:text="${loan.memberId()}">Member</span>
+                            </td>
+                            <td th:text="${#temporals.format(loan.loanDate(), 'MMM d, yyyy')}">Date</td>
+                            <td>
+                                <span th:text="${#temporals.format(loan.dueDate(), 'MMM d, yyyy')}">Date</span>
+                                <span th:if="${loan.isOverdue() and loan.returnDate() == null}"
+                                      class="badge bg-danger ms-1">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                </span>
+                            </td>
+                            <td th:text="${loan.returnDate() != null} ? ${#temporals.format(loan.returnDate(), 'MMM d, yyyy')} : '-'">Date</td>
+                            <td>
+                                <span th:if="${loan.returnDate() != null}" class="badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>Returned
+                                </span>
+                                <span th:if="${loan.returnDate() == null and loan.isOverdue()}" class="badge bg-danger">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>Overdue
+                                </span>
+                                <span th:if="${loan.returnDate() == null and !loan.isOverdue()}" class="badge bg-info">
+                                    <i class="bi bi-hourglass-split me-1"></i>Active
+                                </span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(loans)}">
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                No loans found
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

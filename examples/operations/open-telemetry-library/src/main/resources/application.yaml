@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: opentelemetry-library
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0  # 100% sampling for demo
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  metrics:
+    tags:
+      application: opentelemetry-library
+  # OTLP Metrics export
+  otlp:
+    metrics:
+      export:
+        url: http://localhost:4318/v1/metrics
+  # OTLP Tracing and Logging export (Spring Boot 4.x property path)
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/traces
+    logging:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/logs
+
+# OpenTelemetry resource attributes
+otel:
+  resource:
+    attributes:
+      service.name: opentelemetry-library
+      service.version: 1.0.0
+      deployment.environment: development
+
+server:
+  port: 8088
+  shutdown: immediate
+
+logging:
+  level:
+    com.example.library: INFO
+    org.springframework.boot.actuator.autoconfigure.opentelemetry: DEBUG
+    org.springframework.boot.docker.compose: DEBUG
+    io.opentelemetry: DEBUG
+    io.micrometer.tracing: DEBUG

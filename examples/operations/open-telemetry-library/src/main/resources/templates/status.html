@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>System Status</h2>
+        <span class="text-muted">Compare with Grafana metrics</span>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-database me-2"></i>Application Data</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th class="text-end">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><i class="bi bi-book me-2"></i>Total Books</td>
+                                <td class="text-end"><span class="badge bg-primary" th:text="${stats.totalBooks}">0</span></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-check-circle me-2 text-success"></i>Available Copies</td>
+                                <td class="text-end"><span class="badge bg-success" th:text="${stats.availableBooks}">0</span></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-tags me-2"></i>Categories</td>
+                                <td class="text-end"><span class="badge bg-info" th:text="${stats.totalCategories}">0</span></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-people me-2"></i>Total Members</td>
+                                <td class="text-end"><span class="badge bg-primary" th:text="${stats.totalMembers}">0</span></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-person-check me-2 text-success"></i>Active Members</td>
+                                <td class="text-end"><span class="badge bg-success" th:text="${stats.activeMembers}">0</span></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-arrow-left-right me-2"></i>Total Loans</td>
+                                <td class="text-end"><span class="badge bg-primary" th:text="${stats.totalLoans}">0</span></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-hourglass-split me-2 text-info"></i>Active Loans</td>
+                                <td class="text-end"><span class="badge bg-info" th:text="${stats.activeLoans}">0</span></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-exclamation-triangle me-2 text-danger"></i>Overdue Loans</td>
+                                <td class="text-end"><span class="badge bg-danger" th:text="${stats.overdueLoans}">0</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-graph-up text-otel me-2"></i>Grafana Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        The following metrics are exported to Grafana via OTLP:
+                    </p>
+                    <table class="table table-dark table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Metric Name</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code class="text-otel">library.books.total</code></td>
+                                <td><span class="badge bg-info">Gauge</span></td>
+                            </tr>
+                            <tr>
+                                <td><code class="text-otel">library.books.available</code></td>
+                                <td><span class="badge bg-info">Gauge</span></td>
+                            </tr>
+                            <tr>
+                                <td><code class="text-otel">library.books.searches</code></td>
+                                <td><span class="badge bg-warning">Counter</span></td>
+                            </tr>
+                            <tr>
+                                <td><code class="text-otel">library.members.total</code></td>
+                                <td><span class="badge bg-info">Gauge</span></td>
+                            </tr>
+                            <tr>
+                                <td><code class="text-otel">library.members.active</code></td>
+                                <td><span class="badge bg-info">Gauge</span></td>
+                            </tr>
+                            <tr>
+                                <td><code class="text-otel">library.loans.active</code></td>
+                                <td><span class="badge bg-info">Gauge</span></td>
+                            </tr>
+                            <tr>
+                                <td><code class="text-otel">library.loans.overdue</code></td>
+                                <td><span class="badge bg-info">Gauge</span></td>
+                            </tr>
+                            <tr>
+                                <td><code class="text-otel">library.loans.created</code></td>
+                                <td><span class="badge bg-warning">Counter</span></td>
+                            </tr>
+                            <tr>
+                                <td><code class="text-otel">library.loans.returned</code></td>
+                                <td><span class="badge bg-warning">Counter</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-link-45deg me-2"></i>Verify in Grafana</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        Open Grafana and use the Explore feature to query these metrics.
+                        Use PromQL queries like:
+                    </p>
+                    <div class="bg-dark p-2 rounded mb-3">
+                        <code class="text-otel">library_books_total{application="opentelemetry-library"}</code>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="http://localhost:3000/explore?left=%7B%22datasource%22:%22prometheus%22%7D"
+                           target="_blank" class="btn btn-grafana">
+                            <i class="bi bi-bar-chart-fill me-2"></i>Open Grafana Metrics
+                        </a>
+                        <a th:href="@{/actuator/metrics}" target="_blank" class="btn btn-outline-light">
+                            <i class="bi bi-speedometer2 me-2"></i>Actuator Metrics
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actuator Endpoints -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-terminal me-2"></i>Actuator Endpoints</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <a th:href="@{/actuator/health}" target="_blank" class="btn btn-outline-light w-100 mb-2">
+                                <i class="bi bi-heart-pulse me-2"></i>Health
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a th:href="@{/actuator/info}" target="_blank" class="btn btn-outline-light w-100 mb-2">
+                                <i class="bi bi-info-circle me-2"></i>Info
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a th:href="@{/actuator/metrics}" target="_blank" class="btn btn-outline-light w-100 mb-2">
+                                <i class="bi bi-speedometer2 me-2"></i>Metrics
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::content})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-activity text-otel me-2"></i>Trace Simulation</h2>
+        <span class="text-muted">Generate traces for Grafana/Tempo</span>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-8">
+            <div class="card simulation-panel">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-sliders me-2"></i>Simulation Controls</h5>
+                </div>
+                <div class="card-body" x-data="simulationPanel()">
+                    <!-- Latency Selection -->
+                    <div class="mb-4">
+                        <label class="form-label">Simulated Latency</label>
+                        <div class="btn-group w-100" role="group">
+                            <button type="button" class="btn btn-outline-light latency-btn"
+                                    :class="{'selected': latency === 10}"
+                                    @click="latency = 10">10ms</button>
+                            <button type="button" class="btn btn-outline-light latency-btn"
+                                    :class="{'selected': latency === 50}"
+                                    @click="latency = 50">50ms</button>
+                            <button type="button" class="btn btn-outline-light latency-btn"
+                                    :class="{'selected': latency === 500}"
+                                    @click="latency = 500">500ms</button>
+                        </div>
+                        <small class="text-muted">Select latency to simulate for each operation</small>
+                    </div>
+
+                    <!-- Request Count -->
+                    <div class="mb-4">
+                        <label class="form-label">Number of Requests: <span x-text="requestCount" class="badge bg-otel"></span></label>
+                        <input type="range" class="form-range" min="1" max="100" x-model="requestCount">
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>1</span>
+                            <span>50</span>
+                            <span>100</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="mb-4">
+                        <label class="form-label">Actions</label>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-otel" @click="runSimulation('search')" :disabled="running">
+                                <i class="bi bi-search me-2"></i>Search Books
+                                <span class="spinner-border spinner-border-sm ms-2" x-show="running && action === 'search'"></span>
+                            </button>
+                            <button class="btn btn-otel" @click="runSimulation('loan')" :disabled="running">
+                                <i class="bi bi-arrow-right me-2"></i>Create Loans
+                                <span class="spinner-border spinner-border-sm ms-2" x-show="running && action === 'loan'"></span>
+                            </button>
+                            <button class="btn btn-otel" @click="runSimulation('return')" :disabled="running">
+                                <i class="bi bi-arrow-left me-2"></i>Return Books
+                                <span class="spinner-border spinner-border-sm ms-2" x-show="running && action === 'return'"></span>
+                            </button>
+                            <button class="btn btn-primary" @click="runSimulation('mixed')" :disabled="running">
+                                <i class="bi bi-shuffle me-2"></i>Mixed Operations
+                                <span class="spinner-border spinner-border-sm ms-2" x-show="running && action === 'mixed'"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Results -->
+                    <div x-show="results.length > 0">
+                        <label class="form-label">Trace Results</label>
+                        <div class="simulation-result bg-dark p-3 rounded">
+                            <template x-for="result in results" :key="result.traceId">
+                                <div class="mb-2">
+                                    <span class="text-muted" x-text="result.operation"></span>
+                                    <span class="trace-id ms-2" x-text="result.traceId"></span>
+                                    <span class="badge bg-success ms-2" x-text="result.duration + 'ms'"></span>
+                                    <a :href="'http://localhost:3000/explore?left=%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22datasource%22:%7B%22type%22:%22tempo%22%7D,%22queryType%22:%22traceql%22,%22query%22:%22' + result.traceId + '%22%7D%5D%7D'"
+                                       target="_blank" class="btn btn-sm btn-grafana ms-2">
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                    </a>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>How It Works</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">
+                        The simulation generates real HTTP requests to the REST API endpoints,
+                        creating traces that flow through:
+                    </p>
+                    <ol class="small text-muted">
+                        <li>HTTP Controller layer</li>
+                        <li>Service layer with @Observed</li>
+                        <li>Data access layer (simulated)</li>
+                    </ol>
+                    <p class="small text-muted mb-0">
+                        Each request generates a unique trace ID that can be viewed in Grafana/Tempo.
+                    </p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-link-45deg me-2"></i>Quick Links</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="http://localhost:3000/explore?left=%7B%22datasource%22:%22tempo%22%7D"
+                           target="_blank" class="btn btn-grafana btn-sm">
+                            <i class="bi bi-search me-2"></i>Tempo - Traces
+                        </a>
+                        <a href="http://localhost:3000/explore?left=%7B%22datasource%22:%22loki%22%7D"
+                           target="_blank" class="btn btn-grafana btn-sm">
+                            <i class="bi bi-file-text me-2"></i>Loki - Logs
+                        </a>
+                        <a href="http://localhost:3000/explore?left=%7B%22datasource%22:%22prometheus%22%7D"
+                           target="_blank" class="btn btn-grafana btn-sm">
+                            <i class="bi bi-graph-up me-2"></i>Prometheus - Metrics
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function simulationPanel() {
+            return {
+                latency: 50,
+                requestCount: 10,
+                running: false,
+                action: '',
+                results: [],
+
+                async runSimulation(action) {
+                    this.running = true;
+                    this.action = action;
+                    this.results = [];
+
+                    try {
+                        const response = await fetch('/api/simulate/' + action + '?count=' + this.requestCount + '&latencyMs=' + this.latency, {
+                            method: 'POST'
+                        });
+                        const data = await response.json();
+                        this.results = data.traces || [];
+                    } catch (error) {
+                        console.error('Simulation error:', error);
+                    } finally {
+                        this.running = false;
+                    }
+                }
+            }
+        }
+    </script>
+</th:block>
+</body>
+</html>

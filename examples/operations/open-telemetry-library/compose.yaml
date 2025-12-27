@@ -1,0 +1,15 @@
+services:
+  grafana-lgtm:
+    image: 'grafana/otel-lgtm:latest'
+    ports:
+      - '3000:3000'    # Grafana UI
+      - '4317:4317'    # OTLP gRPC
+      - '4318:4318'    # OTLP HTTP
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - ./grafana/provisioning/dashboards/spring-boot-dashboard.json:/otel-lgtm/spring-boot-dashboard.json:ro
+      - ./grafana/provisioning/dashboards/dashboard.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/spring-boot-dashboards.yaml:ro
+    labels:
+      org.springframework.boot.service-connection: otel-collector
