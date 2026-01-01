@@ -914,6 +914,15 @@ code.bg-light {
     width: 60px !important;
     min-width: 60px !important;
     max-width: 60px !important;
+    overflow: visible !important; /* Allow tooltips to show outside sidebar */
+    z-index: 1050; /* Above main content for tooltips */
+}
+
+.sidebar.collapsed .nav,
+.sidebar.collapsed .nav-item,
+.sidebar.collapsed .position-sticky,
+.sidebar.collapsed > div {
+    overflow: visible !important;
 }
 
 .sidebar.collapsed .nav-text {
@@ -943,12 +952,13 @@ code.bg-light {
 }
 
 /* Tooltip for collapsed sidebar items */
-.sidebar.collapsed .nav-link {
+.sidebar.collapsed .nav-link[data-sidebar-tooltip] {
     position: relative;
+    overflow: visible;
 }
 
-.sidebar.collapsed .nav-link::after {
-    content: attr(data-title);
+.sidebar.collapsed .nav-link[data-sidebar-tooltip]::after {
+    content: attr(data-sidebar-tooltip);
     position: absolute;
     left: 100%;
     top: 50%;
@@ -961,14 +971,15 @@ code.bg-light {
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.2s ease, visibility 0.2s ease;
-    z-index: 1000;
+    z-index: 9999;
     margin-left: 0.5rem;
     box-shadow: var(--shadow-md);
     border: 1px solid var(--spring-border-dark);
     font-size: 0.875rem;
+    pointer-events: none;
 }
 
-.sidebar.collapsed .nav-link:hover::after {
+.sidebar.collapsed .nav-link[data-sidebar-tooltip]:hover::after {
     opacity: 1;
     visibility: visible;
 }

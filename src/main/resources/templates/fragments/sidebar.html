@@ -12,56 +12,56 @@
         </div>
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link" th:href="@{/dashboard}" th:classappend="${activePage == 'dashboard'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/dashboard}" th:classappend="${activePage == 'dashboard'} ? 'active' : ''" data-sidebar-tooltip="Dashboard">
                     <i class="bi bi-speedometer2"></i><span class="nav-text">Dashboard</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" th:href="@{/spring-boot}" th:classappend="${activePage == 'spring-boot'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/spring-boot}" th:classappend="${activePage == 'spring-boot'} ? 'active' : ''" data-sidebar-tooltip="Spring Boot">
                     <i class="bi bi-rocket-takeoff"></i><span class="nav-text">Spring Boot</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" th:href="@{/projects}" th:classappend="${activePage == 'projects'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/projects}" th:classappend="${activePage == 'projects'} ? 'active' : ''" data-sidebar-tooltip="Projects">
                     <i class="bi bi-folder"></i><span class="nav-text">Projects</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" th:href="@{/versions}" th:classappend="${activePage == 'versions'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/versions}" th:classappend="${activePage == 'versions'} ? 'active' : ''" data-sidebar-tooltip="Versions">
                     <i class="bi bi-tags"></i><span class="nav-text">Versions</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" th:href="@{/documentation}" th:classappend="${activePage == 'documentation'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/documentation}" th:classappend="${activePage == 'documentation'} ? 'active' : ''" data-sidebar-tooltip="Documentation">
                     <i class="bi bi-book"></i><span class="nav-text">Documentation</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" th:href="@{/examples}" th:classappend="${activePage == 'examples'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/examples}" th:classappend="${activePage == 'examples'} ? 'active' : ''" data-sidebar-tooltip="Code Examples">
                     <i class="bi bi-code-square"></i><span class="nav-text">Code Examples</span>
                 </a>
             </li>
             <!-- OpenRewrite Recipes (conditional) -->
             <li class="nav-item" th:if="${openRewriteEnabled}">
-                <a class="nav-link" th:href="@{/recipes}" th:classappend="${activePage == 'recipes'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/recipes}" th:classappend="${activePage == 'recipes'} ? 'active' : ''" data-sidebar-tooltip="Recipes">
                     <i class="bi bi-arrow-repeat" style="color: #f97316;"></i><span class="nav-text">Recipes</span>
                 </a>
             </li>
             <!-- Language Evolution (conditional) -->
             <li class="nav-item" th:if="${languageEvolutionEnabled}">
-                <a class="nav-link" th:href="@{/languages}" th:classappend="${activePage == 'languages'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/languages}" th:classappend="${activePage == 'languages'} ? 'active' : ''" data-sidebar-tooltip="Languages">
                     <i class="bi bi-braces" style="color: #fbbf24;"></i><span class="nav-text">Languages</span>
                 </a>
             </li>
             <!-- Flavors (conditional) -->
             <li class="nav-item" th:if="${flavorsEnabled}">
-                <a class="nav-link" th:href="@{/flavors}" th:classappend="${activePage == 'flavors'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/flavors}" th:classappend="${activePage == 'flavors'} ? 'active' : ''" data-sidebar-tooltip="Flavors">
                     <i class="bi bi-palette" style="color: #a78bfa;"></i><span class="nav-text">Flavors</span>
                 </a>
             </li>
             <!-- Spring Initializr (conditional) -->
             <li class="nav-item" th:if="${initializrEnabled}">
-                <a class="nav-link" th:href="@{/initializr}" th:classappend="${activePage == 'initializr'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/initializr}" th:classappend="${activePage == 'initializr'} ? 'active' : ''" data-sidebar-tooltip="Initializr">
                     <i class="bi bi-box-seam" style="color: #6ee7b7;"></i><span class="nav-text">Initializr</span>
                 </a>
             </li>
@@ -70,28 +70,28 @@
 
             <!-- Admin Only -->
             <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                <a class="nav-link" th:href="@{/sync}" th:classappend="${activePage == 'sync'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/sync}" th:classappend="${activePage == 'sync'} ? 'active' : ''" data-sidebar-tooltip="Synchronization">
                     <i class="bi bi-arrow-repeat" style="color: #60a5fa;"></i><span class="nav-text">Synchronization</span>
                 </a>
             </li>
             <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                <a class="nav-link" th:href="@{/users}" th:classappend="${activePage == 'users' or activePage == 'groups'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/users}" th:classappend="${activePage == 'users' or activePage == 'groups'} ? 'active' : ''" data-sidebar-tooltip="Users & Groups">
                     <i class="bi bi-people"></i><span class="nav-text">Users & Groups</span>
                 </a>
             </li>
             <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                <a class="nav-link" th:href="@{/settings}" th:classappend="${activePage == 'settings'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/settings}" th:classappend="${activePage == 'settings'} ? 'active' : ''" data-sidebar-tooltip="Settings">
                     <i class="bi bi-gear"></i><span class="nav-text">Settings</span>
                 </a>
             </li>
             <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-                <a class="nav-link" th:href="@{/monitoring}" th:classappend="${activePage == 'monitoring'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/monitoring}" th:classappend="${activePage == 'monitoring'} ? 'active' : ''" data-sidebar-tooltip="Monitoring">
                     <i class="bi bi-activity" style="color: #63b3ed;"></i><span class="nav-text">Monitoring</span>
                 </a>
             </li>
             <!-- Embeddings (conditional) -->
             <li class="nav-item" sec:authorize="hasRole('ADMIN')" th:if="${embeddingsEnabled}">
-                <a class="nav-link" th:href="@{/embeddings}" th:classappend="${activePage == 'embeddings'} ? 'active' : ''">
+                <a class="nav-link" th:href="@{/embeddings}" th:classappend="${activePage == 'embeddings'} ? 'active' : ''" data-sidebar-tooltip="Embeddings">
                     <i class="bi bi-cpu" style="color: #ec4899;"></i><span class="nav-text">Embeddings</span>
                 </a>
             </li>

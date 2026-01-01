@@ -206,6 +206,7 @@ public class EmbeddingSyncService {
         long examplesTotal = codeExampleRepository.count();
 
         long pendingJobs = embeddingJobRepository.countPendingAndRetryJobs();
+        long failedJobs = embeddingJobRepository.countByStatus(EmbeddingJob.JobStatus.FAILED);
 
         return new EmbeddingStats(
                 docsWithEmbedding, docsTotal,
@@ -213,6 +214,7 @@ public class EmbeddingSyncService {
                 flavorsWithEmbedding, flavorsTotal,
                 examplesWithEmbedding, examplesTotal,
                 pendingJobs,
+                failedJobs,
                 embeddingService.isAvailable(),
                 embeddingService.getProviderName(),
                 embeddingService.getModelName()
@@ -589,6 +591,7 @@ public class EmbeddingSyncService {
             long flavorsWithEmbedding, long flavorsTotal,
             long examplesWithEmbedding, long examplesTotal,
             long pendingJobs,
+            long failedJobs,
             boolean providerAvailable,
             String providerName,
             String modelName

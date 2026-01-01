@@ -32,12 +32,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (!sidebar || !toggleBtn) return;
 
-    // Set data-title attributes for tooltips when collapsed
+    // Set data-sidebar-tooltip attributes for tooltips when collapsed
+    // (only if not already set in HTML)
     const navLinks = sidebar.querySelectorAll('.nav-link');
     navLinks.forEach(function(link) {
-        const navText = link.querySelector('.nav-text');
-        if (navText) {
-            link.setAttribute('data-title', navText.textContent.trim());
+        if (!link.hasAttribute('data-sidebar-tooltip')) {
+            const navText = link.querySelector('.nav-text');
+            if (navText) {
+                link.setAttribute('data-sidebar-tooltip', navText.textContent.trim());
+            }
         }
     });
 

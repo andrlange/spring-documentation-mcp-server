@@ -280,10 +280,11 @@
         </div>
     </div>
 
-    <!-- Provider Status Row -->
+    <!-- Stats Row - 4 cards in one line -->
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="provider-card">
+        <!-- Provider Status -->
+        <div class="col-6 col-md-3">
+            <div class="provider-card h-100">
                 <div class="provider-status">
                     <div class="provider-status-dot" :class="stats.providerAvailable ? 'available' : 'unavailable'"></div>
                     <div>
@@ -302,8 +303,9 @@
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="metric-card purple">
+        <!-- Overall Coverage -->
+        <div class="col-6 col-md-3">
+            <div class="metric-card purple h-100">
                 <div class="metric-label">
                     <i class="bi bi-percent me-1"></i> Overall Coverage
                 </div>
@@ -312,8 +314,9 @@
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="metric-card" :class="stats.pendingJobs > 0 ? 'warning' : 'success'">
+        <!-- Pending Jobs -->
+        <div class="col-6 col-md-3">
+            <div class="metric-card h-100" :class="stats.pendingJobs > 0 ? 'warning' : 'success'">
                 <div class="metric-label">
                     <i class="bi bi-hourglass-split me-1"></i> Pending Jobs
                 </div>
@@ -321,6 +324,19 @@
                      x-text="stats.pendingJobs.toLocaleString()">0</div>
                 <div class="metric-subtitle" x-show="stats.pendingJobs > 0">Processing in background</div>
                 <div class="metric-subtitle" x-show="stats.pendingJobs === 0">All embeddings up to date</div>
+            </div>
+        </div>
+
+        <!-- Failed Jobs -->
+        <div class="col-6 col-md-3">
+            <div class="metric-card h-100" :class="stats.failedJobs > 0 ? 'danger' : 'success'">
+                <div class="metric-label">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Failed Jobs
+                </div>
+                <div class="metric-value" :class="stats.failedJobs > 0 ? 'danger' : 'success'"
+                     x-text="stats.failedJobs.toLocaleString()">0</div>
+                <div class="metric-subtitle" x-show="stats.failedJobs > 0">Entities with empty text</div>
+                <div class="metric-subtitle" x-show="stats.failedJobs === 0">No failures</div>
             </div>
         </div>
     </div>
@@ -566,6 +582,7 @@
                     examplesTotal: initialStats.examplesTotal || 0,
                     examplesCoverage: initialStats.examplesCoverage || 0,
                     pendingJobs: initialStats.pendingJobs || 0,
+                    failedJobs: initialStats.failedJobs || 0,
                     totalWithEmbedding: initialStats.totalWithEmbedding || 0,
                     totalEntities: initialStats.totalEntities || 0,
                     overallCoverage: initialStats.overallCoverage || 0,
@@ -690,6 +707,7 @@
                             this.stats.examplesTotal = data.examplesTotal || 0;
                             this.stats.examplesCoverage = data.examplesCoverage || 0;
                             this.stats.pendingJobs = data.pendingJobs || 0;
+                            this.stats.failedJobs = data.failedJobs || 0;
                             this.stats.totalWithEmbedding = data.totalWithEmbedding || 0;
                             this.stats.totalEntities = data.totalEntities || 0;
                             this.stats.overallCoverage = data.overallCoverage || 0;

@@ -362,10 +362,10 @@ class JavadocToolsTest {
             // When - request 100 results
             List<JavadocSearchResult> results = javadocTools.searchJavadocs(null, null, "chat", 100);
 
-            // Then - should cap at 50
+            // Then - should cap at 50, but fetch double (100) for multi-word filtering
             ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
             verify(classRepository).searchByKeywordGlobalWithPackage(eq("chat"), pageableCaptor.capture());
-            assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(50);
+            assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(100); // 50 * 2 for filtering
         }
 
         @Test
@@ -381,10 +381,10 @@ class JavadocToolsTest {
             // When
             List<JavadocSearchResult> results = javadocTools.searchJavadocs(null, null, "chat", null);
 
-            // Then
+            // Then - defaults to 10, but fetches double (20) for multi-word filtering
             ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
             verify(classRepository).searchByKeywordGlobalWithPackage(eq("chat"), pageableCaptor.capture());
-            assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(10);
+            assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(20); // 10 * 2 for filtering
         }
 
         @Test
