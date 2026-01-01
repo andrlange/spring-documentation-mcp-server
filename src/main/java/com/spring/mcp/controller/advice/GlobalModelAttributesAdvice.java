@@ -1,5 +1,6 @@
 package com.spring.mcp.controller.advice;
 
+import com.spring.mcp.config.EmbeddingProperties;
 import com.spring.mcp.config.FlavorsFeatureConfig;
 import com.spring.mcp.config.InitializrProperties;
 import com.spring.mcp.config.LanguageEvolutionFeatureConfig;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
  * and feature toggles.
  *
  * @author Spring MCP Server
- * @version 1.4.0
+ * @version 1.6.0
  * @since 2025-01-10
  */
 @ControllerAdvice
@@ -34,6 +35,7 @@ public class GlobalModelAttributesAdvice {
     private final LanguageEvolutionFeatureConfig languageEvolutionFeatureConfig;
     private final FlavorsFeatureConfig flavorsFeatureConfig;
     private final InitializrProperties initializrProperties;
+    private final EmbeddingProperties embeddingProperties;
     private final UserRepository userRepository;
 
     @Value("${info.app.name:Spring MCP Server}")
@@ -131,6 +133,17 @@ public class GlobalModelAttributesAdvice {
     @ModelAttribute("initializrBaseUrl")
     public String addInitializrBaseUrl() {
         return initializrProperties.getBaseUrl();
+    }
+
+    /**
+     * Adds the Embeddings feature flag to all models.
+     * This controls visibility of semantic embeddings navigation and features.
+     *
+     * @return true if Embeddings feature is enabled, false otherwise
+     */
+    @ModelAttribute("embeddingsEnabled")
+    public boolean addEmbeddingsEnabled() {
+        return embeddingProperties.isEnabled();
     }
 
     /**

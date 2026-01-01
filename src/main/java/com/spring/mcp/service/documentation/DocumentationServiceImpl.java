@@ -196,6 +196,42 @@ public class DocumentationServiceImpl implements DocumentationService {
     }
 
     /**
+     * Get documentation DTOs by their IDs (for hybrid search support).
+     * Maintains the order of the input IDs.
+     *
+     * @param ids List of documentation link IDs
+     * @return List of DocumentationDtos in the same order as input IDs
+     */
+    public List<DocumentationDto> getDocumentationByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        log.debug("Getting documentation by IDs: {} IDs", ids.size());
+
+        try {
+            // Fetch all links in one query
+            List<DocumentationLink> links = linkRepository.findAllById(ids);
+
+            // Create a map for quick lookup
+            java.util.Map<Long, DocumentationLink> linkMap = links.stream()
+                    .collect(Collectors.toMap(DocumentationLink::getId, link -> link));
+
+            // Return in the same order as input IDs (important for relevance ranking)
+            return ids.stream()
+                    .map(linkMap::get)
+                    .filter(link -> link != null)
+                    .map(this::mapLinkToDto)
+                    .filter(dto -> dto != null)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("Error getting documentation by IDs", e);
+            return Collections.emptyList();
+        }
+    }
+
+    /**
      * Count total search results (for pagination)
      *
      * @param query Search query

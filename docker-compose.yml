@@ -1,6 +1,8 @@
 services:
   postgres:
-    image: postgres:18-alpine
+    # Using pgvector/pgvector:pg18 for vector similarity search support
+    # This enables the pgvector extension required for semantic embeddings
+    image: pgvector/pgvector:pg18
     container_name: spring-mcp-db
     environment:
       POSTGRES_DB: spring_mcp
@@ -9,6 +11,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
+      # Mount to /var/lib/postgresql (not /data) for pg_ctlcluster compatibility in PG 18+
+      # Data will be stored in 18/docker/ subdirectory automatically
       - ./.vols/db:/var/lib/postgresql
       - ./init-scripts:/docker-entrypoint-initdb.d
     healthcheck:

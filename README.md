@@ -10,7 +10,7 @@
 >
 > **Purpose**: My main goal is to create demo applications using my own specifications to explore AI-assisted development workflows.
 
-### (Current Version 1.5.4 - Collapsible Sidebar Menu & Version Sync Fix)
+### (Current Version 1.6.0 - Semantic Embeddings with pgvector)
 
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
@@ -21,6 +21,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - **MCP Server**: SSE-based protocol implementation using Spring AI
 - **Documentation Sync**: Automated synchronization from spring.io and GitHub spring-projects repositories
 - **Full-Text Search**: PostgreSQL-powered search across all Spring documentation
+- **Semantic Embeddings**: Vector embeddings with pgvector for intelligent semantic search using Ollama or OpenAI
 - **Web Management UI**: Thymeleaf-based interface for managing projects, versions, and documentation
 - **Code Examples**: Searchable repository of Spring code snippets
 - **Migration Recipes**: OpenRewrite-based migration knowledge for Spring Boot version upgrades
@@ -47,6 +48,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
   - [Boot Initializr Integration](#boot-initializr-integration)
   - [Javadoc API Documentation](#javadoc-api-documentation)
   - [MCP Monitoring Dashboard](#mcp-monitoring-dashboard)
+  - [Semantic Embeddings](#semantic-embeddings)
 - [Using with Claude Code](#using-with-claude-code)
   - [Configuration](#mcp-configuration)
   - [Documentation Queries](#documentation-queries)
@@ -70,6 +72,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
+| **1.6.0** | 2026-01-01 | Semantic embeddings with pgvector (Ollama/OpenAI providers)  |
 | **1.5.4** | 2025-12-25 | Collapsible sidebar menu, SNAPSHOT → GA version sync fix     |
 | **1.5.3** | 2025-12-19 | User display name, Spring Boot 3.5.9                         |
 | **1.5.2** | 2025-12-17 | JEP/KEP specs, detail pages, getLanguageFeatureExample tool  |
@@ -115,7 +118,7 @@ docker-compose up -d postgres
 ### 2. Build and Run
 ```bash
 ./gradlew clean build
-java -jar build/libs/spring-boot-documentation-mcp-server-1.5.4.jar
+java -jar build/libs/spring-boot-documentation-mcp-server-1.6.0.jar
 ```
 
 Or using Gradle:
@@ -646,6 +649,164 @@ Navigate to `/monitoring` (requires ADMIN role) to access the dashboard.
 
 ---
 
+### Semantic Embeddings
+
+Vector embeddings for intelligent semantic search using pgvector, with support for Ollama (local) and OpenAI (cloud) embedding providers.
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="assets/screen-29.png" alt="Embeddings Dashboard" />
+      <p align="center"><b>Embeddings Dashboard</b> - Real-time embedding coverage statistics and provider status</p>
+    </td>
+  </tr>
+</table>
+
+**Key Features**:
+- **Hybrid Search**: Combines keyword-based TSVECTOR search with semantic vector similarity for more relevant results
+- **Multiple Providers**: Choose between Ollama (local, free) or OpenAI (cloud, paid)
+- **Background Processing**: Async job queue for embedding generation without blocking the UI
+- **Incremental Updates**: Only generates embeddings for new/modified content
+- **Automatic Re-embedding**: Flavors automatically re-embed when content changes
+- **Statistics Dashboard**: Real-time view of embedding coverage across all entity types
+
+#### Supported Embedding Providers
+
+| Provider | Model | Dimensions | Cost | Requirements |
+|----------|-------|------------|------|--------------|
+| **Ollama** | nomic-embed-text | 768 | Free | Local Ollama installation |
+| **OpenAI** | text-embedding-3-small | 1536 | ~$0.02/1M tokens | API key |
+| **OpenAI** | text-embedding-ada-002 | 1536 | ~$0.10/1M tokens | API key |
+
+#### Setting Up Ollama (Recommended for Local Development)
+
+1. **Install Ollama**:
+   ```bash
+   # macOS
+   brew install ollama
+
+   # Linux
+   curl -fsSL https://ollama.com/install.sh | sh
+
+   # Start Ollama service
+   ollama serve
+   ```
+
+2. **Pull the embedding model**:
+   ```bash
+   ollama pull nomic-embed-text
+   ```
+
+3. **Verify installation**:
+   ```bash
+   curl http://localhost:11434/api/embed -d '{"model": "nomic-embed-text", "input": "test"}'
+   ```
+
+#### Setting Up OpenAI
+
+1. **Get API Key**: Visit [OpenAI Platform](https://platform.openai.com/api-keys)
+2. **Configure**: Set the API key in environment or application.yml
+
+#### Configuration
+
+```yaml
+mcp:
+  features:
+    embeddings:
+      enabled: true                # Enable semantic embeddings
+      provider: ollama             # 'ollama' or 'openai'
+      dimensions: 768              # 768 for Ollama, 1536 for OpenAI
+      chunk-size: 512              # Max tokens per chunk
+      chunk-overlap: 50            # Overlap between chunks
+      batch-size: 50               # Embeddings per batch
+
+      # Hybrid search configuration
+      hybrid:
+        enabled: true              # Combine keyword + semantic search
+        alpha: 0.3                 # 0.0=pure vector, 1.0=pure keyword
+        min-similarity: 0.5        # Minimum cosine similarity threshold
+
+      # Ollama provider configuration
+      ollama:
+        base-url: http://localhost:11434
+        model: nomic-embed-text
+        timeout-ms: 30000
+
+      # OpenAI provider configuration (alternative)
+      openai:
+        api-key: ${OPENAI_API_KEY:}
+        model: text-embedding-3-small
+        timeout-ms: 30000
+
+      # Job processing configuration
+      job:
+        batch-size: 50             # Jobs per batch
+        thread-pool-size: 2        # Async threads
+        queue-capacity: 1000       # Max pending jobs
+
+      # Retry configuration for failures
+      retry:
+        max-attempts: 10
+        initial-delay-ms: 5000
+        max-delay-ms: 300000
+        multiplier: 2.0
+
+      # Health check configuration
+      health-check:
+        enabled: true
+        interval-ms: 60000
+        timeout-ms: 10000
+```
+
+#### Triggering Embedding Generation
+
+**Option 1: Sync Page Button**
+Navigate to `/sync` and click the "Generate Missing" button in the Embeddings card.
+
+**Option 2: Embeddings Dashboard**
+Navigate to `/embeddings` (visible when embeddings enabled) and click "Sync Missing".
+
+**Option 3: Automatic on Content Changes**
+Flavors automatically queue embedding regeneration when created or updated.
+
+#### How Hybrid Search Works
+
+The hybrid search algorithm combines keyword and semantic matching:
+
+1. **Keyword Search (TSVECTOR)**: PostgreSQL full-text search for exact term matching
+2. **Semantic Search (pgvector)**: Cosine similarity between query and content embeddings
+3. **Score Fusion**: `final_score = (1 - alpha) × semantic_score + alpha × keyword_score`
+
+With the default `alpha: 0.3`, results are 70% weighted toward semantic similarity and 30% toward keyword matching.
+
+#### Entities with Embedding Support
+
+| Entity Type | Description | Re-embedding |
+|-------------|-------------|--------------|
+| Documentation | Spring.io documentation content | Once (static) |
+| Transformations | Migration recipes and code patterns | Once (static) |
+| Flavors | Company guidelines (markdown) | On every change |
+| Code Examples | Code snippets with descriptions | Once (static) |
+| Javadoc Classes | API class documentation | Once (static) |
+
+#### Database Requirements
+
+The embeddings feature requires **pgvector** extension for PostgreSQL:
+
+```yaml
+# docker-compose.yml - Already configured in this project
+services:
+  postgres:
+    image: pgvector/pgvector:pg18  # pgvector-enabled PostgreSQL
+```
+
+The extension is automatically created via Flyway migration:
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+---
+
 ## Using with Claude Code
 
 Configure Claude Code to use the Spring Documentation MCP Server for AI-assisted development.
@@ -1020,7 +1181,7 @@ lsof -ti :8080 | xargs kill -9
 ### Completed
 - [x] Spring Boot 3.5.9 with Spring AI 1.1.2 MCP Server
 - [x] PostgreSQL database with full-text search
-- [x] 43 MCP tools (documentation, migration, language, flavors, groups, initializr, javadocs)
+- [x] 44 MCP tools (documentation, migration, language, flavors, groups, initializr, javadocs)
 - [x] Web management UI with all features
 - [x] API Key authentication with BCrypt encryption
 - [x] Documentation sync from spring.io and GitHub
@@ -1034,9 +1195,9 @@ lsof -ti :8080 | xargs kill -9
 - [x] Export features (Markdown)
 - [x] Analytics and usage tracking
 - [x] MCP Monitoring Dashboard with real-time metrics
+- [x] Semantic embeddings with pgvector (Ollama/OpenAI)
 
 ### Planned
-- [ ] Semantic search using embeddings
 - [ ] Version comparison and diff
 - [ ] Air-Gapped Replication Mode
 

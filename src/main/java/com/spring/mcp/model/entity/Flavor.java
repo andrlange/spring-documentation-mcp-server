@@ -83,6 +83,20 @@ public class Flavor {
     @Column(name = "updated_by")
     private String updatedBy;
 
+    // === Embedding fields (Release 1.6.0) ===
+
+    /**
+     * Name of the embedding model used
+     */
+    @Column(name = "embedding_model", length = 100)
+    private String embeddingModel;
+
+    /**
+     * Timestamp when the embedding was generated
+     */
+    @Column(name = "embedded_at")
+    private LocalDateTime embeddedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -99,5 +113,12 @@ public class Flavor {
      */
     public String[] getTagsArray() {
         return tags != null ? tags.toArray(new String[0]) : new String[0];
+    }
+
+    /**
+     * Check if this flavor has an embedding.
+     */
+    public boolean hasEmbedding() {
+        return embeddingModel != null && embeddedAt != null;
     }
 }

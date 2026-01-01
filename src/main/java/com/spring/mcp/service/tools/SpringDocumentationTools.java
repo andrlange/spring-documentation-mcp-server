@@ -1,5 +1,6 @@
 package com.spring.mcp.service.tools;
 
+import com.spring.mcp.config.EmbeddingProperties;
 import com.spring.mcp.model.dto.DocumentationDto;
 import com.spring.mcp.model.dto.mcp.*;
 import com.spring.mcp.model.entity.CodeExample;
@@ -16,11 +17,13 @@ import com.spring.mcp.repository.SpringProjectRepository;
 import com.spring.mcp.service.SettingsService;
 import com.spring.mcp.service.documentation.DocumentationService;
 import com.spring.mcp.service.documentation.DocumentationServiceImpl;
+import com.spring.mcp.service.embedding.HybridSearchService;
 import com.spring.mcp.service.mcp.McpVersionResolverService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springaicommunity.mcp.annotation.McpTool;
 import org.springaicommunity.mcp.annotation.McpToolParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -47,15 +50,22 @@ public class SpringDocumentationTools {
     private final SpringBootCompatibilityRepository compatibilityRepository;
     private final SettingsService settingsService;
     private final McpVersionResolverService versionResolver;
+    private final EmbeddingProperties embeddingProperties;
+
+    // Optional: Only injected when embeddings feature is enabled
+    @Autowired(required = false)
+    private HybridSearchService hybridSearchService;
 
     /**
-     * Search Spring documentation with full-text search
+     * Search Spring documentation with full-text search.
+     * When embeddings are enabled, uses hybrid search combining keyword + semantic search.
      */
     @McpTool(description = """
         Search across all Spring documentation with pagination support.
         Supports filtering by project, version, and documentation type.
         Returns relevant documentation links and snippets with relevance ranking.
         Use pagination (page parameter) to navigate through large result sets.
+        When embeddings are enabled, uses hybrid search (keyword + semantic) for better results.
         """)
     public SearchDocsResponse searchSpringDocs(
             @McpToolParam(description = "Search query string (required)") String query,
@@ -77,8 +87,37 @@ public class SpringDocumentationTools {
             throw new IllegalArgumentException("Query parameter is required");
         }
 
-        List<DocumentationDto> results = documentationServiceImpl.searchDocumentation(query, project, version, docType, pageSize, offset);
-        long totalResults = documentationServiceImpl.countSearchResults(query, project, version, docType);
+        List<DocumentationDto> results;
+        long totalResults;
+
+        // Use hybrid search when embeddings are enabled and no filters are applied
+        boolean useHybridSearch = embeddingProperties.isEnabled()
+                && hybridSearchService != null
+                && project == null
+                && version == null
+                && docType == null;
+
+        if (useHybridSearch) {
+            log.debug("Using hybrid search (keyword + semantic) for query: {}", query);
+            List<HybridSearchService.SearchResult> hybridResults =
+                    hybridSearchService.searchDocumentation(query, pageSize + offset);
+
+            // Get IDs for the current page
+            List<Long> pageIds = hybridResults.stream()
+                    .skip(offset)
+                    .limit(pageSize)
+                    .map(HybridSearchService.SearchResult::id)
+                    .toList();
+
+            // Fetch full documentation details for IDs
+            results = documentationServiceImpl.getDocumentationByIds(pageIds);
+            totalResults = hybridResults.size();
+        } else {
+            // Fall back to traditional full-text search
+            results = documentationServiceImpl.searchDocumentation(query, project, version, docType, pageSize, offset);
+            totalResults = documentationServiceImpl.countSearchResults(query, project, version, docType);
+        }
+
         long executionTimeMs = Duration.between(startTime, Instant.now()).toMillis();
 
         SearchDocsResponse.SearchFilters filters = new SearchDocsResponse.SearchFilters(

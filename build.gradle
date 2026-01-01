@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.spring.mcp'
-version = '1.5.4'
+version = '1.6.0'
 
 java {
     // Using Java 25 (LTS version)
@@ -36,6 +36,7 @@ ext {
     asciidoctorjVersion = '3.0.1'
     commonsLang3 = '3.18.0'
     mockwebserver = '5.3.2'
+    pgvectorVersion = '0.1.6'
 }
 
 dependencies {
@@ -62,6 +63,12 @@ dependencies {
 
     // Spring AI MCP Server with SSE
     implementation "org.springframework.ai:spring-ai-starter-mcp-server-webmvc:${springAiVersion}"
+
+    // Spring AI Embedding Support (Ollama for local embeddings)
+    implementation "org.springframework.ai:spring-ai-ollama:${springAiVersion}"
+
+    // pgvector support for PostgreSQL vector operations
+    implementation "com.pgvector:pgvector:${pgvectorVersion}"
 
     // HTML Parsing for documentation fetching
     implementation "org.jsoup:jsoup:${jsoupVersion}"

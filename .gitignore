@@ -65,6 +65,9 @@ docs/
 .mcp.json
 start.sh
 
+vols.zip
+
+
 
 /prompts/
 /node_modules/

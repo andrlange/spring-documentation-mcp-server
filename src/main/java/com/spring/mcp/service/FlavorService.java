@@ -35,6 +35,15 @@ public interface FlavorService {
     List<FlavorSummaryDto> search(String query, FlavorCategory category, List<String> tags, int limit);
     List<FlavorDto> searchByTags(List<String> tags);
 
+    /**
+     * Get flavors by their IDs (for hybrid search support).
+     * Maintains the order of the input IDs.
+     *
+     * @param ids List of flavor IDs
+     * @return List of FlavorSummaryDtos in the same order as input IDs
+     */
+    List<FlavorSummaryDto> getByIds(List<Long> ids);
+
     // Category-specific queries (for MCP tools)
     List<FlavorDto> findArchitectureByTechnologies(List<String> slugs);
     List<FlavorDto> findComplianceByRules(List<String> rules);

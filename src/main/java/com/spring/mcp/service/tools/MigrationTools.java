@@ -1,12 +1,14 @@
 package com.spring.mcp.service.tools;
 
+import com.spring.mcp.config.EmbeddingProperties;
 import com.spring.mcp.config.OpenRewriteFeatureConfig;
 import com.spring.mcp.model.dto.mcp.*;
+import com.spring.mcp.service.embedding.HybridSearchService;
 import com.spring.mcp.service.migration.MigrationKnowledgeService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springaicommunity.mcp.annotation.McpTool;
 import org.springaicommunity.mcp.annotation.McpToolParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -18,12 +20,24 @@ import java.util.List;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "mcp.features.openrewrite", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class MigrationTools {
 
     private final MigrationKnowledgeService migrationService;
     private final OpenRewriteFeatureConfig featureConfig;
+    private final EmbeddingProperties embeddingProperties;
+
+    // Optional: Only injected when embeddings feature is enabled
+    @Autowired(required = false)
+    private HybridSearchService hybridSearchService;
+
+    public MigrationTools(MigrationKnowledgeService migrationService,
+                          OpenRewriteFeatureConfig featureConfig,
+                          EmbeddingProperties embeddingProperties) {
+        this.migrationService = migrationService;
+        this.featureConfig = featureConfig;
+        this.embeddingProperties = embeddingProperties;
+    }
 
     @McpTool(description = """
         Get comprehensive migration guide for upgrading Spring Boot versions.
@@ -67,6 +81,7 @@ public class MigrationTools {
         Examples: 'flyway starter', 'health indicator', 'thymeleaf request',
         'MockBean replacement', 'security configuration'.
         Returns relevant transformations with code examples.
+        When embeddings are enabled, uses hybrid search (keyword + semantic) for better results.
         """)
     public List<TransformationDto> searchMigrationKnowledge(
             @McpToolParam(description = "Search term (e.g., 'flyway', 'actuator health', '@MockBean')") String searchTerm,
@@ -81,6 +96,25 @@ public class MigrationTools {
 
         String proj = project != null && !project.isBlank() ? project : "spring-boot";
         int lim = limit != null && limit > 0 ? limit : 10;
+
+        // Use hybrid search when embeddings are enabled and no project filter
+        boolean useHybridSearch = embeddingProperties.isEnabled()
+                && hybridSearchService != null
+                && (project == null || project.isBlank() || "spring-boot".equals(project));
+
+        if (useHybridSearch) {
+            log.debug("Using hybrid search (keyword + semantic) for migration knowledge: {}", searchTerm);
+            List<HybridSearchService.SearchResult> hybridResults =
+                    hybridSearchService.searchTransformations(searchTerm, lim);
+
+            // Convert hybrid results to TransformationDtos
+            List<Long> ids = hybridResults.stream()
+                    .map(HybridSearchService.SearchResult::id)
+                    .toList();
+
+            return migrationService.getTransformationsByIds(ids);
+        }
+
         return migrationService.searchTransformations(proj, searchTerm, lim);
     }
 

@@ -49,6 +49,22 @@ public class DocumentationContent {
     // Note: indexed_content (TSVECTOR) is handled by PostgreSQL trigger
     // and not mapped as a field since it's a computed column
 
+    // === Embedding fields (Release 1.6.0) ===
+    // Note: The actual vector is stored via native SQL queries as JPA doesn't support pgvector
+    // These fields track embedding metadata
+
+    /**
+     * Name of the embedding model used (e.g., "nomic-embed-text", "text-embedding-3-small")
+     */
+    @Column(name = "embedding_model", length = 100)
+    private String embeddingModel;
+
+    /**
+     * Timestamp when the embedding was generated
+     */
+    @Column(name = "embedded_at")
+    private LocalDateTime embeddedAt;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -56,4 +72,11 @@ public class DocumentationContent {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    /**
+     * Check if this content has an embedding.
+     */
+    public boolean hasEmbedding() {
+        return embeddingModel != null && embeddedAt != null;
+    }
 }

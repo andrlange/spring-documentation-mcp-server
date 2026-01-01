@@ -7,12 +7,14 @@ import com.spring.mcp.model.entity.Flavor;
 import com.spring.mcp.model.enums.FlavorCategory;
 import com.spring.mcp.repository.FlavorRepository;
 import com.spring.mcp.service.FlavorService;
+import com.spring.mcp.service.embedding.EmbeddingSyncService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -31,9 +33,12 @@ public class FlavorServiceImpl implements FlavorService {
     private static final Logger log = LoggerFactory.getLogger(FlavorServiceImpl.class);
 
     private final FlavorRepository flavorRepository;
+    private final Optional<EmbeddingSyncService> embeddingSyncService;
 
-    public FlavorServiceImpl(FlavorRepository flavorRepository) {
+    public FlavorServiceImpl(FlavorRepository flavorRepository,
+                             Optional<EmbeddingSyncService> embeddingSyncService) {
         this.flavorRepository = flavorRepository;
+        this.embeddingSyncService = embeddingSyncService;
     }
 
     @Override
@@ -50,6 +55,10 @@ public class FlavorServiceImpl implements FlavorService {
 
         Flavor saved = flavorRepository.save(flavor);
         log.info("Created flavor with id: {}", saved.getId());
+
+        // Queue embedding generation if embeddings feature is enabled
+        queueEmbeddingGeneration(saved.getId());
+
         return mapToDto(saved);
     }
 
@@ -77,7 +86,12 @@ public class FlavorServiceImpl implements FlavorService {
         existing.setIsActive(dto.getIsActive() != null ? dto.getIsActive() : true);
         existing.setUpdatedBy(username);
 
-        return mapToDto(flavorRepository.save(existing));
+        Flavor saved = flavorRepository.save(existing);
+
+        // Queue embedding re-generation when flavor content changes
+        queueEmbeddingGeneration(saved.getId());
+
+        return mapToDto(saved);
     }
 
     @Override
@@ -164,6 +178,28 @@ public class FlavorServiceImpl implements FlavorService {
         return flavorRepository.findByTagsContaining(tags.toArray(new String[0])).stream()
             .map(this::mapToDto)
             .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<FlavorSummaryDto> getByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        // Fetch all flavors in one query
+        List<Flavor> flavors = flavorRepository.findAllById(ids);
+
+        // Create a map for quick lookup
+        Map<Long, Flavor> flavorMap = flavors.stream()
+                .collect(Collectors.toMap(Flavor::getId, f -> f));
+
+        // Return in the same order as input IDs (important for relevance ranking)
+        return ids.stream()
+                .map(flavorMap::get)
+                .filter(f -> f != null)
+                .map(this::mapToSummaryDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -528,5 +564,22 @@ public class FlavorServiceImpl implements FlavorService {
             .metadata(dto.getMetadata() != null ? dto.getMetadata() : new HashMap<>())
             .isActive(dto.getIsActive() != null ? dto.getIsActive() : true)
             .build();
+    }
+
+    /**
+     * Queue embedding generation for a flavor.
+     * This is called after create/update to ensure embeddings are regenerated.
+     * Flavors need re-embedding because their content changes, unlike static
+     * documentation/transformations that are synced from external sources.
+     */
+    private void queueEmbeddingGeneration(Long flavorId) {
+        embeddingSyncService.ifPresent(syncService -> {
+            try {
+                syncService.createEmbeddingJob("FLAVOR", flavorId);
+                log.debug("Queued embedding generation for flavor #{}", flavorId);
+            } catch (Exception e) {
+                log.warn("Failed to queue embedding for flavor #{}: {}", flavorId, e.getMessage());
+            }
+        });
     }
 }

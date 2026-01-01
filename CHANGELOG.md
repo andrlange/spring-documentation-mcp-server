@@ -5,6 +5,49 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-01-01
+
+### Added
+- **Semantic Search / Embeddings Feature**: Optional AI-powered semantic search capability
+    - **Hybrid Search**: Combines PostgreSQL full-text search (TSVECTOR) with vector similarity search
+    - **pgvector Integration**: Uses PostgreSQL pgvector extension for efficient vector storage and similarity queries
+    - **Embedding Providers**: Support for Ollama (nomic-embed-text) and OpenAI (text-embedding-3-small)
+    - **Intelligent Chunking**: Text chunking service with configurable chunk size and overlap for large documents
+    - **RRF Algorithm**: Reciprocal Rank Fusion for combining keyword and semantic search results
+    - **Enhanced MCP Tools**: Migration knowledge and flavor search now use hybrid search when enabled
+- **Database Migrations**:
+    - `V21__embeddings_infrastructure.sql`: Adds pgvector extension and embedding columns
+    - `V22__embedding_indexes.sql`: Creates vector similarity indexes
+- **Configuration**:
+    - Enable via `mcp.features.embeddings.enabled=true`
+    - Configure provider: `mcp.features.embeddings.provider=ollama` or `openai`
+    - Ollama: `mcp.features.embeddings.ollama.base-url` and `model`
+    - OpenAI: `mcp.features.embeddings.openai.api-key` and `model`
+    - Hybrid search alpha: `mcp.features.embeddings.hybrid.alpha` (0.3 = 70% semantic, 30% keyword)
+    - Chunk settings: `mcp.features.embeddings.chunk-size` and `chunk-overlap`
+- **New Services**:
+    - `EmbeddingService`: Interface for embedding generation with NoOp fallback
+    - `EmbeddingServiceImpl`: Implementation with chunking and averaging support
+    - `OllamaEmbeddingProvider`: Ollama integration via Spring AI
+    - `OpenAIEmbeddingProvider`: OpenAI integration via Spring AI
+    - `ChunkingService`: Intelligent text splitting by paragraph/sentence/character
+    - `HybridSearchService`: Combines keyword and vector search with RRF
+- **Testing**:
+    - Comprehensive unit tests for all embedding services
+    - Integration tests with Testcontainers (pgvector)
+
+### Changed
+- Docker Compose: postgres image now uses `pgvector/pgvector:pg17` for vector support
+- Migration tools and Flavor tools now optionally use hybrid search when embeddings enabled
+
+### Technical Details
+- Embeddings are generated lazily on first search when enabled
+- Cosine similarity is used for vector distance calculation
+- Default embedding dimensions: 768 (nomic-embed-text) or 1536 (text-embedding-3-small)
+- Feature is disabled by default to avoid requiring embedding infrastructure
+
+---
+
 ## [1.5.4] - 2025-12-25
 
 ### Added

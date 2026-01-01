@@ -220,19 +220,34 @@ public class JavadocTools {
             }
         }
 
-        // Search classes using eager-loading methods to avoid lazy loading issues in read-only transaction
-        Pageable pageable = PageRequest.of(0, maxResults);
+        // Split query into words for multi-word search
+        String[] queryWords = query.trim().split("\\s+");
+
+        // Search classes using eager-loading methods
+        Pageable pageable = PageRequest.of(0, maxResults * 2); // Fetch more for filtering
         List<JavadocClass> classResults;
+
+        // Search with the first word to get candidates, then filter by remaining words
+        String primaryQuery = queryWords[0];
         if (library != null && !library.isBlank() && resolvedVersion != null) {
-            // Search within specific library/version with eager-loaded package
-            classResults = classRepository.searchByKeywordWithPackage(library, resolvedVersion, query, pageable);
+            classResults = classRepository.searchByKeywordWithPackage(library, resolvedVersion, primaryQuery, pageable);
         } else {
-            // Search globally with eager-loaded package
-            classResults = classRepository.searchByKeywordGlobalWithPackage(query, pageable);
+            classResults = classRepository.searchByKeywordGlobalWithPackage(primaryQuery, pageable);
+        }
+
+        // Filter results to match ALL query words (AND logic)
+        if (queryWords.length > 1) {
+            classResults = classResults.stream()
+                    .filter(cls -> matchesAllWords(cls, queryWords))
+                    .collect(Collectors.toList());
         }
 
         for (JavadocClass cls : classResults) {
+            if (results.size() >= maxResults) break;
+
             JavadocPackage pkg = cls.getJavadocPackage();
+            // Calculate relevance score based on where matches occur
+            double score = calculateRelevanceScore(cls, queryWords);
             results.add(JavadocSearchResult.fromClass(
                     pkg.getLibraryName(),
                     pkg.getVersion(),
@@ -242,17 +257,21 @@ public class JavadocTools {
                     cls.getSummary(),
                     cls.getSourceUrl(),
                     cls.getDeprecated() != null && cls.getDeprecated(),
-                    1.0 // Default score, ranking is done by the database ORDER BY
+                    score
             ));
         }
+
+        // Sort by relevance score descending
+        results.sort((a, b) -> Double.compare(b.score(), a.score()));
 
         // Also search packages if we have room
         if (results.size() < maxResults && library != null && resolvedVersion != null) {
             int remaining = maxResults - results.size();
             List<JavadocPackage> packageResults = packageRepository.searchByKeyword(
-                    library, resolvedVersion, query, remaining);
+                    library, resolvedVersion, primaryQuery, remaining);
 
             for (JavadocPackage pkg : packageResults) {
+                if (results.size() >= maxResults) break;
                 results.add(JavadocSearchResult.fromPackage(
                         pkg.getLibraryName(),
                         pkg.getVersion(),
@@ -265,6 +284,61 @@ public class JavadocTools {
         }
 
         return results.subList(0, Math.min(results.size(), maxResults));
+    }
+
+    /**
+     * Check if a class matches all query words in any of its searchable fields.
+     */
+    private boolean matchesAllWords(JavadocClass cls, String[] words) {
+        String searchableText = buildSearchableText(cls).toLowerCase();
+        for (String word : words) {
+            if (!searchableText.contains(word.toLowerCase())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Build a searchable text from class fields.
+     */
+    private String buildSearchableText(JavadocClass cls) {
+        StringBuilder sb = new StringBuilder();
+        if (cls.getFqcn() != null) sb.append(cls.getFqcn()).append(" ");
+        if (cls.getSimpleName() != null) sb.append(cls.getSimpleName()).append(" ");
+        if (cls.getSummary() != null) sb.append(cls.getSummary()).append(" ");
+        if (cls.getDescription() != null) sb.append(cls.getDescription()).append(" ");
+        return sb.toString();
+    }
+
+    /**
+     * Calculate relevance score based on where query words match.
+     * Higher scores for matches in class name vs description.
+     */
+    private double calculateRelevanceScore(JavadocClass cls, String[] words) {
+        double score = 0.0;
+        String simpleName = cls.getSimpleName() != null ? cls.getSimpleName().toLowerCase() : "";
+        String fqcn = cls.getFqcn() != null ? cls.getFqcn().toLowerCase() : "";
+        String summary = cls.getSummary() != null ? cls.getSummary().toLowerCase() : "";
+
+        for (String word : words) {
+            String lowerWord = word.toLowerCase();
+            // Exact match in simple name = highest score
+            if (simpleName.equalsIgnoreCase(word)) {
+                score += 1.0;
+            } else if (simpleName.contains(lowerWord)) {
+                score += 0.8;
+            } else if (fqcn.contains(lowerWord)) {
+                score += 0.6;
+            } else if (summary.contains(lowerWord)) {
+                score += 0.4;
+            } else {
+                score += 0.2; // Match in description
+            }
+        }
+
+        // Normalize by number of words
+        return score / words.length;
     }
 
     @McpTool(description = """
