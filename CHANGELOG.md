@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Integration tests with Testcontainers (pgvector)
 
 ### Changed
-- Docker Compose: postgres image now uses `pgvector/pgvector:pg17` for vector support
+- Docker Compose: postgres image now uses `pgvector/pgvector:pg18` for vector support
 - Migration tools and Flavor tools now optionally use hybrid search when embeddings enabled
 
 ### Technical Details
