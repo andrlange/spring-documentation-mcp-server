@@ -89,6 +89,12 @@
                     <i class="bi bi-activity" style="color: #63b3ed;"></i><span class="nav-text">Monitoring</span>
                 </a>
             </li>
+            <!-- Embeddings (conditional) -->
+            <li class="nav-item" sec:authorize="hasRole('ADMIN')" th:if="${embeddingsEnabled}">
+                <a class="nav-link" th:href="@{/embeddings}" th:classappend="${activePage == 'embeddings'} ? 'active' : ''">
+                    <i class="bi bi-cpu" style="color: #ec4899;"></i><span class="nav-text">Embeddings</span>
+                </a>
+            </li>
         </ul>
     </div>
 </body>

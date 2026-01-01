@@ -126,6 +126,35 @@ public class MigrationKnowledgeService {
     }
 
     /**
+     * Get transformations by their IDs (for hybrid search support).
+     * Maintains the order of the input IDs.
+     *
+     * @param ids List of transformation IDs
+     * @return List of TransformationDtos in the same order as input IDs
+     */
+    public List<TransformationDto> getTransformationsByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        log.debug("Getting transformations by IDs: {} IDs", ids.size());
+
+        // Fetch all transformations in one query
+        List<MigrationTransformation> transformations = transformationRepository.findAllById(ids);
+
+        // Create a map for quick lookup
+        Map<Long, MigrationTransformation> transformationMap = transformations.stream()
+                .collect(Collectors.toMap(MigrationTransformation::getId, t -> t));
+
+        // Return in the same order as input IDs (important for relevance ranking)
+        return ids.stream()
+                .map(transformationMap::get)
+                .filter(t -> t != null)
+                .map(TransformationDto::from)
+                .toList();
+    }
+
+    /**
      * Get available migration paths for a project
      */
     public List<String> getAvailableMigrationTargets(String project) {

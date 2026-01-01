@@ -86,6 +86,27 @@ public class MigrationTransformation {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    // === Embedding fields (Release 1.6.0) ===
+
+    /**
+     * Name of the embedding model used
+     */
+    @Column(name = "embedding_model", length = 100)
+    private String embeddingModel;
+
+    /**
+     * Timestamp when the embedding was generated
+     */
+    @Column(name = "embedded_at")
+    private LocalDateTime embeddedAt;
+
+    /**
+     * Check if this transformation has an embedding.
+     */
+    public boolean hasEmbedding() {
+        return embeddingModel != null && embeddedAt != null;
+    }
+
     /**
      * Types of transformations
      */

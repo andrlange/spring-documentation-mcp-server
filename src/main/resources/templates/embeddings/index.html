@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title>Embeddings Dashboard - Spring MCP Server</title>
+    <style>
+        /* Dark Theme Embeddings Dashboard */
+        .embeddings-container {
+            background: #0f1318;
+            min-height: calc(100vh - 60px);
+            padding: 1.5rem;
+        }
+
+        /* Provider Status Card */
+        .provider-card {
+            background: #1e2433;
+            border-radius: 12px;
+            border: 1px solid rgba(99, 179, 237, 0.15);
+            padding: 1.5rem;
+        }
+
+        .provider-status {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .provider-status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .provider-status-dot.available {
+            background: #48bb78;
+            box-shadow: 0 0 8px rgba(72, 187, 120, 0.6);
+        }
+
+        .provider-status-dot.unavailable {
+            background: #fc8181;
+            box-shadow: 0 0 8px rgba(252, 129, 129, 0.6);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Metric Cards */
+        .metric-card {
+            background: #1e2433;
+            border-radius: 12px;
+            border: 1px solid rgba(99, 179, 237, 0.15);
+            padding: 1.25rem;
+            height: 100%;
+        }
+
+        .metric-card.success { border-left: 3px solid #48bb78; }
+        .metric-card.warning { border-left: 3px solid #ed8936; }
+        .metric-card.danger { border-left: 3px solid #fc8181; }
+        .metric-card.info { border-left: 3px solid #63b3ed; }
+        .metric-card.purple { border-left: 3px solid #9f7aea; }
+        .metric-card.pink { border-left: 3px solid #ec4899; }
+
+        .metric-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            line-height: 1.2;
+        }
+
+        .metric-value.success { color: #68d391; }
+        .metric-value.warning { color: #f6ad55; }
+        .metric-value.danger { color: #fc8181; }
+        .metric-value.info { color: #63b3ed; }
+        .metric-value.purple { color: #b794f4; }
+        .metric-value.pink { color: #f687b3; }
+
+        .metric-subtitle {
+            font-size: 0.75rem;
+            color: #718096;
+            margin-top: 0.25rem;
+        }
+
+        /* Entity Stats Grid */
+        .entity-card {
+            background: #1e2433;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .entity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .entity-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .entity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .entity-icon.docs { background: rgba(66, 153, 225, 0.2); color: #63b3ed; }
+        .entity-icon.transforms { background: rgba(237, 137, 54, 0.2); color: #f6ad55; }
+        .entity-icon.flavors { background: rgba(159, 122, 234, 0.2); color: #b794f4; }
+        .entity-icon.examples { background: rgba(72, 187, 120, 0.2); color: #68d391; }
+
+        .entity-name {
+            font-weight: 600;
+            color: #e2e8f0;
+            font-size: 1rem;
+        }
+
+        .entity-count {
+            font-size: 0.875rem;
+            color: #a0aec0;
+        }
+
+        /* Progress Bar */
+        .coverage-progress {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .coverage-bar {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+
+        .coverage-bar.high { background: linear-gradient(90deg, #48bb78, #68d391); }
+        .coverage-bar.medium { background: linear-gradient(90deg, #ed8936, #f6ad55); }
+        .coverage-bar.low { background: linear-gradient(90deg, #fc8181, #feb2b2); }
+
+        .coverage-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #718096;
+            margin-top: 0.5rem;
+        }
+
+        /* Config Section */
+        .config-card {
+            background: #1e2433;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .config-header {
+            padding: 1rem 1.25rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .config-body {
+            padding: 1rem 1.25rem;
+        }
+
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .config-item:last-child {
+            border-bottom: none;
+        }
+
+        .config-label {
+            color: #a0aec0;
+            font-size: 0.875rem;
+        }
+
+        .config-value {
+            color: #e2e8f0;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        /* Sync Button */
+        .sync-btn {
+            background: linear-gradient(135deg, #ec4899, #9f7aea);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sync-btn:hover {
+            background: linear-gradient(135deg, #db2777, #8b5cf6);
+            color: white;
+        }
+
+        .sync-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Last updated badge */
+        .last-updated {
+            font-size: 0.75rem;
+            color: #718096;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content" class="embeddings-container" x-data="embeddingsDashboard()" x-init="init()">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-white mb-1">
+                <i class="bi bi-cpu me-2"></i>Embeddings Dashboard
+            </h2>
+            <p class="text-muted mb-0">Vector embeddings for semantic search</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <!-- Auto-refresh indicator -->
+            <div class="last-updated" x-show="refreshing">
+                <span class="spinner-border spinner-border-sm text-info me-1"></span>
+                <span class="text-info">Refreshing...</span>
+            </div>
+
+            <!-- Sync Button -->
+            <button class="sync-btn" @click="triggerSync()" :disabled="syncing || processing">
+                <span x-show="!isWorking">
+                    <i class="bi bi-arrow-repeat"></i> Sync Missing
+                </span>
+                <span x-show="isWorking" class="d-flex align-items-center gap-2">
+                    <span class="spinner-border spinner-border-sm"></span>
+                    <span x-text="'Processing ' + stats.pendingJobs.toLocaleString() + '...'">Processing...</span>
+                </span>
+            </button>
+
+            <!-- Last updated -->
+            <div class="last-updated">
+                <i class="bi bi-clock"></i>
+                <span x-text="lastUpdated">--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Provider Status Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="provider-card">
+                <div class="provider-status">
+                    <div class="provider-status-dot" :class="stats.providerAvailable ? 'available' : 'unavailable'"></div>
+                    <div>
+                        <div class="text-white fw-bold" x-text="stats.providerName">Provider</div>
+                        <div class="text-muted small">
+                            <span x-text="stats.modelName">Model</span>
+                            <span class="text-secondary"> | </span>
+                            <span th:text="${dimensions}">0</span> dimensions
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span x-show="stats.providerAvailable" class="badge bg-success">Available</span>
+                    <span x-show="!stats.providerAvailable" class="badge bg-danger">Unavailable</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="metric-card purple">
+                <div class="metric-label">
+                    <i class="bi bi-percent me-1"></i> Overall Coverage
+                </div>
+                <div class="metric-value purple" x-text="stats.overallCoverage.toFixed(1) + '%'">0%</div>
+                <div class="metric-subtitle" x-text="stats.totalWithEmbedding + ' / ' + stats.totalEntities + ' entities'">0 / 0 entities</div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="metric-card" :class="stats.pendingJobs > 0 ? 'warning' : 'success'">
+                <div class="metric-label">
+                    <i class="bi bi-hourglass-split me-1"></i> Pending Jobs
+                </div>
+                <div class="metric-value" :class="stats.pendingJobs > 0 ? 'warning' : 'success'"
+                     x-text="stats.pendingJobs.toLocaleString()">0</div>
+                <div class="metric-subtitle" x-show="stats.pendingJobs > 0">Processing in background</div>
+                <div class="metric-subtitle" x-show="stats.pendingJobs === 0">All embeddings up to date</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Entity Coverage Section -->
+    <h4 class="text-white mb-3">
+        <i class="bi bi-bar-chart me-2"></i>Coverage by Entity Type
+    </h4>
+
+    <div class="row g-3 mb-4">
+        <!-- Documentation -->
+        <div class="col-md-6 col-lg-3">
+            <div class="entity-card">
+                <div class="entity-header">
+                    <div class="entity-title">
+                        <div class="entity-icon docs">
+                            <i class="bi bi-file-text"></i>
+                        </div>
+                        <div>
+                            <div class="entity-name">Documentation</div>
+                            <div class="entity-count" x-text="stats.docsWithEmbedding + ' / ' + stats.docsTotal">0 / 0</div>
+                        </div>
+                    </div>
+                    <span class="badge" :class="stats.docsCoverage >= 80 ? 'bg-success' : (stats.docsCoverage >= 50 ? 'bg-warning' : 'bg-danger')"
+                          x-text="stats.docsCoverage.toFixed(1) + '%'">0%</span>
+                </div>
+                <div class="coverage-progress">
+                    <div class="coverage-bar" :class="stats.docsCoverage >= 80 ? 'high' : (stats.docsCoverage >= 50 ? 'medium' : 'low')"
+                         :style="'width: ' + stats.docsCoverage + '%'"></div>
+                </div>
+                <div class="coverage-label">
+                    <span>Spring.io docs</span>
+                    <span x-text="(stats.docsTotal - stats.docsWithEmbedding) + ' missing'">0 missing</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transformations -->
+        <div class="col-md-6 col-lg-3">
+            <div class="entity-card">
+                <div class="entity-header">
+                    <div class="entity-title">
+                        <div class="entity-icon transforms">
+                            <i class="bi bi-arrow-left-right"></i>
+                        </div>
+                        <div>
+                            <div class="entity-name">Transformations</div>
+                            <div class="entity-count" x-text="stats.transformsWithEmbedding + ' / ' + stats.transformsTotal">0 / 0</div>
+                        </div>
+                    </div>
+                    <span class="badge" :class="stats.transformsCoverage >= 80 ? 'bg-success' : (stats.transformsCoverage >= 50 ? 'bg-warning' : 'bg-danger')"
+                          x-text="stats.transformsCoverage.toFixed(1) + '%'">0%</span>
+                </div>
+                <div class="coverage-progress">
+                    <div class="coverage-bar" :class="stats.transformsCoverage >= 80 ? 'high' : (stats.transformsCoverage >= 50 ? 'medium' : 'low')"
+                         :style="'width: ' + stats.transformsCoverage + '%'"></div>
+                </div>
+                <div class="coverage-label">
+                    <span>Migration recipes</span>
+                    <span x-text="(stats.transformsTotal - stats.transformsWithEmbedding) + ' missing'">0 missing</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flavors -->
+        <div class="col-md-6 col-lg-3">
+            <div class="entity-card">
+                <div class="entity-header">
+                    <div class="entity-title">
+                        <div class="entity-icon flavors">
+                            <i class="bi bi-palette"></i>
+                        </div>
+                        <div>
+                            <div class="entity-name">Flavors</div>
+                            <div class="entity-count" x-text="stats.flavorsWithEmbedding + ' / ' + stats.flavorsTotal">0 / 0</div>
+                        </div>
+                    </div>
+                    <span class="badge" :class="stats.flavorsCoverage >= 80 ? 'bg-success' : (stats.flavorsCoverage >= 50 ? 'bg-warning' : 'bg-danger')"
+                          x-text="stats.flavorsCoverage.toFixed(1) + '%'">0%</span>
+                </div>
+                <div class="coverage-progress">
+                    <div class="coverage-bar" :class="stats.flavorsCoverage >= 80 ? 'high' : (stats.flavorsCoverage >= 50 ? 'medium' : 'low')"
+                         :style="'width: ' + stats.flavorsCoverage + '%'"></div>
+                </div>
+                <div class="coverage-label">
+                    <span>Re-embed on change</span>
+                    <span x-text="(stats.flavorsTotal - stats.flavorsWithEmbedding) + ' missing'">0 missing</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Examples -->
+        <div class="col-md-6 col-lg-3">
+            <div class="entity-card">
+                <div class="entity-header">
+                    <div class="entity-title">
+                        <div class="entity-icon examples">
+                            <i class="bi bi-code-slash"></i>
+                        </div>
+                        <div>
+                            <div class="entity-name">Code Examples</div>
+                            <div class="entity-count" x-text="stats.examplesWithEmbedding + ' / ' + stats.examplesTotal">0 / 0</div>
+                        </div>
+                    </div>
+                    <span class="badge" :class="stats.examplesCoverage >= 80 ? 'bg-success' : (stats.examplesCoverage >= 50 ? 'bg-warning' : 'bg-danger')"
+                          x-text="stats.examplesCoverage.toFixed(1) + '%'">0%</span>
+                </div>
+                <div class="coverage-progress">
+                    <div class="coverage-bar" :class="stats.examplesCoverage >= 80 ? 'high' : (stats.examplesCoverage >= 50 ? 'medium' : 'low')"
+                         :style="'width: ' + stats.examplesCoverage + '%'"></div>
+                </div>
+                <div class="coverage-label">
+                    <span>Code snippets</span>
+                    <span x-text="(stats.examplesTotal - stats.examplesWithEmbedding) + ' missing'">0 missing</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Section -->
+    <div class="row g-3">
+        <div class="col-md-6">
+            <h4 class="text-white mb-3">
+                <i class="bi bi-gear me-2"></i>Hybrid Search Configuration
+            </h4>
+            <div class="config-card">
+                <div class="config-header">
+                    <span class="text-white fw-bold">Search Settings</span>
+                </div>
+                <div class="config-body">
+                    <div class="config-item">
+                        <span class="config-label">Hybrid Search</span>
+                        <span class="config-value">
+                            <span th:if="${hybridEnabled}" class="badge bg-success">Enabled</span>
+                            <span th:unless="${hybridEnabled}" class="badge bg-secondary">Disabled</span>
+                        </span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">Alpha (Keyword Weight)</span>
+                        <span class="config-value" th:text="${alpha}">0.3</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">Semantic Weight</span>
+                        <span class="config-value" th:text="${#numbers.formatDecimal(1 - alpha, 1, 1)}">0.7</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">Min Similarity</span>
+                        <span class="config-value" th:text="${minSimilarity}">0.5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <h4 class="text-white mb-3">
+                <i class="bi bi-sliders me-2"></i>Processing Configuration
+            </h4>
+            <div class="config-card">
+                <div class="config-header">
+                    <span class="text-white fw-bold">Chunking & Batching</span>
+                </div>
+                <div class="config-body">
+                    <div class="config-item">
+                        <span class="config-label">Chunk Size</span>
+                        <span class="config-value" th:text="${chunkSize} + ' tokens'">512 tokens</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">Chunk Overlap</span>
+                        <span class="config-value" th:text="${chunkOverlap} + ' tokens'">50 tokens</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">Batch Size</span>
+                        <span class="config-value" th:text="${batchSize} + ' embeddings'">50 embeddings</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Provider-specific config -->
+            <div class="config-card mt-3" th:if="${ollamaBaseUrl != null}">
+                <div class="config-header">
+                    <span class="text-white fw-bold"><i class="bi bi-hdd-rack me-2"></i>Ollama Provider</span>
+                </div>
+                <div class="config-body">
+                    <div class="config-item">
+                        <span class="config-label">Base URL</span>
+                        <span class="config-value" th:text="${ollamaBaseUrl}">http://localhost:11434</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">Model</span>
+                        <span class="config-value" th:text="${ollamaModel}">nomic-embed-text</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-card mt-3" th:if="${openaiModel != null}">
+                <div class="config-header">
+                    <span class="text-white fw-bold"><i class="bi bi-cloud me-2"></i>OpenAI Provider</span>
+                </div>
+                <div class="config-body">
+                    <div class="config-item">
+                        <span class="config-label">Model</span>
+                        <span class="config-value" th:text="${openaiModel}">text-embedding-3-small</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">API Key</span>
+                        <span class="config-value">
+                            <span th:if="${openaiConfigured}" class="badge bg-success">Configured</span>
+                            <span th:unless="${openaiConfigured}" class="badge bg-danger">Not Configured</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<th:block layout:fragment="scripts">
+    <script th:inline="javascript">
+        function embeddingsDashboard() {
+            // Initialize stats from Thymeleaf server-side values
+            const initialStats = /*[[${stats}]]*/ {};
+
+            return {
+                syncing: false,          // True when user clicked sync button
+                processing: false,       // True when background processing is running
+                refreshing: false,
+                lastUpdated: new Date().toLocaleTimeString(),
+                autoRefreshInterval: null,
+
+                // Reactive stats object - initialized from server, updated via AJAX
+                stats: {
+                    docsWithEmbedding: initialStats.docsWithEmbedding || 0,
+                    docsTotal: initialStats.docsTotal || 0,
+                    docsCoverage: initialStats.docsCoverage || 0,
+                    transformsWithEmbedding: initialStats.transformsWithEmbedding || 0,
+                    transformsTotal: initialStats.transformsTotal || 0,
+                    transformsCoverage: initialStats.transformsCoverage || 0,
+                    flavorsWithEmbedding: initialStats.flavorsWithEmbedding || 0,
+                    flavorsTotal: initialStats.flavorsTotal || 0,
+                    flavorsCoverage: initialStats.flavorsCoverage || 0,
+                    examplesWithEmbedding: initialStats.examplesWithEmbedding || 0,
+                    examplesTotal: initialStats.examplesTotal || 0,
+                    examplesCoverage: initialStats.examplesCoverage || 0,
+                    pendingJobs: initialStats.pendingJobs || 0,
+                    totalWithEmbedding: initialStats.totalWithEmbedding || 0,
+                    totalEntities: initialStats.totalEntities || 0,
+                    overallCoverage: initialStats.overallCoverage || 0,
+                    providerAvailable: initialStats.providerAvailable || false,
+                    providerName: initialStats.providerName || 'Unknown',
+                    modelName: initialStats.modelName || 'Unknown'
+                },
+
+                // Computed: show animation when processing or has pending jobs
+                get isWorking() {
+                    return this.processing || this.stats.pendingJobs > 0;
+                },
+
+                async init() {
+                    this.updateTimestamp();
+                    // Check initial processing status
+                    await this.checkStatus();
+                    // Auto-refresh every 5 seconds when working, otherwise every 30 seconds
+                    this.scheduleRefresh();
+                },
+
+                scheduleRefresh() {
+                    // Clear existing interval
+                    if (this.autoRefreshInterval) {
+                        clearInterval(this.autoRefreshInterval);
+                    }
+
+                    // Refresh more frequently when jobs are pending or processing
+                    const interval = this.isWorking ? 5000 : 30000;
+                    this.autoRefreshInterval = setInterval(() => {
+                        this.refreshStats();
+                    }, interval);
+                },
+
+                async checkStatus() {
+                    try {
+                        const response = await fetch('/embeddings/status', {
+                            credentials: 'same-origin',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.processing = data.processing || false;
+                            this.stats.pendingJobs = data.pendingJobs || 0;
+                        }
+                    } catch (error) {
+                        console.warn('Failed to check status:', error);
+                    }
+                },
+
+                async triggerSync() {
+                    if (this.processing) {
+                        this.showNotification('Already running', 'Embedding sync is already in progress', 'info');
+                        return;
+                    }
+
+                    this.syncing = true;
+                    try {
+                        const response = await fetch('/embeddings/sync', {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.status === 'already_running') {
+                                this.processing = true;
+                                this.showNotification('Already running', data.message, 'info');
+                            } else {
+                                this.processing = true;
+                                this.showNotification('Sync started', data.message, 'success');
+                            }
+                            // Refresh stats after a short delay
+                            setTimeout(() => this.refreshStats(), 2000);
+                        } else {
+                            this.showNotification('Sync failed', 'Could not start embedding sync', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Sync error:', error);
+                        this.showNotification('Sync failed', error.message, 'error');
+                    } finally {
+                        this.syncing = false;
+                    }
+                },
+
+                async refreshStats() {
+                    this.refreshing = true;
+                    try {
+                        // Fetch both stats and status in parallel
+                        const [statsResponse, statusResponse] = await Promise.all([
+                            fetch('/embeddings/stats', {
+                                credentials: 'same-origin',
+                                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                            }),
+                            fetch('/embeddings/status', {
+                                credentials: 'same-origin',
+                                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                            })
+                        ]);
+
+                        if (statsResponse.ok) {
+                            const data = await statsResponse.json();
+
+                            // Update reactive stats object - this triggers Alpine.js reactivity
+                            this.stats.docsWithEmbedding = data.docsWithEmbedding || 0;
+                            this.stats.docsTotal = data.docsTotal || 0;
+                            this.stats.docsCoverage = data.docsCoverage || 0;
+                            this.stats.transformsWithEmbedding = data.transformsWithEmbedding || 0;
+                            this.stats.transformsTotal = data.transformsTotal || 0;
+                            this.stats.transformsCoverage = data.transformsCoverage || 0;
+                            this.stats.flavorsWithEmbedding = data.flavorsWithEmbedding || 0;
+                            this.stats.flavorsTotal = data.flavorsTotal || 0;
+                            this.stats.flavorsCoverage = data.flavorsCoverage || 0;
+                            this.stats.examplesWithEmbedding = data.examplesWithEmbedding || 0;
+                            this.stats.examplesTotal = data.examplesTotal || 0;
+                            this.stats.examplesCoverage = data.examplesCoverage || 0;
+                            this.stats.pendingJobs = data.pendingJobs || 0;
+                            this.stats.totalWithEmbedding = data.totalWithEmbedding || 0;
+                            this.stats.totalEntities = data.totalEntities || 0;
+                            this.stats.overallCoverage = data.overallCoverage || 0;
+                            this.stats.providerAvailable = data.providerAvailable || false;
+                            this.stats.providerName = data.providerName || 'Unknown';
+                            this.stats.modelName = data.modelName || 'Unknown';
+                        }
+
+                        if (statusResponse.ok) {
+                            const statusData = await statusResponse.json();
+                            this.processing = statusData.processing || false;
+                        }
+
+                        this.updateTimestamp();
+
+                        // Adjust refresh interval based on pending jobs / processing
+                        this.scheduleRefresh();
+                    } catch (error) {
+                        console.warn('Failed to refresh stats:', error);
+                    } finally {
+                        this.refreshing = false;
+                    }
+                },
+
+                updateTimestamp() {
+                    this.lastUpdated = new Date().toLocaleTimeString();
+                },
+
+                showNotification(title, message, type) {
+                    // Simple console log for now
+                    if (type === 'success') {
+                        console.log(`[${title}] ${message}`);
+                    } else if (type === 'info') {
+                        console.info(`[${title}] ${message}`);
+                    } else {
+                        console.warn(`[${title}] ${message}`);
+                    }
+                },
+
+                destroy() {
+                    if (this.autoRefreshInterval) {
+                        clearInterval(this.autoRefreshInterval);
+                    }
+                }
+            };
+        }
+    </script>
+</th:block>
+</body>
+</html>

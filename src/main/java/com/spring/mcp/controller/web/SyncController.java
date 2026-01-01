@@ -1,9 +1,12 @@
 package com.spring.mcp.controller.web;
 
+import com.spring.mcp.config.EmbeddingProperties;
 import com.spring.mcp.config.JavadocsFeatureConfig;
 import com.spring.mcp.config.LanguageEvolutionFeatureConfig;
 import com.spring.mcp.config.OpenRewriteFeatureConfig;
 import com.spring.mcp.config.SyncFeatureConfig;
+import com.spring.mcp.service.embedding.EmbeddingJobProcessor;
+import com.spring.mcp.service.embedding.EmbeddingSyncService;
 import com.spring.mcp.service.language.LanguageSyncService;
 import com.spring.mcp.service.sync.JavadocSyncService;
 import com.spring.mcp.service.scheduler.LanguageSchedulerService;
@@ -76,6 +79,11 @@ public class SyncController {
     // Spring Guides sync (for code examples and language fix)
     private final com.spring.mcp.service.sync.SpringGuideFetchService springGuideFetchService;
 
+    // Embeddings sync (optional - depends on feature being enabled)
+    private final EmbeddingProperties embeddingProperties;
+    private final Optional<EmbeddingSyncService> embeddingSyncService;
+    private final Optional<EmbeddingJobProcessor> embeddingJobProcessor;
+
     /**
      * Show sync page with options.
      *
@@ -91,6 +99,7 @@ public class SyncController {
         model.addAttribute("languageEvolutionEnabled", languageEvolutionFeatureConfig.isEnabled());
         model.addAttribute("fixVersionsEnabled", syncFeatureConfig.getFixVersions().isEnabled());
         model.addAttribute("javadocsEnabled", javadocsFeatureConfig.isEnabled());
+        model.addAttribute("embeddingsEnabled", embeddingProperties.isEnabled());
         return "sync/index";
     }
 
@@ -597,6 +606,51 @@ public class SyncController {
 
         } catch (Exception e) {
             String errorMsg = "Error during language tag fix: " + e.getMessage();
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+            log.error(errorMsg, e);
+        }
+
+        return "redirect:/sync";
+    }
+
+    /**
+     * Trigger manual sync of embeddings for entities without embeddings.
+     * Only available when Embeddings feature is enabled.
+     *
+     * @param redirectAttributes for flash messages
+     * @return redirect to sync page
+     */
+    @PostMapping("/embeddings")
+    public String syncEmbeddings(RedirectAttributes redirectAttributes) {
+        log.info("Manual embeddings sync triggered");
+
+        if (!embeddingProperties.isEnabled()) {
+            redirectAttributes.addFlashAttribute("error", "Embeddings feature is disabled");
+            return "redirect:/sync";
+        }
+
+        if (embeddingSyncService.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Embedding sync service is not available");
+            return "redirect:/sync";
+        }
+
+        // Check if embedding jobs are already being processed
+        if (embeddingJobProcessor.isPresent() && embeddingJobProcessor.get().isProcessing()) {
+            redirectAttributes.addFlashAttribute("info", "Embedding sync is already running. Check the Embeddings dashboard for progress.");
+            log.info("Embedding sync already running, ignoring duplicate request");
+            return "redirect:/sync";
+        }
+
+        try {
+            // Start async embedding sync for entities without embeddings
+            embeddingSyncService.get().syncMissingEmbeddings();
+
+            String message = "Embeddings sync started in background. Check the Embeddings dashboard for progress.";
+            redirectAttributes.addFlashAttribute("success", message);
+            log.info(message);
+
+        } catch (Exception e) {
+            String errorMsg = "Error during embeddings sync: " + e.getMessage();
             redirectAttributes.addFlashAttribute("error", errorMsg);
             log.error(errorMsg, e);
         }

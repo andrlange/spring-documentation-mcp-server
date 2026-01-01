@@ -91,7 +91,8 @@ public class SecurityConfig {
                 // Also disable for AJAX endpoints in settings that use JSON responses
                 .ignoringRequestMatchers("/mcp/**", "/sse", "/message", "/mcp/spring/sse", "/mcp/spring/messages",
                     "/api/mcp/**", "/sync/**", "/settings/api-keys/**", "/settings/global/**",
-                    "/settings/scheduler/time-format", "/settings/language-scheduler/time-format")
+                    "/settings/scheduler/time-format", "/settings/language-scheduler/time-format",
+                    "/embeddings/**")
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)

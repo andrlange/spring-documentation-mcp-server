@@ -1,5 +1,6 @@
 package com.spring.mcp.service.tools;
 
+import com.spring.mcp.config.EmbeddingProperties;
 import com.spring.mcp.model.dto.flavor.CategoryStatsDto;
 import com.spring.mcp.model.dto.flavor.FlavorDto;
 import com.spring.mcp.model.dto.flavor.FlavorSummaryDto;
@@ -7,10 +8,11 @@ import com.spring.mcp.model.enums.FlavorCategory;
 import com.spring.mcp.security.SecurityContextHelper;
 import com.spring.mcp.service.FlavorGroupService;
 import com.spring.mcp.service.FlavorService;
-import lombok.RequiredArgsConstructor;
+import com.spring.mcp.service.embedding.HybridSearchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springaicommunity.mcp.annotation.McpTool;
 import org.springaicommunity.mcp.annotation.McpToolParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -46,17 +48,32 @@ import java.util.Set;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @ConditionalOnProperty(name = "mcp.features.flavors.enabled", havingValue = "true", matchIfMissing = true)
 public class FlavorTools {
 
     private final FlavorService flavorService;
     private final FlavorGroupService flavorGroupService;
     private final SecurityContextHelper securityContextHelper;
+    private final EmbeddingProperties embeddingProperties;
+
+    // Optional: Only injected when embeddings feature is enabled
+    @Autowired(required = false)
+    private HybridSearchService hybridSearchService;
+
+    public FlavorTools(FlavorService flavorService,
+                       FlavorGroupService flavorGroupService,
+                       SecurityContextHelper securityContextHelper,
+                       EmbeddingProperties embeddingProperties) {
+        this.flavorService = flavorService;
+        this.flavorGroupService = flavorGroupService;
+        this.securityContextHelper = securityContextHelper;
+        this.embeddingProperties = embeddingProperties;
+    }
 
     @McpTool(description = """
         Search company flavors (guidelines, architecture patterns, compliance rules, agent configurations).
         Returns summaries matching the search criteria.
+        When embeddings are enabled, uses hybrid search (keyword + semantic) for better results.
         """)
     public List<FlavorSummaryDto> searchFlavors(
             @McpToolParam(description = "Search query for flavor content (searches name, description, and content)")
@@ -78,8 +95,32 @@ public class FlavorTools {
         // Get accessible flavor IDs for this API key
         Set<Long> accessibleIds = flavorGroupService.getAccessibleFlavorIdsForApiKey(apiKeyId);
 
-        // Search and filter to only accessible flavors
-        return flavorService.search(query, cat, tags, maxResults).stream()
+        // Use hybrid search when embeddings are enabled and no filters are applied
+        boolean useHybridSearch = embeddingProperties.isEnabled()
+                && hybridSearchService != null
+                && query != null && !query.isBlank()
+                && cat == null
+                && (tags == null || tags.isEmpty());
+
+        List<FlavorSummaryDto> results;
+        if (useHybridSearch) {
+            log.debug("Using hybrid search (keyword + semantic) for flavors: {}", query);
+            List<HybridSearchService.SearchResult> hybridResults =
+                    hybridSearchService.searchFlavors(query, maxResults);
+
+            // Convert hybrid results to FlavorSummaryDtos
+            List<Long> ids = hybridResults.stream()
+                    .map(HybridSearchService.SearchResult::id)
+                    .toList();
+
+            results = flavorService.getByIds(ids);
+        } else {
+            // Fall back to traditional search
+            results = flavorService.search(query, cat, tags, maxResults);
+        }
+
+        // Filter to only accessible flavors
+        return results.stream()
                 .filter(f -> accessibleIds.contains(f.getId()))
                 .toList();
     }

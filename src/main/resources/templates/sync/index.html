@@ -15,7 +15,7 @@
         </h1>
     </div>
 
-    <!-- Success/Error Messages -->
+    <!-- Success/Error/Info Messages -->
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="bi bi-check-circle-fill"></i>
         <span th:text="${success}">Success message</span>
@@ -25,6 +25,12 @@
     <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="bi bi-exclamation-triangle-fill"></i>
         <span th:text="${error}">Error message</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div th:if="${info}" class="alert alert-info alert-dismissible fade show" role="alert">
+        <i class="bi bi-info-circle-fill"></i>
+        <span th:text="${info}">Info message</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
@@ -619,6 +625,44 @@
                     <small class="text-muted">
                         <i class="bi bi-clock"></i>
                         ~10-20 seconds
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Embeddings Sync - Conditional -->
+        <div class="col-md-6 col-lg-4" th:if="${embeddingsEnabled}">
+            <div class="card h-100 shadow-sm" style="border-color: #ec4899;">
+                <div class="card-header text-white" style="background-color: #ec4899;">
+                    <h6 class="card-title mb-0">
+                        <span class="badge bg-white me-2" style="color: #ec4899;">
+                            <i class="bi bi-cpu"></i>
+                        </span>
+                        <i class="bi bi-vector-pen"></i>
+                        Generate Embeddings
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text small">
+                        Generate semantic embeddings for entities without embeddings. Embeddings enable hybrid search combining keyword + semantic similarity.
+                    </p>
+                    <form method="post" th:action="@{/sync/embeddings}" class="mb-0 sync-form">
+                        <button type="submit" class="btn btn-sm w-100 sync-btn" style="background-color: #ec4899; border-color: #ec4899; color: white;">
+                            <span class="btn-text">
+                                <i class="bi bi-cpu"></i>
+                                Generate Missing
+                            </span>
+                            <span class="btn-spinner d-none">
+                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                Starting...
+                            </span>
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer bg-light">
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i>
+                        Runs in background
                     </small>
                 </div>
             </div>

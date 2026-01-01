@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring Boot Documentation MCP Server
-    version: 1.5.4
+    version: 1.6.0
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.9
@@ -72,7 +72,7 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.5.4"
+        version: "1.6.0"
         instructions: |
           Spring Boot Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 
@@ -325,6 +325,53 @@ mcp:
         build-type: "gradle-project"
         group-id: "com.example"
         artifact-id: "demo"
+
+    # Embeddings Feature Configuration (Release 1.6.0)
+    # Vector embeddings for semantic search using pgvector
+    embeddings:
+      enabled: ${EMBEDDINGS_ENABLED:false}  # Default: DISABLED - enable to use vector search
+      provider: ${EMBEDDING_PROVIDER:ollama}  # ollama or openai
+      dimensions: ${EMBEDDING_DIMENSIONS:768}  # 768 for nomic-embed-text, 1536 for OpenAI
+      chunk-size: ${EMBEDDING_CHUNK_SIZE:512}  # Max tokens per chunk
+      chunk-overlap: ${EMBEDDING_CHUNK_OVERLAP:50}  # Overlap between chunks
+      batch-size: ${EMBEDDING_BATCH_SIZE:50}  # Embeddings per batch
+
+      # Hybrid search configuration (combines keyword + semantic search)
+      hybrid:
+        enabled: true
+        alpha: 0.3  # 0.0 = pure vector, 1.0 = pure keyword, 0.3 = semantic-weighted
+        min-similarity: 0.5  # Minimum cosine similarity threshold
+
+      # Retry configuration for failed embeddings
+      retry:
+        max-attempts: ${EMBEDDING_RETRY_ATTEMPTS:10}
+        initial-delay-ms: ${EMBEDDING_RETRY_INITIAL_DELAY:5000}
+        max-delay-ms: ${EMBEDDING_RETRY_MAX_DELAY:300000}
+        multiplier: 2.0
+
+      # Health check configuration
+      health-check:
+        enabled: true
+        interval-ms: ${EMBEDDING_HEALTH_CHECK_INTERVAL:60000}
+        timeout-ms: ${EMBEDDING_HEALTH_CHECK_TIMEOUT:10000}
+
+      # Job processing configuration
+      job:
+        batch-size: ${EMBEDDING_JOB_BATCH_SIZE:50}
+        thread-pool-size: ${EMBEDDING_JOB_THREADS:2}
+        queue-capacity: ${EMBEDDING_JOB_QUEUE_SIZE:1000}
+
+      # Ollama provider configuration
+      ollama:
+        base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+        model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
+        timeout-ms: ${OLLAMA_TIMEOUT:30000}
+
+      # OpenAI provider configuration (optional)
+      openai:
+        api-key: ${OPENAI_API_KEY:}
+        model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
+        timeout-ms: ${OPENAI_TIMEOUT:30000}
 
     # Javadocs Downloader Feature Configuration (Release 1.4.2)
     javadocs:
