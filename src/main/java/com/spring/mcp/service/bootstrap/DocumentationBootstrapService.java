@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -229,6 +230,29 @@ public class DocumentationBootstrapService {
 
         } finally {
             bootstrapInProgress.set(false);
+        }
+    }
+
+    /**
+     * Asynchronously bootstraps all configured Spring projects.
+     * <p>
+     * This method runs on a virtual thread and delegates to {@link #bootstrapAllProjects()}.
+     * It provides non-blocking execution for long-running bootstrap operations.
+     * <p>
+     * Use this method when triggering bootstrap from REST endpoints or other
+     * contexts where blocking is undesirable.
+     * <p>
+     * Progress can be monitored via {@link #getBootstrapStatus()}.
+     *
+     * @see #bootstrapAllProjects()
+     */
+    @Async("bootstrapExecutor")
+    public void bootstrapAllProjectsAsync() {
+        log.info("Starting async bootstrap on virtual thread: {}", Thread.currentThread());
+        try {
+            bootstrapAllProjects();
+        } catch (Exception e) {
+            log.error("Error during async bootstrap: {}", e.getMessage(), e);
         }
     }
 

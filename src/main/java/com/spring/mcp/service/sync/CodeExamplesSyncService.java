@@ -13,6 +13,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -54,7 +55,7 @@ public class CodeExamplesSyncService {
      *
      * @return SyncResult with statistics
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SyncResult syncCodeExamples() {
         log.info("Starting comprehensive code examples sync...");
         SyncResult result = new SyncResult();

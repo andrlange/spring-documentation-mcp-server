@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring Boot Documentation MCP Server
-    version: 1.6.0
+    version: 1.6.1
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.9
@@ -10,6 +10,12 @@ info:
 spring:
   application:
     name: spring-boot-documentation-mcp-server
+
+  # Enable Virtual Threads (Java 21+)
+  # Lightweight threads for high-throughput I/O-bound operations
+  threads:
+    virtual:
+      enabled: true
 
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:spring_mcp}
@@ -72,7 +78,7 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.6.0"
+        version: "1.6.1"
         instructions: |
           Spring Boot Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 

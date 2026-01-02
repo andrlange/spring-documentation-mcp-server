@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -53,7 +54,7 @@ public class SpringBootVersionSyncService {
      *
      * @return SyncResult with statistics
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SyncResult syncSpringBootVersions() {
         log.info("Starting Spring Boot versions sync for spring_boot_versions table");
         SyncResult result = new SyncResult();

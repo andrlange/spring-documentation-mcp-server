@@ -5,6 +5,38 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2026-01-02
+
+### Added
+- **Virtual Threads Support**: Migrated all asynchronous operations to Java Virtual Threads (JEP 444)
+    - **Central AsyncConfig**: New `AsyncConfig.java` providing Spring-managed virtual thread executors
+    - **Named Executors**: `virtualThreadExecutor`, `taskExecutor`, `indexingExecutor`, `bootstrapExecutor`
+    - **Spring Lifecycle Integration**: Graceful shutdown and proper thread management
+    - **Uncaught Exception Handler**: Centralized logging for async method failures
+- **Documentation**: Added "Virtual Threads (Java 21+)" section to README.md explaining architecture and benefits
+
+### Changed
+- **BootstrapController**: Replaced manual `new Thread()` with `@Async("bootstrapExecutor")` method
+    - Bootstrap operations now run on Spring-managed virtual threads
+    - Improved error handling and logging
+- **DocumentationIndexer**: Refactored to use injected `indexingExecutor` instead of creating per-batch thread pools
+    - Removed `Executors.newFixedThreadPool()` calls that created new pools for each batch
+    - Parallel indexing now uses shared, Spring-managed virtual thread executor
+    - Added proper timeout handling for indexing tasks
+- **EmbeddingConfig**: Simplified to use virtual threads
+    - Removed `@EnableAsync` (centralized in `AsyncConfig`)
+    - Replaced `ThreadPoolTaskExecutor` with `Executors.newVirtualThreadPerTaskExecutor()`
+    - No pool sizing required with virtual threads - JVM handles scheduling automatically
+- **application.yml**: Added `spring.threads.virtual.enabled: true` to enable virtual threads globally
+
+### Technical Details
+- Virtual threads are lightweight (~1KB vs ~1MB for platform threads)
+- Ideal for I/O-bound operations: HTTP calls, database queries, file operations
+- All async operations now benefit from virtual thread scalability
+- Spring Boot 3.2+ automatically configures Tomcat/Jetty/Undertow to use virtual threads when enabled
+
+---
+
 ## [1.6.0] - 2026-01-01
 
 ### Added
@@ -495,6 +527,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.6.1 | 2026-01-02 | Virtual Threads support, Spring-managed async operations |
+| 1.6.0 | 2026-01-01 | Semantic embeddings with pgvector (Ollama/OpenAI providers) |
 | 1.5.4 | 2025-12-25 | Collapsible sidebar menu, SNAPSHOT → GA version sync fix |
 | 1.5.3 | 2025-12-19 | User display name, Spring Boot 3.5.9 |
 | 1.5.2 | 2025-12-17 | JEP/KEP detail pages, synthesized code examples, dark theme fixes |

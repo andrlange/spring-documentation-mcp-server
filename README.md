@@ -10,7 +10,7 @@
 >
 > **Purpose**: My main goal is to create demo applications using my own specifications to explore AI-assisted development workflows.
 
-### (Current Version 1.6.0 - Semantic Embeddings with pgvector)
+### (Current Version 1.6.1 - Virtual Threads & Semantic Embeddings)
 
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
@@ -63,6 +63,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 - [Contributing](#contributing)
 - [License](#license)
 - [Resources](#resources)
+- [Virtual Threads (Java 21+)](#virtual-threads-java-21)
 
 ## Changelog
 
@@ -72,6 +73,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
+| **1.6.1** | 2026-01-02 | Virtual Threads, Spring-managed async operations             |
 | **1.6.0** | 2026-01-01 | Semantic embeddings with pgvector (Ollama/OpenAI providers)  |
 | **1.5.4** | 2025-12-25 | Collapsible sidebar menu, SNAPSHOT → GA version sync fix     |
 | **1.5.3** | 2025-12-19 | User display name, Spring Boot 3.5.9                         |
@@ -118,7 +120,7 @@ docker-compose up -d postgres
 ### 2. Build and Run
 ```bash
 ./gradlew clean build
-java -jar build/libs/spring-boot-documentation-mcp-server-1.6.0.jar
+java -jar build/libs/spring-boot-documentation-mcp-server-1.6.1.jar
 ```
 
 Or using Gradle:
@@ -1232,6 +1234,95 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 > Thanks to Dan Vega - https://github.com/danvega/sb4 providing Spring Boot 4 architecture examples -
 > flavors/architecture/danvega-sb4
+
+---
+
+## Virtual Threads (Java 21+)
+
+Starting with version 1.6.1, the Spring MCP Server uses **Java Virtual Threads** for all asynchronous operations, providing lightweight, scalable concurrency for I/O-bound tasks.
+
+### What Are Virtual Threads?
+
+Virtual threads are lightweight threads introduced in Java 21 (JEP 444). Unlike traditional platform threads (~1MB stack each), virtual threads are managed by the JVM and use only ~1KB of memory, allowing millions of concurrent threads.
+
+### Benefits in Spring MCP Server
+
+| Before (Platform Threads) | After (Virtual Threads) |
+|---------------------------|-------------------------|
+| Manual `new Thread()` calls | Spring-managed `@Async` |
+| New thread pool per batch | Shared lightweight executors |
+| ~1MB per thread | ~1KB per thread |
+| Manual pool sizing required | JVM handles scheduling |
+| No graceful shutdown | Spring lifecycle integration |
+| No monitoring visibility | Actuator metrics available |
+
+### Configuration
+
+Virtual threads are enabled by default in `application.yml`:
+
+```yaml
+spring:
+  threads:
+    virtual:
+      enabled: true
+```
+
+### Architecture
+
+The `AsyncConfig` provides Spring-managed virtual thread executors for different operations:
+
+| Executor | Purpose | Used By |
+|----------|---------|---------|
+| `virtualThreadExecutor` | Default async executor | `@Async` methods without qualifier |
+| `taskExecutor` | General-purpose tasks | Various services |
+| `indexingExecutor` | Documentation indexing | `DocumentationIndexer` |
+| `bootstrapExecutor` | Bootstrap operations | `DocumentationBootstrapService` |
+| `embeddingTaskExecutor` | Embedding generation | `EmbeddingSyncService` |
+
+### Code Changes
+
+**Before (Manual Threading)**:
+```java
+// Old approach - unmanaged thread
+new Thread(() -> {
+    bootstrapService.bootstrapAllProjects();
+}).start();
+```
+
+**After (Spring-Managed Virtual Threads)**:
+```java
+// New approach - Spring @Async with virtual threads
+@Async("bootstrapExecutor")
+public void bootstrapAllProjectsAsync() {
+    bootstrapAllProjects();
+}
+```
+
+### Impact on Existing Features
+
+All async operations now use virtual threads:
+
+- **Bootstrap**: Project bootstrapping runs on virtual threads
+- **Documentation Indexing**: Parallel document processing uses shared virtual thread executor
+- **Embedding Generation**: Async embedding jobs use virtual threads
+- **Scheduled Tasks**: Background sync operations benefit from virtual threads
+
+### When to Use Virtual Threads
+
+Virtual threads are ideal for:
+- HTTP calls to external APIs (spring.io, GitHub, Ollama, OpenAI)
+- Database operations
+- File I/O
+- Any I/O-bound concurrent workload
+
+They are **not** recommended for CPU-bound tasks (use platform thread pools instead).
+
+### Monitoring
+
+Virtual thread usage can be monitored via:
+- Spring Boot Actuator (`/actuator/metrics`)
+- Application logs (thread names show "virtual" prefix)
+- MCP Monitoring Dashboard (`/monitoring`)
 
 ---
 

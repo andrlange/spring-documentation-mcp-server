@@ -10,6 +10,7 @@ import com.spring.mcp.util.VersionParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -42,7 +43,7 @@ public class ProjectSyncService {
      *
      * @return SyncResult with statistics
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SyncResult syncSpringBoot() {
         log.info("Starting Spring Boot sync");
         SyncResult result = new SyncResult();

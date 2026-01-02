@@ -12,6 +12,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -50,7 +51,7 @@ public class ProjectRelationshipSyncService {
      *
      * @return SyncResult with statistics
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SyncResult syncProjectRelationships() {
         log.info("Starting project relationships sync");
         SyncResult result = new SyncResult();

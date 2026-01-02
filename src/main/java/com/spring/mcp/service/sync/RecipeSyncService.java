@@ -11,12 +11,14 @@ import com.spring.mcp.model.event.SyncProgressEvent;
 import com.spring.mcp.repository.MigrationRecipeRepository;
 import com.spring.mcp.repository.MigrationTransformationRepository;
 import com.spring.mcp.repository.SpringProjectRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,7 +29,6 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "mcp.features.openrewrite", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class RecipeSyncService {
 
@@ -36,12 +37,35 @@ public class RecipeSyncService {
     private final SpringProjectRepository springProjectRepository;
     private final OpenRewriteFeatureConfig featureConfig;
     private final ApplicationEventPublisher eventPublisher;
+    private final TransactionTemplate requiresNewTransactionTemplate;
+
+    public RecipeSyncService(
+            MigrationRecipeRepository recipeRepository,
+            MigrationTransformationRepository transformationRepository,
+            SpringProjectRepository springProjectRepository,
+            OpenRewriteFeatureConfig featureConfig,
+            ApplicationEventPublisher eventPublisher,
+            PlatformTransactionManager transactionManager) {
+        this.recipeRepository = recipeRepository;
+        this.transformationRepository = transformationRepository;
+        this.springProjectRepository = springProjectRepository;
+        this.featureConfig = featureConfig;
+        this.eventPublisher = eventPublisher;
+
+        // Create a TransactionTemplate with REQUIRES_NEW propagation
+        // This ensures each project is processed in its own isolated transaction
+        this.requiresNewTransactionTemplate = new TransactionTemplate(transactionManager);
+        this.requiresNewTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
 
     /**
      * Perform a full sync of recipe data.
      * Dynamically generates migration recipes based on Spring projects in the database.
+     *
+     * Note: This method does NOT use @Transactional. Each project is processed in its own
+     * isolated transaction using TransactionTemplate with REQUIRES_NEW propagation.
+     * This prevents dirty entities from one failed project from contaminating others.
      */
-    @Transactional
     public void syncRecipes() {
         if (!featureConfig.isEnabled()) {
             log.info("OpenRewrite feature is disabled, skipping recipe sync");
@@ -52,7 +76,7 @@ public class RecipeSyncService {
         publishProgress("Recipe Sync", "Starting dynamic recipe generation", 0);
 
         try {
-            // Get all active Spring projects from the database
+            // Get all active Spring projects from the database (read-only, no transaction needed)
             List<SpringProject> projects = springProjectRepository.findByActiveTrue();
 
             if (projects.isEmpty()) {
@@ -68,33 +92,63 @@ public class RecipeSyncService {
             int recipesUpdated = 0;
             int transformationsCreated = 0;
             int projectsProcessed = 0;
+            int projectsWithErrors = 0;
 
             for (SpringProject project : projects) {
+                final Long projectId = project.getId();
+                final String projectSlug = project.getSlug();
+
                 try {
-                    RecipeGenerationResult result = generateRecipesForProject(project);
-                    recipesCreated += result.recipesCreated;
-                    recipesUpdated += result.recipesUpdated;
-                    transformationsCreated += result.transformationsCreated;
+                    // Process each project in its own isolated transaction
+                    // If one project fails, it won't affect others
+                    // IMPORTANT: We pass only the project ID and re-fetch inside the new transaction
+                    // to avoid LazyInitializationException (the original entity's session is closed)
+                    RecipeGenerationResult result = requiresNewTransactionTemplate.execute(status -> {
+                        try {
+                            // Re-fetch the project inside this transaction so lazy collections work
+                            SpringProject freshProject = springProjectRepository.findById(projectId)
+                                .orElseThrow(() -> new IllegalStateException("Project not found: " + projectId));
+                            return generateRecipesForProject(freshProject);
+                        } catch (Exception e) {
+                            status.setRollbackOnly();
+                            throw e;
+                        }
+                    });
+
+                    if (result != null) {
+                        recipesCreated += result.recipesCreated;
+                        recipesUpdated += result.recipesUpdated;
+                        transformationsCreated += result.transformationsCreated;
+                    }
                     projectsProcessed++;
 
                     int progressPercent = 10 + (int) ((projectsProcessed * 80.0) / projects.size());
                     publishProgress("Recipe Sync",
-                        String.format("Processed %s (%d/%d)", project.getSlug(), projectsProcessed, projects.size()),
+                        String.format("Processed %s (%d/%d)", projectSlug, projectsProcessed, projects.size()),
                         progressPercent);
                 } catch (Exception e) {
-                    log.error("Error generating recipes for project: {}", project.getSlug(), e);
+                    projectsWithErrors++;
+                    log.error("Error generating recipes for project: {} - {}", projectSlug, e.getMessage());
+                    log.debug("Full stack trace for project {}", projectSlug, e);
                 }
             }
 
-            // Final count
-            long totalRecipes = recipeRepository.countByIsActiveTrue();
-            long totalTransformations = transformationRepository.count();
+            // Final count (in its own transaction)
+            long totalRecipes = requiresNewTransactionTemplate.execute(status -> recipeRepository.countByIsActiveTrue());
+            long totalTransformations = requiresNewTransactionTemplate.execute(status -> transformationRepository.count());
 
-            log.info("Recipe sync complete: {} recipes created, {} updated, {} transformations created. Total: {} recipes, {} transformations",
-                recipesCreated, recipesUpdated, transformationsCreated, totalRecipes, totalTransformations);
+            if (projectsWithErrors > 0) {
+                log.warn("Recipe sync completed with {} errors. {} recipes created, {} updated, {} transformations created. Total: {} recipes, {} transformations",
+                    projectsWithErrors, recipesCreated, recipesUpdated, transformationsCreated, totalRecipes, totalTransformations);
+            } else {
+                log.info("Recipe sync complete: {} recipes created, {} updated, {} transformations created. Total: {} recipes, {} transformations",
+                    recipesCreated, recipesUpdated, transformationsCreated, totalRecipes, totalTransformations);
+            }
 
             publishProgress("Recipe Sync",
-                String.format("Sync complete: %d recipes, %d transformations", totalRecipes, totalTransformations),
+                String.format("Sync complete: %d recipes, %d transformations%s",
+                    totalRecipes, totalTransformations,
+                    projectsWithErrors > 0 ? " (" + projectsWithErrors + " errors)" : ""),
                 100);
         } catch (Exception e) {
             log.error("Error during recipe sync", e);

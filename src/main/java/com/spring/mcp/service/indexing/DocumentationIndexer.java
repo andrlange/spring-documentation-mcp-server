@@ -7,9 +7,9 @@ import com.spring.mcp.repository.DocumentationLinkRepository;
 import com.spring.mcp.service.documentation.DocumentationFetchService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,15 +49,36 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class DocumentationIndexer {
 
     private final DocumentationFetchService fetchService;
     private final DocumentationContentRepository contentRepository;
     private final DocumentationLinkRepository linkRepository;
-
-    @PersistenceContext
     private final EntityManager entityManager;
+    private final ExecutorService indexingExecutor;
+
+    /**
+     * Constructor with dependency injection including Spring-managed virtual thread executor.
+     *
+     * @param fetchService the documentation fetch service
+     * @param contentRepository the documentation content repository
+     * @param linkRepository the documentation link repository
+     * @param entityManager the JPA entity manager
+     * @param indexingExecutor the Spring-managed virtual thread executor for parallel indexing
+     */
+    public DocumentationIndexer(
+            DocumentationFetchService fetchService,
+            DocumentationContentRepository contentRepository,
+            DocumentationLinkRepository linkRepository,
+            EntityManager entityManager,
+            @Qualifier("indexingExecutor") Executor indexingExecutor) {
+        this.fetchService = fetchService;
+        this.contentRepository = contentRepository;
+        this.linkRepository = linkRepository;
+        this.entityManager = entityManager;
+        // Cast to ExecutorService for Future support - virtual thread executors implement ExecutorService
+        this.indexingExecutor = (ExecutorService) indexingExecutor;
+    }
 
     @Value("${mcp.documentation.indexing.batch-size:100}")
     private int batchSize;
@@ -471,12 +492,13 @@ public class DocumentationIndexer {
         int failed = 0;
 
         if (parallelProcessing && batch.size() > 1) {
-            // Parallel processing using thread pool
-            ExecutorService executor = Executors.newFixedThreadPool(Math.min(maxThreads, batch.size()));
+            // Parallel processing using Spring-managed virtual thread executor
+            // Note: Virtual threads are lightweight (~1KB) and scale to millions of concurrent tasks
+            log.debug("Processing batch of {} links in parallel using virtual threads", batch.size());
             List<Future<Boolean>> futures = new ArrayList<>();
 
             for (DocumentationLink link : batch) {
-                Future<Boolean> future = executor.submit(() -> {
+                Future<Boolean> future = indexingExecutor.submit(() -> {
                     try {
                         indexDocumentation(link);
                         return true;
@@ -491,29 +513,28 @@ public class DocumentationIndexer {
                 futures.add(future);
             }
 
-            // Collect results
+            // Collect results - with virtual threads, we don't need to manage thread pool lifecycle
             for (Future<Boolean> future : futures) {
                 try {
-                    if (future.get()) {
+                    if (future.get(60, TimeUnit.SECONDS)) {
                         successful++;
                     } else {
                         failed++;
                     }
-                } catch (InterruptedException | ExecutionException e) {
+                } catch (InterruptedException e) {
+                    log.error("Indexing task interrupted: {}", e.getMessage());
+                    failed++;
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException e) {
                     log.error("Error processing future: {}", e.getMessage());
+                    failed++;
+                } catch (TimeoutException e) {
+                    log.error("Indexing task timed out: {}", e.getMessage());
                     failed++;
                 }
             }
 
-            executor.shutdown();
-            try {
-                if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
-                    executor.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                executor.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
+            // Note: No executor shutdown needed - virtual thread executor is Spring-managed
 
         } else {
             // Sequential processing
