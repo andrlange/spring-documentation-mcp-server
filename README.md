@@ -1239,13 +1239,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Virtual Threads (Java 21+)
 
-Starting with version 1.6.1, the Spring MCP Server uses **Java Virtual Threads** for all asynchronous operations, providing lightweight, scalable concurrency for I/O-bound tasks.
+Starting with version 1.6.1, the Spring Boot Documentation MCP Server uses **Java Virtual Threads** for all 
+asynchronous operations, providing lightweight, scalable concurrency for I/O-bound tasks.
 
 ### What Are Virtual Threads?
 
 Virtual threads are lightweight threads introduced in Java 21 (JEP 444). Unlike traditional platform threads (~1MB stack each), virtual threads are managed by the JVM and use only ~1KB of memory, allowing millions of concurrent threads.
 
-### Benefits in Spring MCP Server
+### Benefits in Spring Boot Documentation MCP Server
 
 | Before (Platform Threads) | After (Virtual Threads) |
 |---------------------------|-------------------------|
