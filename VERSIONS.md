@@ -6,7 +6,7 @@ This document tracks the version configuration across all project files to ensur
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Application** | 1.6.0 | Spring MCP Server |
+| **Application** | 1.6.1 | Spring MCP Server |
 | **Java (JDK)** | 25 | LTS version |
 | **Spring Boot** | 3.5.9 | Latest stable |
 | **Spring AI** | 1.1.2 | MCP Server support |
@@ -20,7 +20,7 @@ Needs to track the changelog
 
 ### build.gradle
 ```groovy
-version = '1.6.0'
+version = '1.6.1'
 
 java {
     toolchain {
@@ -45,7 +45,7 @@ services:
   postgres:
     image: postgres:18-alpine
   spring-boot-documentation-mcp-server:
-    image: spring-boot-documentation-mcp-server:1.6.0
+    image: spring-boot-documentation-mcp-server:1.6.1
 ```
 
 ### application.yml
@@ -54,20 +54,23 @@ services:
 info:
   app:
     name: Spring MCP Server
-    version: 1.6.0
+    version: 1.6.1
   spring-boot:
     version: 3.5.9
 
 spring:
+  threads:
+    virtual:
+      enabled: true  # Virtual threads enabled (Java 21+)
   ai:
     mcp:
       server:
-        version: "1.6.0"
+        version: "1.6.1"
 ```
 
 ### build-container.sh
 ```bash
-APP_VERSION="1.6.0"
+APP_VERSION="1.6.1"
 JAVA_VERSION="25"
 ```
 
@@ -109,6 +112,14 @@ Update these locations when adding/removing tools:
 - `.claude/memory/project-memory.md` - MCP Tools count
 
 ## Changelog
+
+### v1.6.1 (2026-01-02)
+- Virtual Threads support for all async operations (JEP 444)
+- Central AsyncConfig with Spring-managed virtual thread executors
+- Refactored BootstrapController to use @Async instead of manual threads
+- Refactored DocumentationIndexer to use injected executor instead of per-batch pools
+- Simplified EmbeddingConfig with virtual threads (removed manual pool sizing)
+- Added "Virtual Threads (Java 21+)" documentation section to README.md
 
 ### v1.6.0 (2026-01-01)
 - Added Semantic Search / Embeddings Feature

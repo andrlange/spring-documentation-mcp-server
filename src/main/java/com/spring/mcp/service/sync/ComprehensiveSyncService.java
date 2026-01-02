@@ -10,7 +10,6 @@ import com.spring.mcp.service.github.GitHubDocumentationSyncService;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -55,8 +54,11 @@ public class ComprehensiveSyncService {
      * This is the master sync method that should be called to ensure complete data.
      *
      * @return ComprehensiveSyncResult with aggregated statistics
+     *
+     * Note: This method intentionally does NOT have @Transactional annotation.
+     * Each sync phase runs in its own isolated transaction (REQUIRES_NEW) to prevent
+     * transaction contamination - if one phase fails, it doesn't affect other phases.
      */
-    @Transactional
     public ComprehensiveSyncResult syncAll() {
         log.info("=".repeat(80));
         log.info("COMPREHENSIVE SYNC STARTED - Syncing ALL Spring Projects and Versions");

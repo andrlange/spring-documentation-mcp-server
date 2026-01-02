@@ -107,30 +107,14 @@ public class BootstrapController {
                 ));
         }
 
-        try {
-            // Run bootstrap in a separate thread to avoid blocking
-            new Thread(() -> {
-                try {
-                    bootstrapService.bootstrapAllProjects();
-                } catch (Exception e) {
-                    log.error("Error during bootstrap", e);
-                }
-            }).start();
+        // Run bootstrap asynchronously on a virtual thread (Spring-managed)
+        bootstrapService.bootstrapAllProjectsAsync();
 
-            return ResponseEntity.accepted()
-                .body(Map.of(
-                    "status", "accepted",
-                    "message", "Bootstrap started successfully. Check /api/bootstrap/status for progress."
-                ));
-
-        } catch (Exception e) {
-            log.error("Error starting bootstrap", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "status", "error",
-                    "message", "Failed to start bootstrap: " + e.getMessage()
-                ));
-        }
+        return ResponseEntity.accepted()
+            .body(Map.of(
+                "status", "accepted",
+                "message", "Bootstrap started successfully on virtual thread. Check /api/bootstrap/status for progress."
+            ));
     }
 
     /**

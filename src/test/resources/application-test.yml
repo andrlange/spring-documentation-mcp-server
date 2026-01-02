@@ -103,3 +103,9 @@ logging:
     org.springframework.ai.mcp: DEBUG
     org.hibernate.SQL: WARN
     org.testcontainers: INFO
+    # Suppress expected shutdown noise (containers stop before Spring context closes)
+    io.modelcontextprotocol.server.transport.WebMvcSseServerTransportProvider: OFF
+    com.zaxxer.hikari.pool.PoolBase: OFF
+    com.zaxxer.hikari.pool.HikariPool: OFF
+    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: OFF
+    org.springframework.beans.factory.support.DisposableBeanAdapter: OFF

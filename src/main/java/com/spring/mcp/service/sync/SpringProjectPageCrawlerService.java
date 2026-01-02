@@ -13,6 +13,7 @@ import com.spring.mcp.repository.SpringProjectRepository;
 import com.spring.mcp.util.VersionParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -64,7 +65,7 @@ public class SpringProjectPageCrawlerService {
      * @param slug The project slug (e.g., "spring-boot", "spring-ai")
      * @return CrawlResult with statistics about the crawl operation
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public CrawlResult crawlProject(String slug) {
         log.info("Starting crawl for project: {}", slug);
         CrawlResult result = new CrawlResult();

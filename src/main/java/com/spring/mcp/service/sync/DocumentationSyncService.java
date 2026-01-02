@@ -6,6 +6,7 @@ import com.spring.mcp.service.documentation.DocumentationFetchService;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -36,7 +37,7 @@ public class DocumentationSyncService {
      *
      * @return SyncResult with statistics
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SyncResult syncAllDocumentation() {
         log.info("Starting documentation sync for all Spring projects...");
         SyncResult result = new SyncResult();

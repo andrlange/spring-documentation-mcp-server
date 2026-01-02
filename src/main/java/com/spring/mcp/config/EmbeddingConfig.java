@@ -8,22 +8,25 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /**
  * Configuration for the Embeddings feature.
+ * <p>
  * Provides auto-configuration for embedding providers based on settings.
+ * Uses virtual threads for async embedding operations, providing lightweight
+ * and scalable concurrent processing.
+ * <p>
+ * Note: @EnableAsync is configured centrally in {@link AsyncConfig}.
  *
  * @author Spring MCP Server
- * @version 1.6.0
+ * @version 1.6.1
  * @since 2026-01-01
  */
 @Slf4j
 @Configuration
-@EnableAsync
 @ConditionalOnProperty(name = "mcp.features.embeddings.enabled", havingValue = "true")
 public class EmbeddingConfig {
 
@@ -62,24 +65,25 @@ public class EmbeddingConfig {
     }
 
     /**
-     * Executor for async embedding job processing.
+     * Executor for async embedding job processing using virtual threads.
+     * <p>
+     * Virtual threads are lightweight (~1KB vs ~1MB for platform threads)
+     * and can scale to millions of concurrent tasks. They are ideal for
+     * I/O-bound operations like API calls to embedding providers (Ollama, OpenAI).
+     * <p>
+     * With virtual threads, traditional thread pool sizing (core size, max size,
+     * queue capacity) is no longer necessary - the JVM manages scheduling efficiently.
+     *
+     * @param properties embedding configuration properties (for logging)
+     * @return virtual thread executor for embedding operations
      */
     @Bean(name = "embeddingTaskExecutor")
     public Executor embeddingTaskExecutor(EmbeddingProperties properties) {
-        EmbeddingProperties.JobConfig jobConfig = properties.getJob();
+        log.info("Configuring embedding task executor with virtual threads");
+        log.info("Virtual threads provide automatic scaling - no pool sizing needed");
+        log.info("Embedding provider: {}, configured batch size: {}",
+                properties.getProvider(), properties.getJob().getBatchSize());
 
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(jobConfig.getThreadPoolSize());
-        executor.setMaxPoolSize(jobConfig.getThreadPoolSize() * 2);
-        executor.setQueueCapacity(jobConfig.getQueueCapacity());
-        executor.setThreadNamePrefix("embedding-");
-        executor.setRejectedExecutionHandler((r, e) ->
-                log.warn("Embedding task rejected - queue full. Consider increasing queue capacity."));
-        executor.initialize();
-
-        log.info("Initialized embedding task executor with {} threads, queue capacity {}",
-                jobConfig.getThreadPoolSize(), jobConfig.getQueueCapacity());
-
-        return executor;
+        return Executors.newVirtualThreadPerTaskExecutor();
     }
 }

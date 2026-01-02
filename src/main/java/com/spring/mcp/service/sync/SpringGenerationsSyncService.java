@@ -15,6 +15,7 @@ import com.spring.mcp.util.VersionParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -52,7 +53,7 @@ public class SpringGenerationsSyncService {
      *
      * @return SyncResult with statistics
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SyncResult syncAllGenerations() {
         log.info("Starting Spring Generations sync");
         SyncResult result = new SyncResult();
