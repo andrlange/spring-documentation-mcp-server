@@ -1239,10 +1239,10 @@ For each of the 43 tools:
 
 ## Appendix B: Related Documentation
 
-- [README.md](../README.md) - Main project documentation
-- [ADDITIONAL_CONTENT.md](../ADDITIONAL_CONTENT.md) - Technical reference with full tool parameters
-- [CAPABILITY_PLANNING.md](CAPABILITY_PLANNING.md) - Capability analysis document
-- [CAPABILITY_PLANNING_HOWTO.md](CAPABILITY_PLANNING_HOWTO.md) - Capability planning guide
+- [README.md](../../README.md) - Main project documentation
+- [ADDITIONAL_CONTENT.md](../../ADDITIONAL_CONTENT.md) - Technical reference with full tool parameters
+- [CAPABILITY_PLANNING.md](../CAPABILITY_PLANNING.md) - Capability analysis document
+- [CAPABILITY_PLANNING_HOWTO.md](../CAPABILITY_PLANNING_HOWTO.md) - Capability planning guide
 
 ---
 

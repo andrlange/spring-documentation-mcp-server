@@ -10,7 +10,7 @@
 >
 > **Purpose**: My main goal is to create demo applications using my own specifications to explore AI-assisted development workflows.
 
-### (Current Version 1.6.1 - Virtual Threads & Semantic Embeddings)
+### (Current Version 1.6.2 - MCP Tool Masquerading)
 
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
@@ -49,6 +49,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
   - [Javadoc API Documentation](#javadoc-api-documentation)
   - [MCP Monitoring Dashboard](#mcp-monitoring-dashboard)
   - [Semantic Embeddings](#semantic-embeddings)
+  - [MCP Tool Masquerading](#mcp-tool-masquerading)
 - [Using with Claude Code](#using-with-claude-code)
   - [Configuration](#mcp-configuration)
   - [Documentation Queries](#documentation-queries)
@@ -73,6 +74,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
+| **1.6.2** | 2026-01-03 | MCP Tool Masquerading - Dynamic tool visibility & descriptions |
 | **1.6.1** | 2026-01-02 | Virtual Threads, Spring-managed async operations             |
 | **1.6.0** | 2026-01-01 | Semantic embeddings with pgvector (Ollama/OpenAI providers)  |
 | **1.5.4** | 2025-12-25 | Collapsible sidebar menu, SNAPSHOT → GA version sync fix     |
@@ -120,7 +122,7 @@ docker-compose up -d postgres
 ### 2. Build and Run
 ```bash
 ./gradlew clean build
-java -jar build/libs/spring-boot-documentation-mcp-server-1.6.1.jar
+java -jar build/libs/spring-boot-documentation-mcp-server-1.6.2.jar
 ```
 
 Or using Gradle:
@@ -806,6 +808,49 @@ The extension is automatically created via Flyway migration:
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
+
+---
+
+### MCP Tool Masquerading
+
+Management UI for tracking MCP tool visibility preferences and customizing tool descriptions. This feature provides a database-backed configuration system for tool management.
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="assets/screen-30.png" alt="MCP Masquerading Dashboard" />
+      <p align="center"><b>MCP Masquerading Dashboard</b> - Real-time tool to configure MCP Tool Visibility</p>
+    </td>
+  </tr>
+</table>
+
+**Features**:
+- **Per-Tool Toggle**: Track enabled/disabled status for individual tools
+- **Group Toggle**: Track status for entire tool groups with one click
+- **Custom Descriptions**: Store custom tool descriptions to provide guidance
+- **Original Descriptions**: Reset to original descriptions at any time
+- **Persistent State**: Tool configurations persist across server restarts
+
+**Tool Groups**:
+
+| Group | Tools | Description |
+|-------|-------|-------------|
+| **DOCUMENTATION** | 10 | Spring documentation search and version tools |
+| **MIGRATION** | 7 | OpenRewrite migration recipes and breaking changes |
+| **LANGUAGE** | 7 | Java/Kotlin language evolution tracking |
+| **FLAVORS** | 8 | Company guidelines and architecture patterns |
+| **FLAVOR_GROUPS** | 3 | Team-based flavor organization |
+| **INITIALIZR** | 5 | Spring Initializr dependency management |
+| **JAVADOC** | 4 | API documentation search |
+
+**Planned Use Cases** (when runtime modifications are implemented):
+- **Reduce Noise**: Disable tools not relevant to your team's workflow
+- **Custom Guidance**: Add company-specific instructions to tool descriptions
+- **Feature Gating**: Temporarily disable tools during maintenance
+- **LLM Optimization**: Reduce token usage by hiding unnecessary tools
+
+**Access**:
+Navigate to `/mcp-tools` (requires ADMIN role) to manage MCP tool visibility preferences and descriptions.
 
 ---
 

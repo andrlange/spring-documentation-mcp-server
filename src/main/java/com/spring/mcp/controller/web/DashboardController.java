@@ -4,11 +4,17 @@ import com.spring.mcp.config.FlavorsFeatureConfig;
 import com.spring.mcp.config.LanguageEvolutionFeatureConfig;
 import com.spring.mcp.config.OpenRewriteFeatureConfig;
 import com.spring.mcp.model.dto.flavor.CategoryStatsDto;
+import com.spring.mcp.model.entity.SpringBootVersion;
 import com.spring.mcp.model.enums.FeatureStatus;
 import com.spring.mcp.model.enums.LanguageType;
+import com.spring.mcp.model.enums.VersionState;
 import com.spring.mcp.repository.*;
 import com.spring.mcp.service.FlavorGroupService;
 import com.spring.mcp.service.FlavorService;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -98,7 +104,14 @@ public class DashboardController {
             long documentationLinkCount = documentationLinkRepository.count();
             long codeExampleCount = codeExampleRepository.count();
             long userCount = userRepository.count();
-            long springBootCount = springBootVersionRepository.count();
+
+            // Count Spring Boot versions with pre-release filtering
+            // (hide SNAPSHOT/MILESTONE/RC when GA exists for same version)
+            List<SpringBootVersion> allBootVersions = springBootVersionRepository.findAllOrderByVersionDesc()
+                    .stream()
+                    .filter(v -> v.getState() != null)
+                    .toList();
+            long springBootCount = filterSupersededPreReleaseVersions(allBootVersions).size();
 
             // Add basic statistics to model
             model.addAttribute("projectCount", projectCount);
@@ -221,5 +234,36 @@ public class DashboardController {
     @PreAuthorize("isAuthenticated()")
     public String redirectToDashboard() {
         return "redirect:/dashboard";
+    }
+
+    /**
+     * Filters out pre-release versions (SNAPSHOT, MILESTONE, RC) when a GA version exists
+     * for the same major.minor.patch base version.
+     *
+     * @param versions list of all versions to filter
+     * @return filtered list with superseded pre-release versions removed
+     */
+    private List<SpringBootVersion> filterSupersededPreReleaseVersions(List<SpringBootVersion> versions) {
+        Set<String> gaBaseVersions = versions.stream()
+                .filter(v -> v.getState() == VersionState.GA)
+                .map(this::getBaseVersionKey)
+                .collect(Collectors.toSet());
+
+        return versions.stream()
+                .filter(v -> v.getState() == VersionState.GA || !gaBaseVersions.contains(getBaseVersionKey(v)))
+                .toList();
+    }
+
+    /**
+     * Gets the base version key (major.minor.patch) for a SpringBootVersion.
+     *
+     * @param version the Spring Boot version
+     * @return base version key like "3.5.9"
+     */
+    private String getBaseVersionKey(SpringBootVersion version) {
+        return String.format("%d.%d.%s",
+                version.getMajorVersion(),
+                version.getMinorVersion(),
+                version.getPatchVersion() != null ? version.getPatchVersion() : "x");
     }
 }

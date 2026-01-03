@@ -5,6 +5,36 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.2] - 2026-01-03
+
+### Added
+- **MCP Tool Masquerading**: Management UI for MCP tool visibility and descriptions
+    - **Per-Tool Toggle**: Track enabled/disabled status for individual MCP tools
+    - **Group Toggle**: Track status for entire tool groups (DOCUMENTATION, MIGRATION, LANGUAGE, FLAVORS, FLAVOR_GROUPS, INITIALIZR, JAVADOC)
+    - **Custom Descriptions**: Store custom tool descriptions to provide guidance to AI clients
+    - **Reset to Original**: Restore original tool descriptions at any time
+    - **Persistent State**: Tool configurations stored in database and persist across restarts
+- **New UI Page**: MCP Tools management page at `/mcp-tools` (ADMIN role required)
+    - Organized by tool group with expandable sections
+    - Toggle switches for individual tools and group-wide toggles
+    - Edit modal for customizing tool descriptions
+    - Statistics showing enabled/disabled tool counts
+- **Database Migration**: `V23__mcp_masquerading.sql`
+    - New `mcp_tools` table storing tool configurations
+    - Columns: tool_name, tool_group, enabled, description, original_description, display_order
+    - Auto-populated on first startup with all 44 tools
+- **New Entities**: `McpTool`, `McpToolGroup` enum
+- **New Services**: `McpToolService`, `McpToolMasqueradingService`
+- **New Controller**: `McpToolsController` with REST endpoints for tool management
+- **Unit Tests**: Comprehensive test coverage for new services, controller, and initializer
+
+### Technical Details
+- Tool groups: DOCUMENTATION (10), MIGRATION (7), LANGUAGE (7), FLAVORS (8), FLAVOR_GROUPS (3), INITIALIZR (5), JAVADOC (4)
+- Total: 44 tools manageable via the UI
+- Security: `/mcp-tools` page requires ADMIN role and is excluded from API key authentication filter
+
+---
+
 ## [1.6.1] - 2026-01-02
 
 ### Added
@@ -527,6 +557,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.6.2 | 2026-01-03 | MCP Tool Masquerading - Dynamic tool visibility & descriptions |
 | 1.6.1 | 2026-01-02 | Virtual Threads support, Spring-managed async operations |
 | 1.6.0 | 2026-01-01 | Semantic embeddings with pgvector (Ollama/OpenAI providers) |
 | 1.5.4 | 2025-12-25 | Collapsible sidebar menu, SNAPSHOT → GA version sync fix |

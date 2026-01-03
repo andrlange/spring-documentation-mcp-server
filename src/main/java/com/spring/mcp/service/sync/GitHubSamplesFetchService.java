@@ -265,7 +265,8 @@ public class GitHubSamplesFetchService {
         SpringProject project = projectOpt.get();
 
         // Try to find the latest version
-        Optional<ProjectVersion> latestVersion = projectVersionRepository.findByProjectAndIsLatestTrue(project);
+        // Use the safer method that handles multiple "latest" versions due to potential data issues
+        Optional<ProjectVersion> latestVersion = projectVersionRepository.findTopByProjectAndIsLatestTrueOrderByCreatedAtDesc(project);
 
         // If no latest version, get the most recently created one
         if (latestVersion.isEmpty()) {
