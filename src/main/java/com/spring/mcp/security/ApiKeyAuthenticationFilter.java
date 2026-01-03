@@ -55,7 +55,13 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Only process MCP endpoints (both /mcp/** and default Spring AI /sse)
+        // Only process MCP protocol endpoints (both /mcp/** and default Spring AI /sse)
+        // Exclude /mcp-tools (management UI) - uses session-based auth
+        if (requestUri.startsWith("/mcp-tools")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if (!requestUri.startsWith("/mcp") && !requestUri.startsWith("/sse")) {
             filterChain.doFilter(request, response);
             return;
@@ -130,8 +136,16 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // Only filter MCP endpoints
+        // Only filter MCP protocol endpoints, not MCP Tools management UI
         String path = request.getRequestURI();
+
+        // Exclude /mcp-tools (management UI) from API key filter
+        // This UI uses session-based authentication
+        if (path.startsWith("/mcp-tools")) {
+            return true;
+        }
+
+        // Apply filter to /mcp/** (protocol endpoints)
         return !path.startsWith("/mcp");
     }
 }

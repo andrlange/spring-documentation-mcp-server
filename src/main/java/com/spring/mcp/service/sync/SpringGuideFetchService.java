@@ -395,7 +395,8 @@ public class SpringGuideFetchService {
         SpringProject project = projectOpt.get();
 
         // Try to find the version marked as latest
-        Optional<ProjectVersion> latestVersion = projectVersionRepository.findByProjectAndIsLatestTrue(project);
+        // Use the safer method that handles multiple "latest" versions due to potential data issues
+        Optional<ProjectVersion> latestVersion = projectVersionRepository.findTopByProjectAndIsLatestTrueOrderByCreatedAtDesc(project);
 
         // If no latest version found, get the most recently created one
         if (latestVersion.isEmpty()) {

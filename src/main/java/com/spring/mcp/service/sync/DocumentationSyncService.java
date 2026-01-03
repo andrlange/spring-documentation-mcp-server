@@ -113,7 +113,8 @@ public class DocumentationSyncService {
 
             // Get the latest GA version (is_latest=true), or any version with CURRENT status,
             // or fall back to the most recent GA version
-            ProjectVersion latestVersion = projectVersionRepository.findByProjectAndIsLatestTrue(project)
+            // Use the safer method that handles multiple "latest" versions due to potential data issues
+            ProjectVersion latestVersion = projectVersionRepository.findTopByProjectAndIsLatestTrueOrderByCreatedAtDesc(project)
                 .orElseGet(() -> projectVersionRepository.findByProjectAndStatusOrderByVersionDesc(project, "CURRENT")
                     .stream().findFirst()
                     .orElseGet(() -> projectVersionRepository.findByProject(project).stream()
@@ -246,7 +247,8 @@ public class DocumentationSyncService {
                     link.getId(), project.getSlug(), version);
 
                 // Find the actual latest version
-                ProjectVersion latestVersion = projectVersionRepository.findByProjectAndIsLatestTrue(project)
+                // Use the safer method that handles multiple "latest" versions due to potential data issues
+                ProjectVersion latestVersion = projectVersionRepository.findTopByProjectAndIsLatestTrueOrderByCreatedAtDesc(project)
                     .orElseGet(() -> projectVersionRepository.findByProjectAndStatusOrderByVersionDesc(project, "CURRENT")
                         .stream().findFirst()
                         .orElse(null));

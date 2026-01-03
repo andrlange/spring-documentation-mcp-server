@@ -374,7 +374,10 @@ public class SpringDocumentationTools {
         boolean enterpriseEnabled = settingsService.isEnterpriseSubscriptionEnabled();
 
         List<SpringBootVersion> versions;
-        if (state != null && !state.isBlank()) {
+        // Treat "null" string as no filter (for MCP clients that pass literal "null")
+        boolean hasStateFilter = state != null && !state.isBlank() && !state.equalsIgnoreCase("null");
+
+        if (hasStateFilter) {
             try {
                 VersionState versionState = VersionState.valueOf(state.toUpperCase());
                 versions = springBootVersionRepository.findByState(versionState);
@@ -382,7 +385,10 @@ public class SpringDocumentationTools {
                 throw new IllegalArgumentException("Invalid state: " + state + ". Valid values: GA, RC, SNAPSHOT, MILESTONE");
             }
         } else {
-            versions = springBootVersionRepository.findAllOrderByVersionDesc();
+            // Get all versions and filter out superseded pre-release versions
+            versions = filterSupersededPreReleaseVersions(
+                    springBootVersionRepository.findAllOrderByVersionDesc()
+            );
         }
 
         int totalFound = versions.size();
@@ -475,7 +481,10 @@ public class SpringDocumentationTools {
         boolean enterpriseEnabled = settingsService.isEnterpriseSubscriptionEnabled();
         LocalDate today = LocalDate.now();
 
-        List<SpringBootVersion> allVersions = springBootVersionRepository.findAllOrderByVersionDesc();
+        // Get all versions and filter out superseded pre-release versions first
+        List<SpringBootVersion> allVersions = filterSupersededPreReleaseVersions(
+                springBootVersionRepository.findAllOrderByVersionDesc()
+        );
 
         List<SpringBootVersion> filteredVersions = allVersions.stream()
             .filter(v -> {
@@ -650,6 +659,39 @@ public class SpringDocumentationTools {
     }
 
     // ==================== Helper Methods ====================
+
+    /**
+     * Filters out pre-release versions (SNAPSHOT, MILESTONE, RC) when a GA version exists
+     * for the same major.minor.patch base version.
+     *
+     * <p>Version evolution follows: SNAPSHOT → MILESTONE → RC → GA
+     * Once a version reaches GA status, the pre-release versions are superseded and hidden.
+     *
+     * @param versions list of all versions to filter
+     * @return filtered list with superseded pre-release versions removed
+     */
+    private List<SpringBootVersion> filterSupersededPreReleaseVersions(List<SpringBootVersion> versions) {
+        // Build a set of base versions (major.minor.patch) that have a GA release
+        Set<String> gaBaseVersions = versions.stream()
+                .filter(v -> v.getState() == VersionState.GA)
+                .map(this::getBaseVersionKey)
+                .collect(Collectors.toSet());
+
+        // Filter: keep version if it's GA, or if no GA exists for its base version
+        return versions.stream()
+                .filter(v -> v.getState() == VersionState.GA || !gaBaseVersions.contains(getBaseVersionKey(v)))
+                .toList();
+    }
+
+    /**
+     * Gets the base version key (major.minor.patch) for a SpringBootVersion.
+     */
+    private String getBaseVersionKey(SpringBootVersion version) {
+        return String.format("%d.%d.%s",
+                version.getMajorVersion(),
+                version.getMinorVersion(),
+                version.getPatchVersion() != null ? version.getPatchVersion() : "x");
+    }
 
     private SearchDocsResponse.DocumentationResult mapToDocumentationResult(DocumentationDto dto) {
         return new SearchDocsResponse.DocumentationResult(

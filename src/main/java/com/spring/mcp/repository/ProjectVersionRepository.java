@@ -41,9 +41,23 @@ public interface ProjectVersionRepository extends JpaRepository<ProjectVersion, 
     Optional<ProjectVersion> findByProjectAndVersion(SpringProject project, String version);
 
     /**
-     * Find the latest version for a project
+     * Find the latest version for a project.
+     * Note: Due to potential data integrity issues, multiple versions may be marked as latest.
+     * Use findTopByProjectAndIsLatestTrueOrderByCreatedAtDesc for a safer single result.
      */
     Optional<ProjectVersion> findByProjectAndIsLatestTrue(SpringProject project);
+
+    /**
+     * Find all versions marked as latest for a project.
+     * Use this method when there might be multiple versions marked as latest due to data issues.
+     */
+    List<ProjectVersion> findAllByProjectAndIsLatestTrue(SpringProject project);
+
+    /**
+     * Find the most recently created version marked as latest for a project.
+     * This is the safest method when there might be multiple versions marked as latest.
+     */
+    Optional<ProjectVersion> findTopByProjectAndIsLatestTrueOrderByCreatedAtDesc(SpringProject project);
 
     /**
      * Find the default version for a project

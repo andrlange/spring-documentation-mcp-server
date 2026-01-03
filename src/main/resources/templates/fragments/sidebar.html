@@ -95,6 +95,12 @@
                     <i class="bi bi-cpu" style="color: #ec4899;"></i><span class="nav-text">Embeddings</span>
                 </a>
             </li>
+            <!-- MCP Masquerading (Admin only) -->
+            <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                <a class="nav-link" th:href="@{/mcp-tools}" th:classappend="${activePage == 'mcp-tools'} ? 'active' : ''" data-sidebar-tooltip="MCP Tools">
+                    <i class="bi bi-tools" style="color: #38bdf8;"></i><span class="nav-text">MCP Masquerading</span>
+                </a>
+            </li>
         </ul>
     </div>
 </body>

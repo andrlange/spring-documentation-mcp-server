@@ -65,7 +65,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/**").authenticated()
 
                 // Admin-only pages
-                .requestMatchers("/users/**", "/settings/**", "/monitoring/**").hasRole("ADMIN")
+                .requestMatchers("/users/**", "/settings/**", "/monitoring/**", "/mcp-tools/**").hasRole("ADMIN")
 
                 // All other requests require authentication
                 .anyRequest().authenticated()
@@ -92,7 +92,7 @@ public class SecurityConfig {
                 .ignoringRequestMatchers("/mcp/**", "/sse", "/message", "/mcp/spring/sse", "/mcp/spring/messages",
                     "/api/mcp/**", "/sync/**", "/settings/api-keys/**", "/settings/global/**",
                     "/settings/scheduler/time-format", "/settings/language-scheduler/time-format",
-                    "/embeddings/**")
+                    "/embeddings/**", "/mcp-tools/**")
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)

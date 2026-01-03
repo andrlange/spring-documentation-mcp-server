@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title>MCP Masquerading - Spring MCP Server</title>
+    <style>
+        /* Tool group color classes */
+        .tool-blue { color: #60a5fa; }
+        .tool-orange { color: #fb923c; }
+        .tool-yellow { color: #fbbf24; }
+        .tool-purple { color: #a78bfa; }
+        .tool-violet { color: #c084fc; }
+        .tool-green { color: #6db33f; }
+        .tool-cyan { color: #22d3d8; }
+
+        /* Group card styling */
+        .tool-group-card {
+            background-color: var(--bs-dark);
+            border: 1px solid var(--bs-gray-700);
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .tool-group-card:hover {
+            border-color: var(--bs-gray-500);
+        }
+
+        .tool-group-header {
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .tool-group-header:hover {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .tool-group-content {
+            padding: 0 1rem 1rem 1rem;
+            border-top: 1px solid var(--bs-gray-700);
+        }
+
+        .expand-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .tool-group-card.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Tool row styling */
+        .tool-row {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+            transition: background-color 0.15s ease;
+        }
+
+        .tool-row:hover {
+            background-color: rgba(56, 189, 248, 0.05);
+        }
+
+        .tool-row:last-child {
+            border-bottom: none;
+        }
+
+        .tool-toggle {
+            width: 50px;
+            flex-shrink: 0;
+        }
+
+        .tool-name {
+            width: 220px;
+            flex-shrink: 0;
+            font-weight: 500;
+            color: #e2e8f0;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+
+        .tool-description {
+            flex: 1;
+            color: #94a3b8;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-right: 1rem;
+        }
+
+        .tool-actions {
+            width: 80px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        /* Modified badge */
+        .badge-modified {
+            background-color: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+            margin-left: 0.5rem;
+        }
+
+        /* Form switch styling for toggle */
+        .form-switch .form-check-input {
+            width: 2.5rem;
+            height: 1.25rem;
+            cursor: pointer;
+        }
+
+        .form-switch .form-check-input:checked {
+            background-color: #6db33f;
+            border-color: #6db33f;
+        }
+
+        /* Status badges in group header */
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        /* Toast notification */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        /* Permanent info banner - never hide */
+        .alert-permanent {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        /* Custom warning banner styling (avoids ad-blocker filtering of alert-warning) */
+        .mcp-warning-banner {
+            background-color: #fff3cd;
+            border: 1px solid #ffecb5;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            color: #664d03;
+        }
+        .mcp-warning-banner.d-none {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="bi bi-tools" style="color: #38bdf8;"></i>
+            MCP Masquerading
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <button type="button" class="btn btn-sm btn-outline-light" id="refreshBtn" title="Refresh">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        <span th:text="${successMessage}">Success message</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span th:text="${errorMessage}">Error message</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 th:text="${stats.totalTools}">44</h3>
+                    <small class="text-muted">Total Tools</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="text-success" th:text="${stats.enabledTools}">35</h3>
+                    <small class="text-muted">Enabled</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="text-secondary" th:text="${stats.disabledTools}">9</h3>
+                    <small class="text-muted">Disabled</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="tool-yellow" th:text="${stats.modifiedTools}">2</h3>
+                    <small class="text-muted">Modified</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="tool-blue" th:text="${stats.groupCount}">7</h3>
+                    <small class="text-muted">Groups</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 th:text="${stats.enabledPercentage} + '%'">80%</h3>
+                    <small class="text-muted">Visibility</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Banner (permanent - never dismissible) -->
+    <div class="alert alert-info alert-permanent mb-4">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>MCP Masquerading</strong> allows you to control which tools are exposed to LLMs.
+        Disable tools you don't need to reduce confusion and improve tool selection accuracy.
+        Changes take effect immediately for all connected MCP clients.
+    </div>
+
+    <!-- Tool Groups -->
+    <div th:each="group : ${toolGroups}" class="tool-group-card" th:data-group="${group.group.name()}">
+        <!-- Group Header -->
+        <div class="tool-group-header" onclick="toggleGroup(this)">
+            <div class="d-flex align-items-center">
+                <i th:class="'bi ' + ${group.iconClass} + ' me-2'"
+                   th:style="'color: var(--bs-' + ${group.colorClass} + ', #94a3b8);'"></i>
+                <span class="fw-semibold" th:text="${group.displayName}">Documentation</span>
+                <span class="badge bg-secondary ms-2" th:text="${group.totalCount} + ' tools'">10 tools</span>
+                <span th:class="'badge ms-2 status-badge ' + ${group.statusBadgeClass}"
+                      th:text="${group.statusText}">All Enabled</span>
+                <span th:if="${group.modifiedCount > 0}" class="badge badge-modified ms-2">
+                    <i class="bi bi-pencil-fill"></i>
+                    <span th:text="${group.modifiedCount} + ' modified'">2 modified</span>
+                </span>
+            </div>
+            <div class="d-flex align-items-center">
+                <button type="button" class="btn btn-sm btn-outline-light me-2 toggle-group-btn"
+                        th:data-group="${group.group.name()}"
+                        th:data-enable="${group.allEnabled ? 'false' : 'true'}"
+                        th:text="${group.allEnabled ? 'Disable All' : 'Enable All'}"
+                        onclick="event.stopPropagation();">
+                    Enable All
+                </button>
+                <i class="bi bi-chevron-down expand-icon"></i>
+            </div>
+        </div>
+
+        <!-- Group Content (hidden by default) -->
+        <div class="tool-group-content" style="display: none;">
+            <div th:each="tool : ${group.tools}" class="tool-row" th:data-tool="${tool.toolName}">
+                <!-- Toggle Switch -->
+                <div class="tool-toggle">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input tool-toggle-input" type="checkbox" role="switch"
+                               th:id="'toggle-' + ${tool.toolName}"
+                               th:data-tool="${tool.toolName}"
+                               th:checked="${tool.enabled}">
+                    </div>
+                </div>
+
+                <!-- Tool Name -->
+                <div class="tool-name">
+                    <span th:text="${tool.toolName}">searchSpringDocs</span>
+                    <span th:if="${tool.modified}" class="badge badge-modified" title="Description has been customized">
+                        Modified
+                    </span>
+                </div>
+
+                <!-- Description (truncated) -->
+                <div class="tool-description" th:title="${tool.description}">
+                    <span th:text="${tool.truncatedDescription}">Search across all Spring documentation...</span>
+                </div>
+
+                <!-- Actions -->
+                <div class="tool-actions">
+                    <button type="button" class="btn btn-sm btn-outline-light edit-tool-btn"
+                            data-bs-toggle="modal"
+                            data-bs-target="#editModal"
+                            th:data-tool="${tool.toolName}"
+                            th:data-description="${tool.description}"
+                            th:data-original="${tool.originalDescription}"
+                            th:data-modified="${tool.modified}"
+                            title="Edit Description">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Description Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="editModalLabel">
+                        <i class="bi bi-pencil me-2"></i>Edit Tool Description
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tool</label>
+                        <div class="form-control-plaintext text-light font-monospace" id="editToolName">searchSpringDocs</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label fw-semibold">Description</label>
+                        <textarea id="editDescription" class="form-control" rows="8"
+                                  placeholder="Enter tool description..."></textarea>
+                    </div>
+                    <div id="modifiedWarning" class="mcp-warning-banner d-none">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        This description has been modified from the original.
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-warning" id="resetDescriptionBtn" disabled>
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Reset to Original
+                    </button>
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-spring-green" id="saveDescriptionBtn">
+                            <i class="bi bi-check-lg me-1"></i>Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Confirmation Modal -->
+    <div class="modal fade" id="resetModal" tabindex="-1" aria-labelledby="resetModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="resetModalLabel">
+                        <i class="bi bi-exclamation-triangle text-warning me-2"></i>Reset Tool Description
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mcp-warning-banner">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>WARNING</strong>
+                        <p class="mb-2 mt-2">You are about to reset the description for:</p>
+                        <p class="fw-bold mb-3" id="resetToolName">searchSpringDocs</p>
+                        <p class="mb-0">This will:</p>
+                        <ul class="mb-0">
+                            <li>Discard your custom description</li>
+                            <li>Restore the original tool description</li>
+                            <li>Immediately update the MCP tool list for connected LLMs</li>
+                        </ul>
+                    </div>
+                    <p class="text-danger fw-bold"><i class="bi bi-exclamation-circle me-1"></i>This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" id="confirmResetBtn">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Reset to Original
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container">
+        <div id="toast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMessage">
+                    Action completed successfully.
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div layout:fragment="scripts">
+<script th:inline="javascript">
+const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+// Toast helper
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+
+    toast.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white');
+
+    if (type === 'success') {
+        toast.classList.add('bg-success', 'text-white');
+    } else if (type === 'error') {
+        toast.classList.add('bg-danger', 'text-white');
+    } else if (type === 'warning') {
+        toast.classList.add('bg-warning');
+    }
+
+    toastMessage.textContent = message;
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+
+// Toggle group expand/collapse
+function toggleGroup(headerElement) {
+    const groupCard = headerElement.closest('.tool-group-card');
+    const groupContent = groupCard.querySelector('.tool-group-content');
+
+    if (groupCard.classList.contains('expanded')) {
+        groupCard.classList.remove('expanded');
+        groupContent.style.display = 'none';
+    } else {
+        groupCard.classList.add('expanded');
+        groupContent.style.display = 'block';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Refresh button
+    document.getElementById('refreshBtn').addEventListener('click', () => location.reload());
+
+    // Individual tool toggle
+    document.querySelectorAll('.tool-toggle-input').forEach(input => {
+        input.addEventListener('change', function() {
+            const toolName = this.dataset.tool;
+            const enabled = this.checked;
+
+            const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/mcp-tools/${toolName}/toggle?enabled=${enabled}`, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`Tool "${toolName}" ${enabled ? 'enabled' : 'disabled'}`, 'success');
+                } else {
+                    this.checked = !enabled; // Revert on error
+                    showToast('Error: ' + (data.error || 'Unknown error'), 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.checked = !enabled; // Revert on error
+                showToast('Error toggling tool', 'error');
+            });
+        });
+    });
+
+    // Group toggle
+    document.querySelectorAll('.toggle-group-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const group = this.dataset.group;
+            const enable = this.dataset.enable === 'true';
+
+            const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/mcp-tools/groups/${group}/toggle?enabled=${enable}`, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`Group "${group}" ${enable ? 'enabled' : 'disabled'}`, 'success');
+                    location.reload();
+                } else {
+                    showToast('Error: ' + (data.error || 'Unknown error'), 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error toggling group', 'error');
+            });
+        });
+    });
+
+    // Edit description modal - use Bootstrap's native modal events
+    let currentTool = null;
+    let originalDescription = null;
+    const editModal = document.getElementById('editModal');
+    const resetModal = document.getElementById('resetModal');
+    const editModalInstance = new bootstrap.Modal(editModal);
+    const resetModalInstance = new bootstrap.Modal(resetModal);
+
+    // Listen for modal show event to populate data
+    editModal.addEventListener('show.bs.modal', function(event) {
+        const btn = event.relatedTarget; // Button that triggered the modal
+        if (!btn) return;
+
+        currentTool = btn.dataset.tool;
+        originalDescription = btn.dataset.original;
+        const description = btn.dataset.description;
+        const modified = btn.dataset.modified === 'true';
+
+        document.getElementById('editToolName').textContent = currentTool;
+        document.getElementById('editDescription').value = description;
+
+        const modifiedWarning = document.getElementById('modifiedWarning');
+        const resetBtn = document.getElementById('resetDescriptionBtn');
+
+        if (modified) {
+            modifiedWarning.classList.remove('d-none');
+            resetBtn.disabled = false;
+        } else {
+            modifiedWarning.classList.add('d-none');
+            resetBtn.disabled = true;
+        }
+    });
+
+    // Save description
+    document.getElementById('saveDescriptionBtn').addEventListener('click', function() {
+        if (!currentTool) return;
+
+        const newDescription = document.getElementById('editDescription').value.trim();
+        if (!newDescription) {
+            showToast('Description cannot be empty', 'error');
+            return;
+        }
+
+        const headers = { 'Content-Type': 'application/json' };
+        if (csrfToken && csrfHeader) {
+            headers[csrfHeader] = csrfToken;
+        }
+
+        fetch(`/mcp-tools/${currentTool}/description`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({ description: newDescription })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Description updated successfully', 'success');
+                editModalInstance.hide();
+                location.reload();
+            } else {
+                showToast('Error: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error saving description', 'error');
+        });
+    });
+
+    // Reset description - show confirmation modal
+    document.getElementById('resetDescriptionBtn').addEventListener('click', function() {
+        if (!currentTool) return;
+
+        document.getElementById('resetToolName').textContent = currentTool;
+        editModalInstance.hide();
+        resetModalInstance.show();
+    });
+
+    // Confirm reset
+    document.getElementById('confirmResetBtn').addEventListener('click', function() {
+        if (!currentTool) return;
+
+        const headers = {};
+        if (csrfToken && csrfHeader) {
+            headers[csrfHeader] = csrfToken;
+        }
+
+        fetch(`/mcp-tools/${currentTool}/reset`, {
+            method: 'POST',
+            headers: headers
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Description reset to original', 'success');
+                resetModalInstance.hide();
+                location.reload();
+            } else {
+                showToast('Error: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error resetting description', 'error');
+        });
+    });
+
+    // Handle reset modal close - go back to edit modal
+    resetModal.addEventListener('hidden.bs.modal', function() {
+        if (currentTool) {
+            // Don't reopen edit modal - user can click edit again if needed
+        }
+    });
+});
+</script>
+</div>
+</body>
+</html>
