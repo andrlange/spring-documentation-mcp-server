@@ -86,64 +86,14 @@ spring:
         instructions: |
           Spring Boot Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 
-          Total: 44 tools available (10 documentation + 7 migration + 7 language evolution + 8 flavors + 3 flavor groups + 5 initializr + 4 javadoc)
-
-          Documentation Tools (10):
-          1. searchSpringDocs: Search across all Spring documentation
-          2. getSpringVersions: List available versions for a Spring project
-          3. listSpringProjects: List all available Spring projects
-          4. getDocumentationByVersion: Get all documentation for a specific version
-          5. getCodeExamples: Search for code examples with filters
-          6. listSpringBootVersions: List Spring Boot versions
-          7. getLatestSpringBootVersion: Get latest patch version for major.minor
-          8. filterSpringBootVersionsBySupport: Filter by support status
-          9. listProjectsBySpringBootVersion: List compatible projects
-          10. findProjectsByUseCase: Search projects by use case
-
-          Migration Knowledge Tools (7) - OpenRewrite feature:
-          11. getSpringMigrationGuide: Get comprehensive migration guide between versions
-          12. getBreakingChanges: Get breaking changes for a project version
-          13. searchMigrationKnowledge: Search migration knowledge base
-          14. getAvailableMigrationPaths: List documented upgrade paths
-          15. getTransformationsByType: Get transformations by type (IMPORT, DEPENDENCY, etc.)
-          16. getDeprecationReplacement: Find replacement for deprecated APIs
-          17. checkVersionCompatibility: Check dependency compatibility
-
-          Language Evolution Tools (6) - Language feature tracking:
-          18. getLanguageVersions: List all versions for Java or Kotlin
-          19. getLanguageFeatures: Get features for a language version with filters
-          20. getModernPatterns: Get old vs new code patterns for a feature
-          21. getLanguageVersionDiff: Compare features between two versions
-          22. getSpringBootLanguageRequirements: Get language requirements for Spring Boot
-          23. searchLanguageFeatures: Search language features by keyword
-
-          Flavors Tools (8) - Company guidelines and patterns:
-          24. searchFlavors: Search company guidelines, patterns, and configurations
-          25. getFlavorByName: Get complete flavor content by unique name
-          26. getFlavorsByCategory: List flavors in a category (ARCHITECTURE, COMPLIANCE, AGENTS, INITIALIZATION, GENERAL)
-          27. getArchitecturePatterns: Get architecture patterns for specific technologies
-          28. getComplianceRules: Get compliance rules by framework (GDPR, SOC2, etc.)
-          29. getAgentConfiguration: Get AI agent configuration for use case
-          30. getProjectInitialization: Get project initialization template
-          31. listFlavorCategories: List categories with counts
-
-          Flavor Groups Tools (3) - Team-based authorization:
-          32. listFlavorGroups: List accessible flavor groups (public + member private)
-          33. getFlavorsGroup: Get all flavors in a specific group
-          34. getFlavorGroupStatistics: Get group statistics
-
-          Initializr Tools (5) - Spring Boot project generation:
-          35. initializrGetDependency: Get dependency with Maven/Gradle snippet
-          36. initializrSearchDependencies: Search dependencies by name/description
-          37. initializrCheckCompatibility: Check dependency version compatibility
-          38. initializrGetBootVersions: List available Spring Boot versions
-          39. initializrGetDependencyCategories: Browse dependencies by category
-
-          Javadoc Tools (4) - API documentation access:
-          40. getClassDoc: Get full class documentation with methods, fields, constructors
-          41. getPackageDoc: Get package documentation with list of classes/interfaces
-          42. searchJavadocs: Full-text search across all Javadoc content
-          43. listJavadocLibraries: List all libraries with available versions
+          Use tools/list to discover all 44 available tools organized into:
+          - Documentation (up to 10 tools)
+          - Migration (up to 7 tools)
+          - Language Evolution (up to 7 tools)
+          - Flavors (up to 8 tools)
+          - Flavor Groups (up to 3 tools)
+          - Initializr (up to 5 tools)
+          - Javadoc (up to 4 tools)
 
           SSE endpoint: /mcp/spring/sse
           Message endpoint: /mcp/spring/messages
