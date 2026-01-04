@@ -2,7 +2,9 @@
 
 > ⚠️ **Disclaimer**
 >
-> This is **NOT** an official Spring or Spring Boot project and is **NOT** part of the Spring ecosystem.
+> “This repository is an unofficial project provided “as is.” It is not supported or endorsed by any organization, and no warranty or guarantee of functionality is provided. Use at your own discretion.”
+> 
+> And it is **NOT** an official Spring or Spring Boot project and is **NOT** part of the Spring ecosystem.
 >
 > This project is created for **educational purposes only**, similar to my other demo applications that showcase architecture patterns and Spring Boot OSS features.
 >
