@@ -78,6 +78,9 @@ public class SpringBootVersionSyncService {
                 }
             }
 
+            // Fix isCurrent flag - ensure only ONE version is marked as current
+            fixCurrentVersionFlag();
+
             result.setSuccess(true);
             log.info("Spring Boot versions sync completed. Created: {}, Updated: {}, Errors: {}",
                 result.getVersionsCreated(), result.getVersionsUpdated(), result.getErrorsEncountered());
@@ -314,6 +317,54 @@ public class SpringBootVersionSyncService {
         // Update state based on Gatsby status
         VersionState state = determineVersionState(versionData.getGatsbyStatus(), versionData.getVersion());
         existing.setState(state);
+    }
+
+    /**
+     * Fix the isCurrent flag to ensure only ONE version is marked as current.
+     * The current version should be the latest GA version overall.
+     */
+    private void fixCurrentVersionFlag() {
+        // Get all versions ordered by version descending
+        List<SpringBootVersion> allVersions = springBootVersionRepository.findAllOrderByVersionDesc();
+
+        if (allVersions.isEmpty()) {
+            return;
+        }
+
+        // Find the latest GA version
+        SpringBootVersion latestGa = allVersions.stream()
+            .filter(v -> v.getState() == VersionState.GA)
+            .findFirst()
+            .orElse(null);
+
+        if (latestGa == null) {
+            log.warn("No GA version found to mark as current");
+            return;
+        }
+
+        // Count how many are currently marked as current
+        long currentCount = allVersions.stream()
+            .filter(SpringBootVersion::getIsCurrent)
+            .count();
+
+        if (currentCount <= 1 && latestGa.getIsCurrent()) {
+            log.debug("Current version flag is already correct: {}", latestGa.getVersion());
+            return;
+        }
+
+        // Reset all isCurrent flags and set only the latest GA as current
+        int updated = 0;
+        for (SpringBootVersion version : allVersions) {
+            boolean shouldBeCurrent = version.getId().equals(latestGa.getId());
+            if (version.getIsCurrent() != shouldBeCurrent) {
+                version.setIsCurrent(shouldBeCurrent);
+                springBootVersionRepository.save(version);
+                updated++;
+            }
+        }
+
+        log.info("Fixed isCurrent flag: {} is now the only current version (updated {} records)",
+            latestGa.getVersion(), updated);
     }
 
     /**

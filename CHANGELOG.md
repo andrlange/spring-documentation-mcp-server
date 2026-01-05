@@ -5,6 +5,28 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.3] - 2026-01-05
+
+### Fixed
+- **MCP Tool Response Size Optimization**: Reduced context consumption for large MCP tool responses
+    - **`getFlavorsByCategory`**: Returns summaries only (metadata without full content)
+        - Before: ~122K chars | After: ~7.5K chars (~94% reduction)
+        - Use `getFlavorByName(uniqueName)` to get full content when needed
+    - **`listProjectsBySpringBootVersion`**: Returns only latest GA version per project by default
+        - Before: ~10.6k tokens (206 versions) | After: ~4k tokens (48 versions) (~62% reduction)
+        - Removed `.x` placeholder versions (e.g., `3.5.x`) with empty URLs
+        - Added `allVersions: Boolean` parameter to include all versions when needed
+- **Spring Boot Version `isCurrent` Flag**: Fixed multiple versions incorrectly marked as current
+    - Issue: Both 4.0.0 and 4.0.1 were marked as `isCurrent=true` after sync
+    - Root cause: Sync service blindly trusted spring.io's `current` flag without validation
+    - Solution: Added `fixCurrentVersionFlag()` post-processing to ensure only the latest GA version is marked as current
+
+### Changed
+- `SpringDocumentationTools.listProjectsBySpringBootVersion()` now accepts optional `allVersions` parameter
+- `SpringBootVersionSyncService` now validates and corrects `isCurrent` flag after sync
+
+---
+
 ## [1.6.2] - 2026-01-03
 
 ### Added
@@ -557,6 +579,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.6.3 | 2026-01-05 | MCP Tool Response Size Optimization, isCurrent flag fix |
 | 1.6.2 | 2026-01-03 | MCP Tool Masquerading - Dynamic tool visibility & descriptions |
 | 1.6.1 | 2026-01-02 | Virtual Threads support, Spring-managed async operations |
 | 1.6.0 | 2026-01-01 | Semantic embeddings with pgvector (Ollama/OpenAI providers) |

@@ -12,7 +12,7 @@
 >
 > **Purpose**: My main goal is to create demo applications using my own specifications to explore AI-assisted development workflows.
 
-### (Current Version 1.6.2 - MCP Tool Masquerading)
+### (Current Version 1.6.3 - MCP Tool Response Optimization)
 
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
@@ -76,6 +76,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
+| **1.6.3** | 2026-01-05 | MCP Tool Response Size Optimization, isCurrent flag fix      |
 | **1.6.2** | 2026-01-03 | MCP Tool Masquerading - Dynamic tool visibility & descriptions |
 | **1.6.1** | 2026-01-02 | Virtual Threads, Spring-managed async operations             |
 | **1.6.0** | 2026-01-01 | Semantic embeddings with pgvector (Ollama/OpenAI providers)  |
@@ -124,7 +125,7 @@ docker-compose up -d postgres
 ### 2. Build and Run
 ```bash
 ./gradlew clean build
-java -jar build/libs/spring-boot-documentation-mcp-server-1.6.2.jar
+java -jar build/libs/spring-boot-documentation-mcp-server-1.6.3.jar
 ```
 
 Or using Gradle:

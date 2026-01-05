@@ -532,17 +532,23 @@ public class SpringDocumentationTools {
     @McpTool(description = """
         List all Spring projects that are compatible with a specific Spring Boot version (major.minor).
         Returns projects and their compatible versions for the given Spring Boot version.
+        By default returns only the latest GA version per project for a compact response.
+        Use allVersions=true to include all compatible versions (SNAPSHOT, RC, etc.).
         """)
     public ProjectsBySpringBootVersionResponse listProjectsBySpringBootVersion(
             @McpToolParam(description = "Spring Boot major version number (required, e.g., 3)") Integer majorVersion,
-            @McpToolParam(description = "Spring Boot minor version number (required, e.g., 5)") Integer minorVersion) {
+            @McpToolParam(description = "Spring Boot minor version number (required, e.g., 5)") Integer minorVersion,
+            @McpToolParam(description = "Include all compatible versions (default: false, returns only latest GA per project)") Boolean allVersions) {
 
-        log.info("Tool: listProjectsBySpringBootVersion - major={}, minor={}", majorVersion, minorVersion);
+        log.info("Tool: listProjectsBySpringBootVersion - major={}, minor={}, allVersions={}",
+                majorVersion, minorVersion, allVersions);
         Instant startTime = Instant.now();
 
         if (majorVersion == null || minorVersion == null) {
             throw new IllegalArgumentException("Both majorVersion and minorVersion parameters are required");
         }
+
+        boolean includeAllVersions = Boolean.TRUE.equals(allVersions);
 
         List<SpringBootVersion> bootVersions = springBootVersionRepository
             .findByMajorVersionAndMinorVersionOrderByPatchVersionDesc(majorVersion, minorVersion);
@@ -557,8 +563,10 @@ public class SpringDocumentationTools {
         List<SpringBootCompatibility> compatibilities =
             compatibilityRepository.findAllBySpringBootVersionIdWithProjectDetails(springBootVersion.getId());
 
+        // Group versions by project, filtering out placeholder versions (e.g., "3.5.x")
         Map<String, List<ProjectVersion>> projectVersionMap = compatibilities.stream()
             .map(SpringBootCompatibility::getCompatibleProjectVersion)
+            .filter(pv -> !isPlaceholderVersion(pv.getVersion()))
             .collect(Collectors.groupingBy(
                 pv -> pv.getProject().getSlug(),
                 Collectors.toList()
@@ -580,8 +588,11 @@ public class SpringDocumentationTools {
                     ProjectVersion firstVersion = entry.getValue().get(0);
                     SpringProject project = firstVersion.getProject();
 
-                    List<ProjectsBySpringBootVersionResponse.CompatibleVersion> compatibleVersions =
-                        entry.getValue().stream()
+                    List<ProjectsBySpringBootVersionResponse.CompatibleVersion> compatibleVersions;
+
+                    if (includeAllVersions) {
+                        // Return all versions (excluding placeholders already filtered)
+                        compatibleVersions = entry.getValue().stream()
                             .map(pv -> new ProjectsBySpringBootVersionResponse.CompatibleVersion(
                                 pv.getVersion(),
                                 pv.getState().name(),
@@ -590,6 +601,27 @@ public class SpringDocumentationTools {
                                 pv.getApiDocUrl() != null ? pv.getApiDocUrl() : ""
                             ))
                             .collect(Collectors.toList());
+                    } else {
+                        // Return only the latest GA version (compact response)
+                        Optional<ProjectVersion> latestGa = entry.getValue().stream()
+                            .filter(pv -> pv.getState() == VersionState.GA)
+                            .max(Comparator.comparing(ProjectVersion::getVersion));
+
+                        // Fall back to any latest version if no GA exists
+                        ProjectVersion bestVersion = latestGa.orElseGet(() ->
+                            entry.getValue().stream()
+                                .max(Comparator.comparing(ProjectVersion::getVersion))
+                                .orElse(firstVersion)
+                        );
+
+                        compatibleVersions = List.of(new ProjectsBySpringBootVersionResponse.CompatibleVersion(
+                            bestVersion.getVersion(),
+                            bestVersion.getState().name(),
+                            bestVersion.getIsLatest(),
+                            bestVersion.getReferenceDocUrl() != null ? bestVersion.getReferenceDocUrl() : "",
+                            bestVersion.getApiDocUrl() != null ? bestVersion.getApiDocUrl() : ""
+                        ));
+                    }
 
                     return new ProjectsBySpringBootVersionResponse.CompatibleProject(
                         project.getSlug(),
@@ -601,13 +633,25 @@ public class SpringDocumentationTools {
                 })
                 .collect(Collectors.toList());
 
+        // Count total versions returned
+        int totalVersionsReturned = compatibleProjects.stream()
+            .mapToInt(p -> p.getCompatibleVersions().size())
+            .sum();
+
         return new ProjectsBySpringBootVersionResponse(
             versionInfo,
             projectVersionMap.size(),
-            compatibilities.size(),
+            totalVersionsReturned,
             executionTimeMs,
             compatibleProjects
         );
+    }
+
+    /**
+     * Checks if a version string is a placeholder (e.g., "3.5.x", "2025.0.x")
+     */
+    private boolean isPlaceholderVersion(String version) {
+        return version != null && version.endsWith(".x");
     }
 
     /**
