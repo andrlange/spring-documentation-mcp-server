@@ -6,7 +6,7 @@ This document tracks the version configuration across all project files to ensur
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Application** | 1.6.2 | Spring MCP Server |
+| **Application** | 1.6.3 | Spring MCP Server |
 | **Java (JDK)** | 25 | LTS version |
 | **Spring Boot** | 3.5.9 | Latest stable |
 | **Spring AI** | 1.1.2 | MCP Server support |
@@ -20,7 +20,7 @@ Needs to track the changelog
 
 ### build.gradle
 ```groovy
-version = '1.6.2'
+version = '1.6.3'
 
 java {
     toolchain {
@@ -45,7 +45,7 @@ services:
   postgres:
     image: postgres:18-alpine
   spring-boot-documentation-mcp-server:
-    image: spring-boot-documentation-mcp-server:1.6.2
+    image: spring-boot-documentation-mcp-server:1.6.3
 ```
 
 ### application.yml
@@ -54,7 +54,7 @@ services:
 info:
   app:
     name: Spring MCP Server
-    version: 1.6.2
+    version: 1.6.3
   spring-boot:
     version: 3.5.9
 
@@ -65,12 +65,12 @@ spring:
   ai:
     mcp:
       server:
-        version: "1.6.2"
+        version: "1.6.3"
 ```
 
 ### build-container.sh
 ```bash
-APP_VERSION="1.6.2"
+APP_VERSION="1.6.3"
 JAVA_VERSION="25"
 ```
 
@@ -112,6 +112,13 @@ Update these locations when adding/removing tools:
 - `.claude/memory/project-memory.md` - MCP Tools count
 
 ## Changelog
+
+### v1.6.3 (2026-01-05)
+- MCP Tool Response Size Optimization
+  - `getFlavorsByCategory`: Returns summaries only (~94% reduction)
+  - `listProjectsBySpringBootVersion`: Returns only latest GA per project (~62% reduction)
+  - Added `allVersions` parameter for full version list when needed
+- Fixed Spring Boot `isCurrent` flag - only latest GA version marked as current
 
 ### v1.6.2 (2026-01-03)
 - MCP Tool Masquerading feature for dynamic tool visibility and description control

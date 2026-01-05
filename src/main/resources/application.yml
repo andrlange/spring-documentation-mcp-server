@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring Boot Documentation MCP Server
-    version: 1.6.2
+    version: 1.6.3
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.9
@@ -78,7 +78,7 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.6.2"
+        version: "1.6.3"
         # Disable annotation scanner - we provide tools explicitly via McpToolsConfig
         # This avoids timing issues with BeanPostProcessor and duplicate registration
         annotation-scanner:

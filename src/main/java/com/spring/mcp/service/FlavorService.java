@@ -31,6 +31,15 @@ public interface FlavorService {
     List<FlavorDto> findAllActive();
     List<FlavorDto> findByCategory(FlavorCategory category);
 
+    /**
+     * Find all active flavors in a category, returning summaries only (without content).
+     * Use this for listing/browsing to reduce response size.
+     *
+     * @param category the flavor category
+     * @return list of flavor summaries
+     */
+    List<FlavorSummaryDto> findSummariesByCategory(FlavorCategory category);
+
     // Search
     List<FlavorSummaryDto> search(String query, FlavorCategory category, List<String> tags, int limit);
     List<FlavorDto> searchByTags(List<String> tags);

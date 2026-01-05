@@ -231,7 +231,7 @@ class SpringDocumentationToolsIntegrationTest extends McpSseIntegrationTestBase 
     // ============ Tool 9: listProjectsBySpringBootVersion ============
 
     @Test
-    @DisplayName("listProjectsBySpringBootVersion - should list projects for Spring Boot 3.5")
+    @DisplayName("listProjectsBySpringBootVersion - should list projects for Spring Boot 3.5 (compact)")
     void listProjectsBySpringBootVersion_shouldListProjects() throws Exception {
         assertToolAvailable("listProjectsBySpringBootVersion");
 
@@ -241,7 +241,23 @@ class SpringDocumentationToolsIntegrationTest extends McpSseIntegrationTestBase 
         );
         String content = callToolAndGetTextContent("listProjectsBySpringBootVersion", args);
 
-        // Should contain project compatibility info
+        // Should contain project compatibility info (compact: 1 version per project)
+        assertThat(content).isNotNull();
+    }
+
+    @Test
+    @DisplayName("listProjectsBySpringBootVersion - should list all versions when allVersions=true")
+    void listProjectsBySpringBootVersion_shouldListAllVersions() throws Exception {
+        assertToolAvailable("listProjectsBySpringBootVersion");
+
+        Map<String, Object> args = Map.of(
+            "majorVersion", 3,
+            "minorVersion", 5,
+            "allVersions", true
+        );
+        String content = callToolAndGetTextContent("listProjectsBySpringBootVersion", args);
+
+        // Should contain project compatibility info with all versions
         assertThat(content).isNotNull();
     }
 

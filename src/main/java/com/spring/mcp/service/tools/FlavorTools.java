@@ -148,8 +148,10 @@ public class FlavorTools {
 
     @McpTool(description = """
         List all active flavors in a specific category.
+        Returns summaries (without full content) to reduce response size.
+        Use getFlavorByName to retrieve full content for a specific flavor.
         """)
-    public List<FlavorDto> getFlavorsByCategory(
+    public List<FlavorSummaryDto> getFlavorsByCategory(
             @McpToolParam(description = "Category: ARCHITECTURE, COMPLIANCE, AGENTS, INITIALIZATION, or GENERAL")
             String category
     ) {
@@ -164,8 +166,8 @@ public class FlavorTools {
         // Get accessible flavor IDs for this API key
         Set<Long> accessibleIds = flavorGroupService.getAccessibleFlavorIdsForApiKey(apiKeyId);
 
-        // Filter to only accessible flavors
-        return flavorService.findByCategory(cat).stream()
+        // Filter to only accessible flavors (using summaries to reduce response size)
+        return flavorService.findSummariesByCategory(cat).stream()
                 .filter(f -> accessibleIds.contains(f.getId()))
                 .toList();
     }

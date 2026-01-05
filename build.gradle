@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.spring.mcp'
-version = '1.6.2'
+version = '1.6.3'
 
 java {
     // Using Java 25 (LTS version)

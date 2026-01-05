@@ -149,6 +149,14 @@ public class FlavorServiceImpl implements FlavorService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<FlavorSummaryDto> findSummariesByCategory(FlavorCategory category) {
+        return flavorRepository.findByCategoryAndIsActiveTrue(category).stream()
+            .map(this::mapToSummaryDto)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<FlavorSummaryDto> search(String query, FlavorCategory category, List<String> tags, int limit) {
         List<Flavor> results;
 
