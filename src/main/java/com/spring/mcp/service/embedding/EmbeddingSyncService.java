@@ -266,23 +266,29 @@ public class EmbeddingSyncService {
             }
 
             if (!texts.isEmpty()) {
-                try {
-                    List<float[]> embeddings = embeddingService.embed(texts);
-                    String modelName = embeddingService.getModelName();
-
-                    for (int i = 0; i < embeddings.size(); i++) {
-                        try {
-                            updater.update(ids.get(i), embeddings.get(i), modelName);
-                            succeeded.incrementAndGet();
-                        } catch (Exception e) {
-                            failed.incrementAndGet();
-                            log.warn("Failed to update embedding for {} #{}: {}", entityType, ids.get(i), e.getMessage());
+                String modelName = embeddingService.getModelName();
+                // Process each text individually to handle chunking for large texts
+                for (int i = 0; i < texts.size(); i++) {
+                    String text = texts.get(i);
+                    Long entityId = ids.get(i);
+                    try {
+                        float[] embedding;
+                        // Check if text needs chunking (exceeds chunk size limit)
+                        if (chunkingService.needsChunking(text)) {
+                            log.debug("Text for {} #{} needs chunking ({} estimated tokens)",
+                                    entityType, entityId, chunkingService.estimateTokens(text));
+                            embedding = embeddingService.embedWithChunking(text);
+                        } else {
+                            embedding = embeddingService.embed(text);
                         }
+
+                        updater.update(entityId, embedding, modelName);
+                        succeeded.incrementAndGet();
+                    } catch (Exception e) {
+                        failed.incrementAndGet();
+                        log.warn("Failed to embed {} #{}: {}", entityType, entityId, e.getMessage());
                     }
-                    processed.addAndGet(texts.size());
-                } catch (Exception e) {
-                    failed.addAndGet(texts.size());
-                    log.error("Batch embedding failed for {}: {}", entityType, e.getMessage());
+                    processed.incrementAndGet();
                 }
             }
 
@@ -340,33 +346,37 @@ public class EmbeddingSyncService {
             }
 
             if (!texts.isEmpty()) {
-                try {
-                    // Batch embed
-                    List<float[]> embeddings = embeddingService.embed(texts);
-
-                    // Update each entity
-                    for (int j = 0; j < embeddings.size(); j++) {
-                        try {
-                            updateEmbeddingForEntity(entityType, validIds.get(j), embeddings.get(j), modelName);
-                            succeeded.incrementAndGet();
-
-                            // Mark job as completed if it exists
-                            markJobCompleted(entityType, validIds.get(j));
-                        } catch (Exception e) {
-                            failed.incrementAndGet();
-                            log.warn("Failed to update embedding for {} #{}: {}", entityType, validIds.get(j), e.getMessage());
+                // Process each text individually to handle chunking for large texts
+                for (int j = 0; j < texts.size(); j++) {
+                    String text = texts.get(j);
+                    Long entityId = validIds.get(j);
+                    try {
+                        float[] embedding;
+                        // Check if text needs chunking (exceeds chunk size limit)
+                        if (chunkingService.needsChunking(text)) {
+                            log.debug("Text for {} #{} needs chunking ({} estimated tokens)",
+                                    entityType, entityId, chunkingService.estimateTokens(text));
+                            embedding = embeddingService.embedWithChunking(text);
+                        } else {
+                            embedding = embeddingService.embed(text);
                         }
-                    }
-                    processed.addAndGet(texts.size());
 
-                    // Log progress every 100 items
-                    if (processed.get() % 100 == 0 || processed.get() == ids.size()) {
-                        log.info("Progress: {} {}/{} processed ({} succeeded, {} failed)",
-                                entityType, processed.get(), ids.size(), succeeded.get(), failed.get());
+                        updateEmbeddingForEntity(entityType, entityId, embedding, modelName);
+                        succeeded.incrementAndGet();
+
+                        // Mark job as completed if it exists
+                        markJobCompleted(entityType, entityId);
+                    } catch (Exception e) {
+                        failed.incrementAndGet();
+                        log.warn("Failed to embed {} #{}: {}", entityType, entityId, e.getMessage());
                     }
-                } catch (Exception e) {
-                    failed.addAndGet(texts.size());
-                    log.error("Batch embedding failed for {}: {}", entityType, e.getMessage());
+                    processed.incrementAndGet();
+                }
+
+                // Log progress every 100 items
+                if (processed.get() % 100 == 0 || processed.get() == ids.size()) {
+                    log.info("Progress: {} {}/{} processed ({} succeeded, {} failed)",
+                            entityType, processed.get(), ids.size(), succeeded.get(), failed.get());
                 }
             }
         }

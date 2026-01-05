@@ -77,9 +77,9 @@ public class InitializrProperties {
     public static class Defaults {
         /**
          * Default Spring Boot version.
-         * Default: "3.5.8" (current stable)
+         * Default: "3.5.9" (current stable)
          */
-        private String bootVersion = "3.5.8";
+        private String bootVersion = "3.5.9";
 
         /**
          * Default Java version.
