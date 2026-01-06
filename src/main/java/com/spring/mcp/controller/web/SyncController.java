@@ -717,7 +717,10 @@ public class SyncController {
         log.info("Manual markdown artifacts fix triggered");
 
         try {
+            log.info("WikiService type: {}", wikiService.getClass().getName());
+            log.info("Calling wikiService.fixExistingMarkdownArtifacts()...");
             int wikiFixed = wikiService.fixExistingMarkdownArtifacts();
+            log.info("WikiService returned: {}", wikiFixed);
             int docsFixed = documentationService.fixExistingMarkdownArtifacts();
             int totalFixed = wikiFixed + docsFixed;
 

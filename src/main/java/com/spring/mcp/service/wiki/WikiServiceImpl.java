@@ -134,15 +134,23 @@ public class WikiServiceImpl implements WikiService {
 
         // Fix release notes
         List<WikiReleaseNotes> releaseNotes = releaseNotesRepository.findAll();
+        log.info("Processing {} release notes", releaseNotes.size());
         for (WikiReleaseNotes notes : releaseNotes) {
             String original = notes.getContentMarkdown();
             if (original != null && !original.isBlank()) {
+                // Check if content has inline tables
+                boolean hasInlineTable = original.contains("| --- |") && original.contains("| |");
+                if (hasInlineTable) {
+                    log.info("Release notes {} has potential inline table (length: {})",
+                            notes.getVersionString(), original.length());
+                }
+
                 String fixedContent = asciiDocConverter.fixMarkdownArtifacts(original);
                 if (!fixedContent.equals(original)) {
                     notes.setContentMarkdown(fixedContent);
                     releaseNotesRepository.save(notes);
                     fixed++;
-                    log.debug("Fixed markdown artifacts in release notes: {}", notes.getVersionString());
+                    log.info("Fixed markdown artifacts in release notes: {}", notes.getVersionString());
                 }
             }
         }
@@ -151,15 +159,23 @@ public class WikiServiceImpl implements WikiService {
         // Fix migration guides
         int migrationFixed = 0;
         List<WikiMigrationGuide> guides = migrationGuideRepository.findAll();
+        log.info("Processing {} migration guides", guides.size());
         for (WikiMigrationGuide guide : guides) {
             String original = guide.getContentMarkdown();
             if (original != null && !original.isBlank()) {
+                // Check if content has inline tables
+                boolean hasInlineTable = original.contains("| --- |") && original.contains("| |");
+                if (hasInlineTable) {
+                    log.info("Migration guide {} has potential inline table (length: {})",
+                            guide.getMigrationPath(), original.length());
+                }
+
                 String fixedContent = asciiDocConverter.fixMarkdownArtifacts(original);
                 if (!fixedContent.equals(original)) {
                     guide.setContentMarkdown(fixedContent);
                     migrationGuideRepository.save(guide);
                     migrationFixed++;
-                    log.debug("Fixed markdown artifacts in migration guide: {}", guide.getMigrationPath());
+                    log.info("Fixed markdown artifacts in migration guide: {}", guide.getMigrationPath());
                 }
             }
         }

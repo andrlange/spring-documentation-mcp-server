@@ -476,4 +476,61 @@ public class WikiSyncService {
             errorsEncountered++;
         }
     }
+
+    /**
+     * Reprocess all existing wiki markdown to fix table formatting issues.
+     * This applies the latest table formatting fixes to already-stored content
+     * without needing to re-fetch from GitHub.
+     *
+     * @return number of documents reprocessed
+     */
+    public int reprocessExistingMarkdown() {
+        log.info("Reprocessing existing wiki markdown to fix table formatting...");
+        int count = 0;
+
+        TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
+        txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
+        // Reprocess release notes
+        var releaseNotes = releaseNotesRepository.findAll();
+        for (var notes : releaseNotes) {
+            if (notes.getContent() != null && !notes.getContent().isBlank()) {
+                try {
+                    txTemplate.execute(status -> {
+                        // Re-convert from stored AsciiDoc content
+                        String fixedMarkdown = asciiDocConverter.convert(notes.getContent());
+                        notes.setContentMarkdown(fixedMarkdown);
+                        releaseNotesRepository.save(notes);
+                        return null;
+                    });
+                    count++;
+                } catch (Exception e) {
+                    log.warn("Failed to reprocess release notes {}: {}", notes.getVersionString(), e.getMessage());
+                }
+            }
+        }
+
+        // Reprocess migration guides
+        var guides = migrationGuideRepository.findAll();
+        for (var guide : guides) {
+            if (guide.getContent() != null && !guide.getContent().isBlank()) {
+                try {
+                    txTemplate.execute(status -> {
+                        // Re-convert from stored AsciiDoc content
+                        String fixedMarkdown = asciiDocConverter.convert(guide.getContent());
+                        guide.setContentMarkdown(fixedMarkdown);
+                        migrationGuideRepository.save(guide);
+                        return null;
+                    });
+                    count++;
+                } catch (Exception e) {
+                    log.warn("Failed to reprocess migration guide {} -> {}: {}",
+                            guide.getSourceVersionString(), guide.getTargetVersionString(), e.getMessage());
+                }
+            }
+        }
+
+        log.info("Reprocessed {} wiki documents", count);
+        return count;
+    }
 }

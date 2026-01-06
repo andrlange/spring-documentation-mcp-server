@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -241,8 +243,12 @@ public class AsciiDocToMarkdownConverter {
     /**
      * Fix table formatting issues from AsciiDoc conversion.
      * Converts broken table formats to proper Markdown tables.
+     * Handles both multi-line tables and inline tables (entire table on one line).
      */
     private String fixTableFormatting(String markdown) {
+        // First, check for inline tables (entire table on one line) and split them
+        markdown = splitInlineTables(markdown);
+
         // Split into lines for processing
         String[] lines = markdown.split("\n");
         StringBuilder result = new StringBuilder();
@@ -300,6 +306,129 @@ public class AsciiDocToMarkdownConverter {
                     result.append("\n");
                 }
                 result.append(line).append("\n");
+            }
+        }
+
+        return result.toString();
+    }
+
+    /**
+     * Pattern to detect inline table separator (| --- | --- | ... |)
+     */
+    private static final Pattern INLINE_TABLE_SEPARATOR_PATTERN =
+            Pattern.compile("\\|\\s*---\\s*\\|(?:\\s*---\\s*\\|)+");
+
+    /**
+     * Split inline tables (entire table on one line) into proper multi-line format.
+     * Detects tables where the separator row (| --- | --- |) appears inline with content.
+     */
+    private String splitInlineTables(String markdown) {
+        String[] lines = markdown.split("\n");
+        StringBuilder result = new StringBuilder();
+        int inlineTablesFound = 0;
+
+        for (String line : lines) {
+            // Check if this line contains an inline table (has separator pattern inline)
+            Matcher sepMatcher = INLINE_TABLE_SEPARATOR_PATTERN.matcher(line);
+            // An inline table has the separator in the middle of the line (not at start)
+            // and has content after the separator
+            if (sepMatcher.find() && sepMatcher.start() > 0 && sepMatcher.end() < line.length()) {
+                // This is likely an inline table - split it
+                inlineTablesFound++;
+                log.debug("Found inline table at line length {}, separator at {}-{}",
+                        line.length(), sepMatcher.start(), sepMatcher.end());
+                String splitTable = splitSingleInlineTable(line);
+                result.append(splitTable);
+            } else {
+                result.append(line).append("\n");
+            }
+        }
+
+        if (inlineTablesFound > 0) {
+            log.info("Split {} inline tables", inlineTablesFound);
+        }
+
+        return result.toString();
+    }
+
+    /**
+     * Split a single inline table into proper rows.
+     *
+     * Input format: | Header1 | Header2 | Header3 | | --- | --- | --- | | Data1 | Data2 | Data3 | | Data4 | Data5 | Data6 |
+     * Output format:
+     * | Header1 | Header2 | Header3 |
+     * | --- | --- | --- |
+     * | Data1 | Data2 | Data3 |
+     * | Data4 | Data5 | Data6 |
+     */
+    private String splitSingleInlineTable(String line) {
+        // Find the separator pattern to determine column count
+        Matcher sepMatcher = INLINE_TABLE_SEPARATOR_PATTERN.matcher(line);
+        if (!sepMatcher.find()) {
+            return line + "\n";
+        }
+
+        String separator = sepMatcher.group();
+        int separatorStart = sepMatcher.start();
+        int separatorEnd = sepMatcher.end();
+
+        // Count columns from separator (count the dashes)
+        int columnCount = separator.split("---").length - 1;
+        if (columnCount < 1) columnCount = 1;
+
+        // Extract header (before separator)
+        String headerPart = line.substring(0, separatorStart).trim();
+
+        // Extract data rows (after separator)
+        String dataPart = line.substring(separatorEnd).trim();
+
+        StringBuilder result = new StringBuilder();
+
+        // Add header row
+        if (!headerPart.isEmpty()) {
+            if (!headerPart.startsWith("|")) headerPart = "|" + headerPart;
+            if (!headerPart.endsWith("|")) headerPart = headerPart + "|";
+            result.append(headerPart).append("\n");
+        }
+
+        // Add separator row
+        result.append(separator).append("\n");
+
+        // Split data part into rows using column counting
+        // Each row has exactly columnCount cells, with a boundary marker between rows
+        if (!dataPart.isEmpty()) {
+            // Remove outer pipes and split by pipe
+            if (dataPart.startsWith("|")) dataPart = dataPart.substring(1);
+            if (dataPart.endsWith("|")) dataPart = dataPart.substring(0, dataPart.length() - 1);
+
+            String[] allItems = dataPart.split("\\|", -1);
+
+            // Group into rows: every (columnCount) items form a row,
+            // followed by 1 boundary item (empty) which we skip
+            List<String> currentRow = new ArrayList<>();
+            for (String item : allItems) {
+                if (currentRow.size() < columnCount) {
+                    // Still building current row
+                    currentRow.add(item.trim());
+                } else {
+                    // Row is complete, output it
+                    StringBuilder row = new StringBuilder("|");
+                    for (String cell : currentRow) {
+                        row.append(" ").append(cell).append(" |");
+                    }
+                    result.append(row).append("\n");
+                    currentRow.clear();
+                    // Skip this item - it's the boundary between rows
+                }
+            }
+
+            // Output any remaining row
+            if (currentRow.size() == columnCount) {
+                StringBuilder row = new StringBuilder("|");
+                for (String cell : currentRow) {
+                    row.append(" ").append(cell).append(" |");
+                }
+                result.append(row).append("\n");
             }
         }
 
