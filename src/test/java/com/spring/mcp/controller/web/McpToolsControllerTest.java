@@ -170,6 +170,8 @@ class McpToolsControllerTest {
 
             when(mcpToolService.toggleTool("searchSpringDocs", false))
                     .thenReturn(toggledTool);
+            when(mcpToolService.getStatistics())
+                    .thenReturn(sampleStats);
 
             // When
             ResponseEntity<Map<String, Object>> response =
@@ -180,6 +182,7 @@ class McpToolsControllerTest {
             assertThat(response.getBody().get("success")).isEqualTo(true);
             assertThat(response.getBody().get("toolName")).isEqualTo("searchSpringDocs");
             assertThat(response.getBody().get("enabled")).isEqualTo(false);
+            assertThat(response.getBody().get("stats")).isNotNull();
         }
 
         @Test

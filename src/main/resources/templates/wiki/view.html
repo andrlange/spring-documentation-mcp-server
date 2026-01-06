@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title th:text="${title + ' - Spring MCP Server'}">Wiki - Spring MCP Server</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        .wiki-content {
+            background-color: var(--bs-dark);
+            border: 1px solid var(--bs-gray-700);
+            border-radius: 0.5rem;
+            padding: 2rem;
+        }
+        .wiki-content h1, .wiki-content h2, .wiki-content h3, .wiki-content h4 {
+            color: #10b981;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .wiki-content h1:first-child, .wiki-content h2:first-child {
+            margin-top: 0;
+        }
+        .wiki-content p {
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+        .wiki-content code {
+            background-color: rgba(16, 185, 129, 0.15);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+        }
+        .wiki-content pre {
+            background-color: #1e1e1e;
+            border: 1px solid var(--bs-gray-700);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .wiki-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .wiki-content ul, .wiki-content ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+        .wiki-content li {
+            margin-bottom: 0.5rem;
+        }
+        .wiki-content blockquote {
+            border-left: 4px solid #10b981;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            color: var(--bs-gray-400);
+        }
+        .wiki-content table {
+            width: 100%;
+            margin-bottom: 1rem;
+            border-collapse: collapse;
+        }
+        .wiki-content th, .wiki-content td {
+            border: 1px solid var(--bs-gray-700);
+            padding: 0.75rem;
+        }
+        .wiki-content th {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+        .wiki-content a {
+            color: #10b981;
+        }
+        .wiki-content a:hover {
+            color: #34d399;
+        }
+        .version-badge-large {
+            background-color: #10b981;
+            color: #0f172a;
+            font-size: 1.25rem;
+            padding: 0.5rem 1rem;
+        }
+        .metadata-card {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/wiki}" class="text-success">Wiki</a></li>
+            <li class="breadcrumb-item active" th:text="${type == 'release-notes' ? 'Release Notes' : 'Migration Guide'}">Type</li>
+            <li class="breadcrumb-item active" th:text="${version}">Version</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="bi bi-journal-text" style="color: #10b981;"></i>
+            <span th:text="${title}">Wiki Document</span>
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a th:href="@{/wiki}" class="btn btn-outline-secondary btn-sm me-2">
+                <i class="bi bi-arrow-left"></i> Back to Wiki
+            </a>
+            <a th:if="${sourceUrl != null}" th:href="${sourceUrl}" target="_blank" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-github"></i> View on GitHub
+            </a>
+        </div>
+    </div>
+
+    <!-- Metadata Card -->
+    <div class="metadata-card p-3 mb-4">
+        <div class="row">
+            <div class="col-md-6" th:if="${type == 'release-notes'}">
+                <strong class="text-success">Version:</strong>
+                <span class="badge version-badge-large ms-2" th:text="${version}">4.0</span>
+            </div>
+            <div class="col-md-6" th:if="${type == 'migration-guide'}">
+                <strong class="text-success">Migration Path:</strong>
+                <span class="ms-2">
+                    <span class="badge bg-secondary" th:text="${fromVersion}">3.5</span>
+                    <i class="bi bi-arrow-right text-success mx-1"></i>
+                    <span class="badge version-badge-large" th:text="${toVersion}">4.0</span>
+                </span>
+            </div>
+            <div class="col-md-6 text-md-end" th:if="${lastModified != null}">
+                <strong class="text-muted">Last Updated:</strong>
+                <span class="ms-2 text-muted" th:text="${#temporals.format(lastModified, 'MMMM d, yyyy')}">January 1, 2026</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wiki Content -->
+    <div class="wiki-content" th:if="${content != null and !content.isEmpty()}">
+        <div th:utext="${content}">
+            Content will be rendered here as HTML from Markdown.
+        </div>
+    </div>
+
+    <div th:if="${content == null or content.isEmpty()}" class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        No content available. The wiki content may need to be synced.
+    </div>
+</div>
+
+<!-- Syntax highlighting -->
+<th:block layout:fragment="scripts">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.wiki-content pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+    </script>
+</th:block>
+</body>
+</html>

@@ -64,8 +64,10 @@ docs/
 /mcp.md
 .mcp.json
 start.sh
+start-dev.sh
 
 vols.zip
+latest.jar
 
 
 

@@ -22,4 +22,14 @@ public interface DocumentationService {
      * Get all documentation for a project version
      */
     List<DocumentationDto> getByVersion(Long versionId);
+
+    /**
+     * Fix markdown artifacts in existing documentation content.
+     * Processes all documentation content to fix:
+     * - Table formatting issues from HTML conversion
+     * - Anchor artifacts like {#_test_code}
+     *
+     * @return the number of documents fixed
+     */
+    int fixExistingMarkdownArtifacts();
 }

@@ -1,6 +1,7 @@
 package com.spring.mcp.service.documentation;
 
 import com.spring.mcp.model.dto.DocumentationDto;
+import com.spring.mcp.model.entity.DocumentationContent;
 import com.spring.mcp.model.entity.DocumentationLink;
 import com.spring.mcp.model.entity.ProjectVersion;
 import com.spring.mcp.model.entity.SpringProject;
@@ -34,6 +35,7 @@ public class DocumentationServiceImpl implements DocumentationService {
     private final DocumentationLinkRepository linkRepository;
     private final SpringProjectRepository projectRepository;
     private final ProjectVersionRepository versionRepository;
+    private final HtmlToMarkdownConverter htmlToMarkdownConverter;
 
     @Value("${mcp.documentation.search.default-limit:5}")
     private int defaultLimit;
@@ -369,5 +371,40 @@ public class DocumentationServiceImpl implements DocumentationService {
         }
 
         return cleaned.substring(0, breakPoint).trim() + "...";
+    }
+
+    /**
+     * Fix markdown artifacts in existing documentation content.
+     * Processes all documentation content to fix:
+     * - Table formatting issues from HTML conversion
+     * - Anchor artifacts like {#_test_code}
+     *
+     * @return the number of documents fixed
+     */
+    @Override
+    @Transactional
+    public int fixExistingMarkdownArtifacts() {
+        log.info("Starting fix of existing markdown artifacts in documentation content...");
+        int fixed = 0;
+
+        List<DocumentationContent> allContent = contentRepository.findAll();
+        log.info("Processing {} documentation content entries", allContent.size());
+
+        for (DocumentationContent content : allContent) {
+            String original = content.getContent();
+            if (original != null && !original.isBlank()) {
+                String fixedContent = htmlToMarkdownConverter.fixMarkdownArtifacts(original);
+                if (!fixedContent.equals(original)) {
+                    content.setContent(fixedContent);
+                    contentRepository.save(content);
+                    fixed++;
+                    log.debug("Fixed markdown artifacts in documentation content ID: {}", content.getId());
+                }
+            }
+        }
+
+        log.info("Completed fixing markdown artifacts. Fixed {} of {} documentation entries",
+                fixed, allContent.size());
+        return fixed;
     }
 }

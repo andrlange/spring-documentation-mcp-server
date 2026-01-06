@@ -104,6 +104,8 @@
             margin-bottom: 0.75rem;
         }
 
+        .entity-icon.wiki { background: rgba(236, 72, 153, 0.2); color: #f687b3; }
+
         .entity-header {
             display: flex;
             justify-content: space-between;
@@ -454,6 +456,60 @@
                 </div>
             </div>
         </div>
+
+        <!-- Wiki Release Notes -->
+        <div class="col-md-6 col-lg-3">
+            <div class="entity-card">
+                <div class="entity-header">
+                    <div class="entity-title">
+                        <div class="entity-icon wiki">
+                            <i class="bi bi-journal-text"></i>
+                        </div>
+                        <div>
+                            <div class="entity-name">Release Notes</div>
+                            <div class="entity-count" x-text="stats.wikiReleaseNotesWithEmbedding + ' / ' + stats.wikiReleaseNotesTotal">0 / 0</div>
+                        </div>
+                    </div>
+                    <span class="badge" :class="stats.wikiReleaseNotesCoverage >= 80 ? 'bg-success' : (stats.wikiReleaseNotesCoverage >= 50 ? 'bg-warning' : 'bg-danger')"
+                          x-text="stats.wikiReleaseNotesCoverage.toFixed(1) + '%'">0%</span>
+                </div>
+                <div class="coverage-progress">
+                    <div class="coverage-bar" :class="stats.wikiReleaseNotesCoverage >= 80 ? 'high' : (stats.wikiReleaseNotesCoverage >= 50 ? 'medium' : 'low')"
+                         :style="'width: ' + stats.wikiReleaseNotesCoverage + '%'"></div>
+                </div>
+                <div class="coverage-label">
+                    <span>Spring Boot Wiki</span>
+                    <span x-text="(stats.wikiReleaseNotesTotal - stats.wikiReleaseNotesWithEmbedding) + ' missing'">0 missing</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wiki Migration Guides -->
+        <div class="col-md-6 col-lg-3">
+            <div class="entity-card">
+                <div class="entity-header">
+                    <div class="entity-title">
+                        <div class="entity-icon wiki">
+                            <i class="bi bi-arrow-up-circle"></i>
+                        </div>
+                        <div>
+                            <div class="entity-name">Migration Guides</div>
+                            <div class="entity-count" x-text="stats.wikiMigrationGuidesWithEmbedding + ' / ' + stats.wikiMigrationGuidesTotal">0 / 0</div>
+                        </div>
+                    </div>
+                    <span class="badge" :class="stats.wikiMigrationGuidesCoverage >= 80 ? 'bg-success' : (stats.wikiMigrationGuidesCoverage >= 50 ? 'bg-warning' : 'bg-danger')"
+                          x-text="stats.wikiMigrationGuidesCoverage.toFixed(1) + '%'">0%</span>
+                </div>
+                <div class="coverage-progress">
+                    <div class="coverage-bar" :class="stats.wikiMigrationGuidesCoverage >= 80 ? 'high' : (stats.wikiMigrationGuidesCoverage >= 50 ? 'medium' : 'low')"
+                         :style="'width: ' + stats.wikiMigrationGuidesCoverage + '%'"></div>
+                </div>
+                <div class="coverage-label">
+                    <span>Spring Boot Wiki</span>
+                    <span x-text="(stats.wikiMigrationGuidesTotal - stats.wikiMigrationGuidesWithEmbedding) + ' missing'">0 missing</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Configuration Section -->
@@ -581,6 +637,12 @@
                     examplesWithEmbedding: initialStats.examplesWithEmbedding || 0,
                     examplesTotal: initialStats.examplesTotal || 0,
                     examplesCoverage: initialStats.examplesCoverage || 0,
+                    wikiReleaseNotesWithEmbedding: initialStats.wikiReleaseNotesWithEmbedding || 0,
+                    wikiReleaseNotesTotal: initialStats.wikiReleaseNotesTotal || 0,
+                    wikiReleaseNotesCoverage: initialStats.wikiReleaseNotesCoverage || 0,
+                    wikiMigrationGuidesWithEmbedding: initialStats.wikiMigrationGuidesWithEmbedding || 0,
+                    wikiMigrationGuidesTotal: initialStats.wikiMigrationGuidesTotal || 0,
+                    wikiMigrationGuidesCoverage: initialStats.wikiMigrationGuidesCoverage || 0,
                     pendingJobs: initialStats.pendingJobs || 0,
                     failedJobs: initialStats.failedJobs || 0,
                     totalWithEmbedding: initialStats.totalWithEmbedding || 0,
@@ -706,6 +768,12 @@
                             this.stats.examplesWithEmbedding = data.examplesWithEmbedding || 0;
                             this.stats.examplesTotal = data.examplesTotal || 0;
                             this.stats.examplesCoverage = data.examplesCoverage || 0;
+                            this.stats.wikiReleaseNotesWithEmbedding = data.wikiReleaseNotesWithEmbedding || 0;
+                            this.stats.wikiReleaseNotesTotal = data.wikiReleaseNotesTotal || 0;
+                            this.stats.wikiReleaseNotesCoverage = data.wikiReleaseNotesCoverage || 0;
+                            this.stats.wikiMigrationGuidesWithEmbedding = data.wikiMigrationGuidesWithEmbedding || 0;
+                            this.stats.wikiMigrationGuidesTotal = data.wikiMigrationGuidesTotal || 0;
+                            this.stats.wikiMigrationGuidesCoverage = data.wikiMigrationGuidesCoverage || 0;
                             this.stats.pendingJobs = data.pendingJobs || 0;
                             this.stats.failedJobs = data.failedJobs || 0;
                             this.stats.totalWithEmbedding = data.totalWithEmbedding || 0;

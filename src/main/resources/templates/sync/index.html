@@ -99,6 +99,7 @@
                             <li th:if="${openRewriteEnabled}">Phase 7: Migration Recipes (OpenRewrite knowledge)</li>
                             <li>Phase 8: GitHub Documentation (Antora/AsciiDoc from GitHub)</li>
                             <li th:if="${javadocsEnabled}">Phase 9: Javadocs API Documentation</li>
+                            <li>Phase 10: Wiki (Release Notes & Migration Guides from GitHub wiki)</li>
                         </ol>
                     </div>
 
@@ -133,7 +134,7 @@
                     <!-- Progress Bar -->
                     <div class="mb-4">
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-white-50" id="sync-phase-text">Phase 0/9: Initializing...</span>
+                            <span class="text-white-50" id="sync-phase-text">Phase 0/10: Initializing...</span>
                             <span class="text-white-50" id="sync-percent-text">0%</span>
                         </div>
                         <div class="progress" style="height: 30px; background-color: rgba(255, 255, 255, 0.1);">
@@ -204,6 +205,12 @@
                             <div class="phase-indicator" data-phase="9">
                                 <i class="bi bi-file-earmark-code text-secondary" style="color: #0d9488 !important;"></i>
                                 <small class="d-block text-white-50">Javadocs</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="phase-indicator" data-phase="10">
+                                <i class="bi bi-journal-text text-secondary" style="color: #10b981 !important;"></i>
+                                <small class="d-block text-white-50">Wiki</small>
                             </div>
                         </div>
                     </div>
@@ -592,6 +599,42 @@
             </div>
         </div>
 
+        <!-- Phase 10: Wiki (Release Notes & Migration Guides) -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm" style="border-color: #10b981;">
+                <div class="card-header text-white" style="background-color: #10b981;">
+                    <h6 class="card-title mb-0">
+                        <span class="badge bg-white me-2" style="color: #10b981;">10</span>
+                        <i class="bi bi-journal-text"></i>
+                        Wiki (Release Notes & Guides)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text small">
+                        Sync Spring Boot release notes and migration guides from the official GitHub wiki.
+                    </p>
+                    <form method="post" th:action="@{/sync/wiki}" class="mb-0 sync-form">
+                        <button type="submit" class="btn btn-sm w-100 sync-btn" style="background-color: #10b981; border-color: #10b981; color: white;">
+                            <span class="btn-text">
+                                <i class="bi bi-arrow-repeat"></i>
+                                Sync
+                            </span>
+                            <span class="btn-spinner d-none">
+                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                Syncing...
+                            </span>
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer bg-light">
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i>
+                        ~30-60 seconds
+                    </small>
+                </div>
+            </div>
+        </div>
+
         <!-- Languages Evolution (Java/Kotlin) - Conditional -->
         <div class="col-md-6 col-lg-4" th:if="${languageEvolutionEnabled}">
             <div class="card h-100 shadow-sm" style="border-color: #8b5cf6;">
@@ -706,6 +749,44 @@
             </div>
         </div>
 
+        <!-- Fix Markdown Artifacts - Maintenance utility for table/anchor issues -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm" style="border-color: #14b8a6;">
+                <div class="card-header text-white" style="background-color: #14b8a6;">
+                    <h6 class="card-title mb-0">
+                        <span class="badge bg-white me-2" style="color: #14b8a6;">
+                            <i class="bi bi-wrench-adjustable"></i>
+                        </span>
+                        <i class="bi bi-markdown"></i>
+                        Fix Markdown Artifacts
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text small">
+                        Fix markdown conversion artifacts in Wiki and Documentation content. Fixes broken tables and anchor link artifacts like <code>{#_test_code}</code>.
+                    </p>
+                    <form method="post" th:action="@{/sync/fix-markdown-artifacts}" class="mb-0 sync-form">
+                        <button type="submit" class="btn btn-sm w-100 sync-btn" style="background-color: #14b8a6; border-color: #14b8a6; color: white;">
+                            <span class="btn-text">
+                                <i class="bi bi-wrench-adjustable"></i>
+                                Fix Artifacts
+                            </span>
+                            <span class="btn-spinner d-none">
+                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                Fixing...
+                            </span>
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer bg-light">
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i>
+                        ~10-30 seconds
+                    </small>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Sync Guide -->
@@ -799,6 +880,12 @@
                                     <td>Download and parse Javadoc API documentation (conditional - if enabled)</td>
                                     <td>~2-5min</td>
                                 </tr>
+                                <tr style="background-color: rgba(16, 185, 129, 0.1);">
+                                    <td><span class="badge" style="background-color: #10b981;">10</span></td>
+                                    <td>Wiki</td>
+                                    <td>Spring Boot release notes and migration guides from GitHub wiki</td>
+                                    <td>~30-60s</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -811,7 +898,7 @@
 
                     <h6 class="mt-4">Best Practices</h6>
                     <ul>
-                        <li><strong>Initial Setup:</strong> Run <strong>Comprehensive Sync</strong> after first installation to populate all data (runs all 10 phases).</li>
+                        <li><strong>Initial Setup:</strong> Run <strong>Comprehensive Sync</strong> after first installation to populate all data (runs all 11 phases).</li>
                         <li><strong>Regular Updates:</strong> Run Comprehensive Sync periodically (weekly or monthly) to stay current with new Spring releases.</li>
                         <li><strong>Targeted Updates:</strong> Use individual sync steps when you only need to refresh specific data.</li>
                         <li><strong>Javadoc Version Filter:</strong> Configure which version types (SNAPSHOT, RC, Milestone) to include in Javadoc sync via Settings page.</li>
@@ -972,7 +1059,7 @@
                 progressBar.style.width = '0%';
                 progressBar.setAttribute('aria-valuenow', 0);
                 progressLabel.textContent = 'Starting...';
-                phaseText.textContent = 'Phase 0/9: Initializing...';
+                phaseText.textContent = 'Phase 0/10: Initializing...';
                 percentText.textContent = '0%';
                 statusMessage.style.display = 'none';
                 errorMessage.style.display = 'none';

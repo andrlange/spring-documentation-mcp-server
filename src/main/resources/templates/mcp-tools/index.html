@@ -425,6 +425,23 @@ function showToast(message, type = 'success') {
     bsToast.show();
 }
 
+// Update statistics display
+function updateStatistics(stats) {
+    const statsCards = document.querySelectorAll('.row.mb-4 .card-body');
+    if (statsCards.length >= 6) {
+        // Total Tools
+        statsCards[0].querySelector('h3').textContent = stats.totalTools;
+        // Enabled
+        statsCards[1].querySelector('h3').textContent = stats.enabledTools;
+        // Disabled
+        statsCards[2].querySelector('h3').textContent = stats.disabledTools;
+        // Modified
+        statsCards[3].querySelector('h3').textContent = stats.modifiedTools;
+        // Visibility percentage
+        statsCards[5].querySelector('h3').textContent = stats.enabledPercentage + '%';
+    }
+}
+
 // Toggle group expand/collapse
 function toggleGroup(headerElement) {
     const groupCard = headerElement.closest('.tool-group-card');
@@ -462,6 +479,10 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     showToast(`Tool "${toolName}" ${enabled ? 'enabled' : 'disabled'}`, 'success');
+                    // Update statistics if provided
+                    if (data.stats) {
+                        updateStatistics(data.stats);
+                    }
                 } else {
                     this.checked = !enabled; // Revert on error
                     showToast('Error: ' + (data.error || 'Unknown error'), 'error');

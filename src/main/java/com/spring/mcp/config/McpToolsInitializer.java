@@ -33,33 +33,65 @@ public class McpToolsInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        if (mcpToolRepository.count() > 0) {
-            log.info("MCP tools already initialized ({} tools in database)", mcpToolRepository.count());
-            return;
-        }
-
-        log.info("Initializing MCP tool configurations...");
-
         Map<String, ToolDefinition> tools = getToolDefinitions();
-        int order = 0;
+        long existingCount = mcpToolRepository.count();
 
-        for (Map.Entry<String, ToolDefinition> entry : tools.entrySet()) {
-            String toolName = entry.getKey();
-            ToolDefinition def = entry.getValue();
+        if (existingCount == 0) {
+            // Fresh install - add all tools
+            log.info("Initializing MCP tool configurations...");
+            int order = 0;
 
-            McpTool tool = McpTool.builder()
-                    .toolName(toolName)
-                    .toolGroup(def.group)
-                    .enabled(true)
-                    .description(def.description)
-                    .originalDescription(def.description)
-                    .displayOrder(order++)
-                    .build();
+            for (Map.Entry<String, ToolDefinition> entry : tools.entrySet()) {
+                String toolName = entry.getKey();
+                ToolDefinition def = entry.getValue();
 
-            mcpToolRepository.save(tool);
+                McpTool tool = McpTool.builder()
+                        .toolName(toolName)
+                        .toolGroup(def.group)
+                        .enabled(true)
+                        .description(def.description)
+                        .originalDescription(def.description)
+                        .displayOrder(order++)
+                        .build();
+
+                mcpToolRepository.save(tool);
+            }
+
+            log.info("Initialized {} MCP tool configurations", tools.size());
+        } else {
+            // Existing install - check for missing tools and add them
+            int added = 0;
+            int maxOrder = mcpToolRepository.findAll().stream()
+                    .mapToInt(McpTool::getDisplayOrder)
+                    .max()
+                    .orElse(0);
+
+            for (Map.Entry<String, ToolDefinition> entry : tools.entrySet()) {
+                String toolName = entry.getKey();
+                ToolDefinition def = entry.getValue();
+
+                if (!mcpToolRepository.existsByToolName(toolName)) {
+                    McpTool tool = McpTool.builder()
+                            .toolName(toolName)
+                            .toolGroup(def.group)
+                            .enabled(true)
+                            .description(def.description)
+                            .originalDescription(def.description)
+                            .displayOrder(++maxOrder)
+                            .build();
+
+                    mcpToolRepository.save(tool);
+                    added++;
+                    log.info("Added missing MCP tool: {} (group: {})", toolName, def.group);
+                }
+            }
+
+            if (added > 0) {
+                log.info("Added {} missing MCP tool configurations (total: {})", added, existingCount + added);
+            } else {
+                log.info("MCP tools already initialized ({} tools in database)", existingCount);
+            }
         }
-
-        log.info("Initialized {} MCP tool configurations", tools.size());
     }
 
     /**
@@ -69,7 +101,7 @@ public class McpToolsInitializer implements ApplicationRunner {
     private Map<String, ToolDefinition> getToolDefinitions() {
         Map<String, ToolDefinition> tools = new LinkedHashMap<>();
 
-        // === DOCUMENTATION TOOLS (10) ===
+        // === DOCUMENTATION TOOLS (12) ===
         tools.put("searchSpringDocs", new ToolDefinition(McpToolGroup.DOCUMENTATION,
                 "Search across all Spring documentation with pagination support. " +
                 "Supports filtering by project, version, and documentation type. " +
@@ -104,6 +136,16 @@ public class McpToolsInitializer implements ApplicationRunner {
 
         tools.put("findProjectsByUseCase", new ToolDefinition(McpToolGroup.DOCUMENTATION,
                 "Search for Spring projects by use case. Searches in project names and descriptions for keywords. Useful for finding projects that solve specific problems or use cases."));
+
+        tools.put("getWikiReleaseNotes", new ToolDefinition(McpToolGroup.DOCUMENTATION,
+                "Get Spring Boot release notes for a specific version from the official GitHub wiki. " +
+                "Release notes document new features, enhancements, bug fixes, and deprecations for each Spring Boot version. " +
+                "Use this to understand what changed in a specific Spring Boot version. Example versions: '4.0', '3.5', '3.4', '3.3', '3.2'"));
+
+        tools.put("getWikiMigrationGuide", new ToolDefinition(McpToolGroup.DOCUMENTATION,
+                "Get Spring Boot migration guide for upgrading between specific versions from the official GitHub wiki. " +
+                "Migration guides document breaking changes, required modifications, and upgrade instructions when migrating from one Spring Boot version to another. " +
+                "Use this when planning an upgrade between Spring Boot versions. Example: from '3.5' to '4.0', from '2.7' to '3.0'"));
 
         // === MIGRATION TOOLS (7) ===
         tools.put("getSpringMigrationGuide", new ToolDefinition(McpToolGroup.MIGRATION,

@@ -3,6 +3,8 @@ package com.spring.mcp.service.embedding;
 import com.spring.mcp.config.EmbeddingProperties;
 import com.spring.mcp.model.entity.*;
 import com.spring.mcp.repository.*;
+import com.spring.mcp.repository.WikiReleaseNotesRepository;
+import com.spring.mcp.repository.WikiMigrationGuideRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -42,6 +44,8 @@ public class EmbeddingSyncService {
     private final MigrationTransformationRepository transformationRepository;
     private final FlavorRepository flavorRepository;
     private final CodeExampleRepository codeExampleRepository;
+    private final WikiReleaseNotesRepository wikiReleaseNotesRepository;
+    private final WikiMigrationGuideRepository wikiMigrationGuideRepository;
     private final EmbeddingJobRepository embeddingJobRepository;
     private final EmbeddingMetadataRepository embeddingMetadataRepository;
 
@@ -106,6 +110,36 @@ public class EmbeddingSyncService {
     }
 
     /**
+     * Sync embeddings for all wiki release notes.
+     */
+    @Async("embeddingTaskExecutor")
+    @Transactional
+    public CompletableFuture<SyncResult> syncWikiReleaseNotesEmbeddings() {
+        log.info("Starting wiki release notes embedding sync...");
+        return syncEntityEmbeddings(
+                "WIKI_RELEASE_NOTES",
+                this::fetchWikiReleaseNotesBatch,
+                this::getWikiReleaseNotesTextForEmbedding,
+                this::updateWikiReleaseNotesEmbedding
+        );
+    }
+
+    /**
+     * Sync embeddings for all wiki migration guides.
+     */
+    @Async("embeddingTaskExecutor")
+    @Transactional
+    public CompletableFuture<SyncResult> syncWikiMigrationGuideEmbeddings() {
+        log.info("Starting wiki migration guide embedding sync...");
+        return syncEntityEmbeddings(
+                "WIKI_MIGRATION_GUIDE",
+                this::fetchWikiMigrationGuideBatch,
+                this::getWikiMigrationGuideTextForEmbedding,
+                this::updateWikiMigrationGuideEmbedding
+        );
+    }
+
+    /**
      * Sync embeddings for entities without embeddings only.
      */
     @Async("embeddingTaskExecutor")
@@ -127,6 +161,12 @@ public class EmbeddingSyncService {
 
             SyncResult codeResult = syncMissingForEntityType("CODE_EXAMPLE").get();
             totalResult = totalResult.add(codeResult);
+
+            SyncResult wikiReleaseNotesResult = syncMissingForEntityType("WIKI_RELEASE_NOTES").get();
+            totalResult = totalResult.add(wikiReleaseNotesResult);
+
+            SyncResult wikiMigrationGuideResult = syncMissingForEntityType("WIKI_MIGRATION_GUIDE").get();
+            totalResult = totalResult.add(wikiMigrationGuideResult);
 
         } catch (Exception e) {
             log.error("Error syncing missing embeddings: {}", e.getMessage(), e);
@@ -205,6 +245,12 @@ public class EmbeddingSyncService {
         long examplesWithEmbedding = countEntitiesWithEmbedding("code_examples", "example_embedding");
         long examplesTotal = codeExampleRepository.count();
 
+        long wikiReleaseNotesWithEmbedding = countEntitiesWithEmbedding("wiki_release_notes", "content_embedding");
+        long wikiReleaseNotesTotal = wikiReleaseNotesRepository.count();
+
+        long wikiMigrationGuidesWithEmbedding = countEntitiesWithEmbedding("wiki_migration_guides", "content_embedding");
+        long wikiMigrationGuidesTotal = wikiMigrationGuideRepository.count();
+
         long pendingJobs = embeddingJobRepository.countPendingAndRetryJobs();
         long failedJobs = embeddingJobRepository.countByStatus(EmbeddingJob.JobStatus.FAILED);
 
@@ -213,6 +259,8 @@ public class EmbeddingSyncService {
                 transformsWithEmbedding, transformsTotal,
                 flavorsWithEmbedding, flavorsTotal,
                 examplesWithEmbedding, examplesTotal,
+                wikiReleaseNotesWithEmbedding, wikiReleaseNotesTotal,
+                wikiMigrationGuidesWithEmbedding, wikiMigrationGuidesTotal,
                 pendingJobs,
                 failedJobs,
                 embeddingService.isAvailable(),
@@ -307,6 +355,8 @@ public class EmbeddingSyncService {
             case "TRANSFORMATION" -> "SELECT id FROM migration_transformations WHERE transformation_embedding IS NULL";
             case "FLAVOR" -> "SELECT id FROM flavors WHERE flavor_embedding IS NULL";
             case "CODE_EXAMPLE" -> "SELECT id FROM code_examples WHERE example_embedding IS NULL";
+            case "WIKI_RELEASE_NOTES" -> "SELECT id FROM wiki_release_notes WHERE content_embedding IS NULL";
+            case "WIKI_MIGRATION_GUIDE" -> "SELECT id FROM wiki_migration_guides WHERE content_embedding IS NULL";
             default -> throw new IllegalArgumentException("Unknown entity type: " + entityType);
         };
 
@@ -404,6 +454,10 @@ public class EmbeddingSyncService {
                     .map(this::getFlavorTextForEmbedding).orElse(null);
             case "CODE_EXAMPLE" -> codeExampleRepository.findById(id)
                     .map(this::getCodeExampleTextForEmbedding).orElse(null);
+            case "WIKI_RELEASE_NOTES" -> wikiReleaseNotesRepository.findById(id)
+                    .map(this::getWikiReleaseNotesTextForEmbedding).orElse(null);
+            case "WIKI_MIGRATION_GUIDE" -> wikiMigrationGuideRepository.findById(id)
+                    .map(this::getWikiMigrationGuideTextForEmbedding).orElse(null);
             default -> null;
         };
     }
@@ -423,6 +477,8 @@ public class EmbeddingSyncService {
             case "TRANSFORMATION" -> updateTransformationEmbedding(id, embedding, model);
             case "FLAVOR" -> updateFlavorEmbedding(id, embedding, model);
             case "CODE_EXAMPLE" -> updateCodeExampleEmbedding(id, embedding, model);
+            case "WIKI_RELEASE_NOTES" -> updateWikiReleaseNotesEmbedding(id, embedding, model);
+            case "WIKI_MIGRATION_GUIDE" -> updateWikiMigrationGuideEmbedding(id, embedding, model);
         }
     }
 
@@ -529,6 +585,46 @@ public class EmbeddingSyncService {
             """, vectorString, model, id);
     }
 
+    private Page<WikiReleaseNotes> fetchWikiReleaseNotesBatch(PageRequest pageRequest) {
+        return wikiReleaseNotesRepository.findAll(pageRequest);
+    }
+
+    private String getWikiReleaseNotesTextForEmbedding(WikiReleaseNotes rn) {
+        StringBuilder sb = new StringBuilder();
+        if (rn.getTitle() != null) sb.append(rn.getTitle()).append(" ");
+        if (rn.getContentMarkdown() != null) sb.append(rn.getContentMarkdown());
+        return sb.toString().trim();
+    }
+
+    private void updateWikiReleaseNotesEmbedding(Long id, float[] embedding, String model) {
+        String vectorString = floatArrayToVectorString(embedding);
+        jdbcTemplate.update("""
+            UPDATE wiki_release_notes
+            SET content_embedding = ?::vector, embedding_model = ?, embedded_at = NOW()
+            WHERE id = ?
+            """, vectorString, model, id);
+    }
+
+    private Page<WikiMigrationGuide> fetchWikiMigrationGuideBatch(PageRequest pageRequest) {
+        return wikiMigrationGuideRepository.findAll(pageRequest);
+    }
+
+    private String getWikiMigrationGuideTextForEmbedding(WikiMigrationGuide mg) {
+        StringBuilder sb = new StringBuilder();
+        if (mg.getTitle() != null) sb.append(mg.getTitle()).append(" ");
+        if (mg.getContentMarkdown() != null) sb.append(mg.getContentMarkdown());
+        return sb.toString().trim();
+    }
+
+    private void updateWikiMigrationGuideEmbedding(Long id, float[] embedding, String model) {
+        String vectorString = floatArrayToVectorString(embedding);
+        jdbcTemplate.update("""
+            UPDATE wiki_migration_guides
+            SET content_embedding = ?::vector, embedding_model = ?, embedded_at = NOW()
+            WHERE id = ?
+            """, vectorString, model, id);
+    }
+
     private void storeEntityEmbedding(String entityType, Long entityId, float[] embedding, String model) {
         String vectorString = floatArrayToVectorString(embedding);
         String table = switch (entityType) {
@@ -536,6 +632,8 @@ public class EmbeddingSyncService {
             case "TRANSFORMATION" -> "migration_transformations";
             case "FLAVOR" -> "flavors";
             case "CODE_EXAMPLE" -> "code_examples";
+            case "WIKI_RELEASE_NOTES" -> "wiki_release_notes";
+            case "WIKI_MIGRATION_GUIDE" -> "wiki_migration_guides";
             default -> throw new IllegalArgumentException("Unknown entity type: " + entityType);
         };
         String column = switch (entityType) {
@@ -543,6 +641,7 @@ public class EmbeddingSyncService {
             case "TRANSFORMATION" -> "transformation_embedding";
             case "FLAVOR" -> "flavor_embedding";
             case "CODE_EXAMPLE" -> "example_embedding";
+            case "WIKI_RELEASE_NOTES", "WIKI_MIGRATION_GUIDE" -> "content_embedding";
             default -> throw new IllegalArgumentException("Unknown entity type: " + entityType);
         };
 
@@ -600,6 +699,8 @@ public class EmbeddingSyncService {
             long transformsWithEmbedding, long transformsTotal,
             long flavorsWithEmbedding, long flavorsTotal,
             long examplesWithEmbedding, long examplesTotal,
+            long wikiReleaseNotesWithEmbedding, long wikiReleaseNotesTotal,
+            long wikiMigrationGuidesWithEmbedding, long wikiMigrationGuidesTotal,
             long pendingJobs,
             long failedJobs,
             boolean providerAvailable,
@@ -622,12 +723,22 @@ public class EmbeddingSyncService {
             return examplesTotal > 0 ? (double) examplesWithEmbedding / examplesTotal * 100 : 0;
         }
 
+        public double getWikiReleaseNotesCoverage() {
+            return wikiReleaseNotesTotal > 0 ? (double) wikiReleaseNotesWithEmbedding / wikiReleaseNotesTotal * 100 : 0;
+        }
+
+        public double getWikiMigrationGuidesCoverage() {
+            return wikiMigrationGuidesTotal > 0 ? (double) wikiMigrationGuidesWithEmbedding / wikiMigrationGuidesTotal * 100 : 0;
+        }
+
         public long getTotalWithEmbedding() {
-            return docsWithEmbedding + transformsWithEmbedding + flavorsWithEmbedding + examplesWithEmbedding;
+            return docsWithEmbedding + transformsWithEmbedding + flavorsWithEmbedding + examplesWithEmbedding
+                    + wikiReleaseNotesWithEmbedding + wikiMigrationGuidesWithEmbedding;
         }
 
         public long getTotalEntities() {
-            return docsTotal + transformsTotal + flavorsTotal + examplesTotal;
+            return docsTotal + transformsTotal + flavorsTotal + examplesTotal
+                    + wikiReleaseNotesTotal + wikiMigrationGuidesTotal;
         }
 
         public double getOverallCoverage() {

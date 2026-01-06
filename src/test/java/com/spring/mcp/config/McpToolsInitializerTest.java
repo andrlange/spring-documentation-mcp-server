@@ -61,20 +61,24 @@ class McpToolsInitializerTest {
             // When
             initializer.run(new DefaultApplicationArguments());
 
-            // Then - saves 44 individual tools
-            verify(mcpToolRepository, times(44)).save(any(McpTool.class));
+            // Then - saves 46 individual tools (including 2 wiki tools)
+            verify(mcpToolRepository, times(46)).save(any(McpTool.class));
         }
 
         @Test
-        @DisplayName("Should skip initialization when tools already exist")
+        @DisplayName("Should skip initialization when all tools already exist")
         void shouldSkipInitializationWhenToolsExist() {
-            // Given
-            when(mcpToolRepository.count()).thenReturn(44L);
+            // Given - all 46 tools already exist
+            when(mcpToolRepository.count()).thenReturn(46L);
+            when(mcpToolRepository.findAll()).thenReturn(List.of(
+                    McpTool.builder().toolName("dummy").displayOrder(45).build()
+            ));
+            when(mcpToolRepository.existsByToolName(anyString())).thenReturn(true);
 
             // When
             initializer.run(new DefaultApplicationArguments());
 
-            // Then
+            // Then - no new saves because all tools exist
             verify(mcpToolRepository, never()).save(any(McpTool.class));
         }
 
@@ -89,7 +93,7 @@ class McpToolsInitializerTest {
             initializer.run(new DefaultApplicationArguments());
 
             // Then
-            verify(mcpToolRepository, atLeast(44)).save(toolCaptor.capture());
+            verify(mcpToolRepository, atLeast(46)).save(toolCaptor.capture());
             List<McpTool> savedTools = toolCaptor.getAllValues();
 
             // Check all groups are represented
@@ -108,7 +112,7 @@ class McpToolsInitializerTest {
             long javadocCount = savedTools.stream()
                     .filter(t -> t.getToolGroup() == McpToolGroup.JAVADOC).count();
 
-            assertThat(docCount).isEqualTo(10);
+            assertThat(docCount).isEqualTo(12);  // Includes 2 wiki tools
             assertThat(migrationCount).isEqualTo(7);
             assertThat(languageCount).isEqualTo(7);
             assertThat(flavorsCount).isEqualTo(8);
@@ -128,7 +132,7 @@ class McpToolsInitializerTest {
             initializer.run(new DefaultApplicationArguments());
 
             // Then
-            verify(mcpToolRepository, atLeast(44)).save(toolCaptor.capture());
+            verify(mcpToolRepository, atLeast(46)).save(toolCaptor.capture());
             List<McpTool> savedTools = toolCaptor.getAllValues();
 
             assertThat(savedTools).allMatch(McpTool::getEnabled);
@@ -145,7 +149,7 @@ class McpToolsInitializerTest {
             initializer.run(new DefaultApplicationArguments());
 
             // Then
-            verify(mcpToolRepository, atLeast(44)).save(toolCaptor.capture());
+            verify(mcpToolRepository, atLeast(46)).save(toolCaptor.capture());
             List<McpTool> savedTools = toolCaptor.getAllValues();
 
             assertThat(savedTools).allMatch(t ->
@@ -163,7 +167,7 @@ class McpToolsInitializerTest {
             initializer.run(new DefaultApplicationArguments());
 
             // Then
-            verify(mcpToolRepository, atLeast(44)).save(toolCaptor.capture());
+            verify(mcpToolRepository, atLeast(46)).save(toolCaptor.capture());
             List<McpTool> savedTools = toolCaptor.getAllValues();
 
             List<String> docToolNames = savedTools.stream()
@@ -181,7 +185,9 @@ class McpToolsInitializerTest {
                     "getLatestSpringBootVersion",
                     "filterSpringBootVersionsBySupport",
                     "listProjectsBySpringBootVersion",
-                    "findProjectsByUseCase"
+                    "findProjectsByUseCase",
+                    "getWikiReleaseNotes",
+                    "getWikiMigrationGuide"
             );
         }
 
@@ -196,7 +202,7 @@ class McpToolsInitializerTest {
             initializer.run(new DefaultApplicationArguments());
 
             // Then
-            verify(mcpToolRepository, atLeast(44)).save(toolCaptor.capture());
+            verify(mcpToolRepository, atLeast(46)).save(toolCaptor.capture());
             List<McpTool> savedTools = toolCaptor.getAllValues();
 
             List<String> migrationToolNames = savedTools.stream()
@@ -226,7 +232,7 @@ class McpToolsInitializerTest {
             initializer.run(new DefaultApplicationArguments());
 
             // Then
-            verify(mcpToolRepository, atLeast(44)).save(toolCaptor.capture());
+            verify(mcpToolRepository, atLeast(46)).save(toolCaptor.capture());
             List<McpTool> savedTools = toolCaptor.getAllValues();
 
             List<String> javadocToolNames = savedTools.stream()
@@ -253,7 +259,7 @@ class McpToolsInitializerTest {
             initializer.run(new DefaultApplicationArguments());
 
             // Then
-            verify(mcpToolRepository, atLeast(44)).save(toolCaptor.capture());
+            verify(mcpToolRepository, atLeast(46)).save(toolCaptor.capture());
             List<McpTool> savedTools = toolCaptor.getAllValues();
 
             assertThat(savedTools).allMatch(t ->
@@ -271,7 +277,7 @@ class McpToolsInitializerTest {
             initializer.run(new DefaultApplicationArguments());
 
             // Then
-            verify(mcpToolRepository, atLeast(44)).save(toolCaptor.capture());
+            verify(mcpToolRepository, atLeast(46)).save(toolCaptor.capture());
             List<McpTool> savedTools = toolCaptor.getAllValues();
 
             assertThat(savedTools).allMatch(t ->
@@ -289,7 +295,7 @@ class McpToolsInitializerTest {
             initializer.run(new DefaultApplicationArguments());
 
             // Then
-            verify(mcpToolRepository, atLeast(44)).save(toolCaptor.capture());
+            verify(mcpToolRepository, atLeast(46)).save(toolCaptor.capture());
             List<McpTool> savedTools = toolCaptor.getAllValues();
 
             List<String> toolNames = savedTools.stream()

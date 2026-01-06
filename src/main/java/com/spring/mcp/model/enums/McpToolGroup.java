@@ -9,7 +9,7 @@ package com.spring.mcp.model.enums;
  * @since 2026-01-03
  */
 public enum McpToolGroup {
-    DOCUMENTATION("Documentation", "bi-book", "blue", 10),
+    DOCUMENTATION("Documentation", "bi-book", "blue", 12),
     MIGRATION("Migration", "bi-arrow-repeat", "orange", 7),
     LANGUAGE("Language Evolution", "bi-braces", "yellow", 7),
     FLAVORS("Flavors", "bi-palette", "purple", 8),

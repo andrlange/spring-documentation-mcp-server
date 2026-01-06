@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title>Wiki - Spring MCP Server</title>
+    <style>
+        .wiki-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background-color: var(--bs-dark);
+            border: 1px solid var(--bs-gray-700);
+        }
+        .wiki-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border-color: #10b981;
+        }
+        .version-badge {
+            background-color: #10b981;
+            color: #0f172a;
+            font-weight: 600;
+        }
+        .migration-arrow {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .section-header {
+            color: #10b981;
+            border-bottom: 2px solid #10b981;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .empty-state {
+            color: var(--bs-gray-500);
+            text-align: center;
+            padding: 3rem;
+        }
+        .search-highlight {
+            background-color: rgba(16, 185, 129, 0.3);
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="bi bi-journal-text" style="color: #10b981;"></i>
+            Spring Boot Wiki
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/sync}" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-arrow-repeat"></i> Sync Wiki
+            </a>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <form th:action="@{/wiki}" method="get" class="d-flex">
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="q" th:value="${query}" class="form-control bg-dark text-light border-secondary"
+                           placeholder="Search release notes and migration guides...">
+                    <button type="submit" class="btn btn-success">Search</button>
+                    <a th:if="${query != null and !query.isEmpty()}" th:href="@{/wiki}" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4" th:if="${stats != null}">
+        <div class="col-md-3">
+            <div class="card bg-dark border-secondary text-center">
+                <div class="card-body py-3">
+                    <h3 class="mb-0" style="color: #10b981;" th:text="${stats.releaseNotesCount()}">0</h3>
+                    <small class="text-muted">Release Notes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark border-secondary text-center">
+                <div class="card-body py-3">
+                    <h3 class="mb-0" style="color: #10b981;" th:text="${stats.migrationGuidesCount()}">0</h3>
+                    <small class="text-muted">Migration Guides</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark border-secondary text-center">
+                <div class="card-body py-3">
+                    <h3 class="mb-0 text-info" th:text="${stats.releaseNotesWithEmbedding()}">0</h3>
+                    <small class="text-muted">With Embeddings</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark border-secondary text-center">
+                <div class="card-body py-3">
+                    <h3 class="mb-0 text-warning" th:text="${latestGaVersion ?: 'N/A'}">N/A</h3>
+                    <small class="text-muted">Latest GA Version</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Release Notes Section -->
+    <div class="mb-5">
+        <h4 class="section-header">
+            <i class="bi bi-file-earmark-text me-2"></i>Release Notes
+        </h4>
+
+        <div th:if="${releaseNotes == null or releaseNotes.isEmpty()}" class="empty-state">
+            <i class="bi bi-journal-x" style="font-size: 3rem;"></i>
+            <p class="mt-3">No release notes available. Run wiki sync to fetch content.</p>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3" th:if="${releaseNotes != null and !releaseNotes.isEmpty()}">
+            <div class="col" th:each="notes : ${releaseNotes}">
+                <div class="card wiki-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">
+                                <span class="badge version-badge" th:text="${notes.versionString}">4.0</span>
+                            </h5>
+                            <small class="text-muted" th:if="${notes.wikiLastModified != null}"
+                                   th:text="${#temporals.format(notes.wikiLastModified, 'MMM d, yyyy')}">Jan 1, 2026</small>
+                        </div>
+                        <p class="card-text text-muted small" th:text="${notes.title}">Spring Boot 4.0 Release Notes</p>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0">
+                        <a th:href="@{/wiki/release-notes/{version}(version=${notes.versionString})}"
+                           class="btn btn-outline-success btn-sm w-100">
+                            <i class="bi bi-eye me-1"></i> View Release Notes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Migration Guides Section -->
+    <div class="mb-4">
+        <h4 class="section-header">
+            <i class="bi bi-arrow-right-circle me-2"></i>Migration Guides
+        </h4>
+
+        <div th:if="${migrationGuides == null or migrationGuides.isEmpty()}" class="empty-state">
+            <i class="bi bi-signpost-split" style="font-size: 3rem;"></i>
+            <p class="mt-3">No migration guides available. Run wiki sync to fetch content.</p>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3" th:if="${migrationGuides != null and !migrationGuides.isEmpty()}">
+            <div class="col" th:each="guide : ${migrationGuides}">
+                <div class="card wiki-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">
+                                <span class="badge bg-secondary" th:text="${guide.sourceVersionString}">3.5</span>
+                                <span class="migration-arrow mx-1"><i class="bi bi-arrow-right"></i></span>
+                                <span class="badge version-badge" th:text="${guide.targetVersionString}">4.0</span>
+                            </h5>
+                        </div>
+                        <p class="card-text text-muted small" th:text="${guide.title}">Migration Guide</p>
+                        <small class="text-muted" th:if="${guide.wikiLastModified != null}"
+                               th:text="'Updated: ' + ${#temporals.format(guide.wikiLastModified, 'MMM d, yyyy')}">Updated: Jan 1, 2026</small>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0">
+                        <a th:href="@{/wiki/migration-guide/{from}/{to}(from=${guide.sourceVersionString}, to=${guide.targetVersionString})}"
+                           class="btn btn-outline-success btn-sm w-100">
+                            <i class="bi bi-eye me-1"></i> View Migration Guide
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -82,10 +82,18 @@ public class McpToolsController {
 
         try {
             McpToolDto tool = mcpToolService.toggleTool(toolName, enabled);
+            McpToolStatisticsDto stats = mcpToolService.getStatistics();
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "toolName", tool.getToolName(),
-                    "enabled", tool.isEnabled()
+                    "enabled", tool.isEnabled(),
+                    "stats", Map.of(
+                            "totalTools", stats.getTotalTools(),
+                            "enabledTools", stats.getEnabledTools(),
+                            "disabledTools", stats.getDisabledTools(),
+                            "modifiedTools", stats.getModifiedTools(),
+                            "enabledPercentage", stats.getEnabledPercentage()
+                    )
             ));
         } catch (IllegalArgumentException e) {
             log.warn("Error toggling tool {}: {}", toolName, e.getMessage());

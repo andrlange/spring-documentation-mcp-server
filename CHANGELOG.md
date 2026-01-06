@@ -5,6 +5,33 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-01-06
+
+### Added
+- **Spring Boot Wiki Integration**: Access release notes and migration guides from the official Spring Boot GitHub wiki
+    - **New UI Page**: Browse wiki content at `/wiki` with search functionality
+    - **Release Notes**: Version-specific release notes from the Spring Boot wiki
+    - **Migration Guides**: Step-by-step migration guides between Spring Boot versions
+    - **Full-Text Search**: PostgreSQL TSVECTOR indexing for fast wiki content search
+    - **AsciiDoc Support**: Automatic AsciiDoc to Markdown conversion using AsciidoctorJ
+    - **Markdown Rendering**: Flexmark-based HTML rendering with syntax highlighting
+    - **Phase 10 Sync**: Wiki content synchronized in comprehensive sync process
+    - **Sidebar Navigation**: New "Wiki" menu entry with journal icon
+- **2 New MCP Tools** (Documentation Group):
+    - `getWikiReleaseNotes`: Get Spring Boot release notes for a specific version
+    - `getWikiMigrationGuide`: Get migration guide between Spring Boot versions
+- **Database Migration**: `V26__wiki_integration.sql`
+    - New tables: `wiki_release_notes`, `wiki_migration_guides`
+    - Full-text search indexes with TSVECTOR
+    - Embedding columns for future semantic search support
+
+### Changed
+- Total MCP tools increased from 44 to **46**
+- Documentation tools increased from 10 to **12**
+- Comprehensive sync now has 11 phases (0-10)
+
+---
+
 ## [1.6.3] - 2026-01-05
 
 ### Fixed
@@ -579,6 +606,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.7.0 | 2026-01-06 | Spring Boot Wiki Integration (Release Notes & Migration Guides) |
 | 1.6.3 | 2026-01-05 | MCP Tool Response Size Optimization, isCurrent flag fix |
 | 1.6.2 | 2026-01-03 | MCP Tool Masquerading - Dynamic tool visibility & descriptions |
 | 1.6.1 | 2026-01-02 | Virtual Threads support, Spring-managed async operations |
@@ -611,4 +639,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **v1.3.3**: +3 flavor groups tools = 34 total
 - **v1.4.0**: +5 initializr tools = 39 total
 - **v1.4.2**: +4 javadoc tools = 43 total
-- **v1.5.2**: +1 language feature example tool = **44 total**
+- **v1.5.2**: +1 language feature example tool = 44 total
+- **v1.7.0**: +2 wiki tools = **46 total**
