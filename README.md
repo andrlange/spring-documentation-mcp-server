@@ -12,7 +12,7 @@
 >
 > **Purpose**: My main goal is to create demo applications using my own specifications to explore AI-assisted development workflows.
 
-### (Current Version 1.6.3 - MCP Tool Response Optimization)
+### (Current Version 1.7.0 - Spring Boot Wiki Integration)
 
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
@@ -20,18 +20,21 @@ A comprehensive Spring Boot application that serves as a Model Context Protocol 
 
 This MCP server enables AI assistants (like Claude) to search, browse, and retrieve Spring Framework documentation, code examples, and API references. It includes:
 
-- **MCP Server**: SSE-based protocol implementation using Spring AI
+- **MCP Server**: SSE-based protocol implementation using Spring AI with 46 tools across 7 categories
 - **Documentation Sync**: Automated synchronization from spring.io and GitHub spring-projects repositories
 - **Full-Text Search**: PostgreSQL-powered search across all Spring documentation
 - **Semantic Embeddings**: Vector embeddings with pgvector for intelligent semantic search using Ollama or OpenAI
 - **Web Management UI**: Thymeleaf-based interface for managing projects, versions, and documentation
-- **Code Examples**: Searchable repository of Spring code snippets
+- **Code Examples**: Searchable repository of Spring code snippets with syntax highlighting
 - **Migration Recipes**: OpenRewrite-based migration knowledge for Spring Boot version upgrades
-- **Language Evolution**: Java (8+) and Kotlin (1.6+) feature tracking with deprecations and code patterns
+- **Language Evolution**: Java (8+) and Kotlin (1.6+) feature tracking with JEP/KEP references and code patterns
 - **Flavors**: Company-specific guidelines, architecture patterns, compliance rules, and AI agent configurations
 - **Flavor Groups**: Team-based access control with API key membership for secure guideline sharing
 - **Boot Initializr**: Spring Initializr integration for dependency search, compatibility checks, and formatted snippets
 - **Javadoc API Docs**: Crawled and indexed Javadoc documentation for Spring projects with full-text search
+- **MCP Monitoring**: Real-time dashboard with tool usage metrics, connection tracking, and API key analytics
+- **MCP Tool Masquerading**: Dynamic control over MCP tool visibility and custom descriptions
+- **Spring Boot Wiki**: Release notes and migration guides from the official Spring Boot GitHub Wiki
 
 ## Table of Contents
 
@@ -52,6 +55,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
   - [MCP Monitoring Dashboard](#mcp-monitoring-dashboard)
   - [Semantic Embeddings](#semantic-embeddings)
   - [MCP Tool Masquerading](#mcp-tool-masquerading)
+  - [Spring Boot Wiki](#spring-boot-wiki)
 - [Using with Claude Code](#using-with-claude-code)
   - [Configuration](#mcp-configuration)
   - [Documentation Queries](#documentation-queries)
@@ -76,30 +80,16 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
-| **1.6.3** | 2026-01-05 | MCP Tool Response Size Optimization, isCurrent flag fix      |
-| **1.6.2** | 2026-01-03 | MCP Tool Masquerading - Dynamic tool visibility & descriptions |
-| **1.6.1** | 2026-01-02 | Virtual Threads, Spring-managed async operations             |
-| **1.6.0** | 2026-01-01 | Semantic embeddings with pgvector (Ollama/OpenAI providers)  |
-| **1.5.4** | 2025-12-25 | Collapsible sidebar menu, SNAPSHOT → GA version sync fix     |
-| **1.5.3** | 2025-12-19 | User display name, Spring Boot 3.5.9                         |
-| **1.5.2** | 2025-12-17 | JEP/KEP specs, detail pages, getLanguageFeatureExample tool  |
-| **1.5.1** | 2025-12-17 | Javadoc MCP tools transaction rollback fix                   |
-| **1.5.0** | 2025-12-16 | MCP Monitoring Dashboard with real-time metrics and analytics |
-| **1.4.3** | 2025-12-12 | Javadoc sync version filter, login version, flavor groups fix |
-| **1.4.2** | 2025-12-08 | Javadoc API documentation crawler and search (4 MCP tools)   |
-| **1.4.1** | 2025-12-07 | GitHub docs keyword fix, configurable sync features          |
-| **1.4.0** | 2025-12-06 | Boot Initializr integration, Caffeine caching (5 MCP tools)  |
-| **1.3.4** | 2025-12-05 | Spring AI 1.1.1, CVE-2025-48924 security fix                 |
-| **1.3.3** | 2025-12-04 | Flavor Groups with team-based access control (3 MCP tools)   |
-| **1.3.2** | 2025-12-02 | YAML metadata headers for Flavors import/export, new example |
-| **1.3.1** | 2025-12-01 | GitHub documentation scanner, enhanced code examples         |
-| **1.3.0** | 2025-11-30 | Flavors feature (8 MCP tools)                                |
-| **1.2.0** | 2025-11-29 | Language Evolution tracking (6 MCP tools)                    |
-| **1.1.0** | 2025-11-28 | OpenRewrite migration recipes (7 MCP tools)                  |
-| **1.0.2** | 2025-11-27 | Spring Boot 3.5.8, example app                               |
-| **1.0.1** | 2025-11-26 | Initial release (10 MCP tools)                               |
+| **1.7.0** | 2026-01-06 | Spring Boot Wiki Integration (Release Notes & Migration Guides, +2 MCP tools) |
+| **1.6.x** | 2026-01    | Semantic embeddings with pgvector, Virtual Threads, MCP Tool Masquerading, response size optimization |
+| **1.5.x** | 2025-12    | MCP Monitoring Dashboard, JEP/KEP feature examples, collapsible sidebar, Spring Boot 3.5.9 |
+| **1.4.x** | 2025-12    | Javadoc API crawler (+4 MCP tools), Boot Initializr integration (+5 MCP tools), Caffeine caching |
+| **1.3.x** | 2025-11/12 | Flavors (+8 MCP tools), Flavor Groups with team access (+3 MCP tools), YAML import/export, CVE fix |
+| **1.2.x** | 2025-11    | Language Evolution tracking - Java/Kotlin features (+6 MCP tools) |
+| **1.1.x** | 2025-11    | OpenRewrite migration recipes (+7 MCP tools) |
+| **1.0.x** | 2025-11    | Initial release with core documentation tools (+10 MCP tools) |
 
-**MCP Tools**: 10 (docs) + 7 (migration) + 7 (language) + 8 (flavors) + 3 (groups) + 5 (initializr) + 4 (javadocs) = **44 total**
+**MCP Tools**: 12 (docs) + 7 (migration) + 7 (language) + 8 (flavors) + 3 (groups) + 5 (initializr) + 4 (javadocs) = **46 total**
 
 ## Quick Start
 
@@ -125,7 +115,7 @@ docker-compose up -d postgres
 ### 2. Build and Run
 ```bash
 ./gradlew clean build
-java -jar build/libs/spring-boot-documentation-mcp-server-1.6.3.jar
+java -jar build/libs/spring-boot-documentation-mcp-server-1.7.0.jar
 ```
 
 Or using Gradle:
@@ -854,6 +844,45 @@ Management UI for tracking MCP tool visibility preferences and customizing tool 
 
 **Access**:
 Navigate to `/mcp-tools` (requires ADMIN role) to manage MCP tool visibility preferences and descriptions.
+
+---
+
+### Spring Boot Wiki
+
+Access Spring Boot release notes and migration guides directly from the official Spring Boot GitHub Wiki. This feature provides comprehensive version change documentation for planning upgrades.
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="assets/screen-31.png" alt="Spring Boot Wiki" />
+      <p align="center"><b>Spring Boot Wiki</b> - Release notes and migration guides from GitHub</p>
+    </td>
+  </tr>
+</table>
+
+**Features**:
+- **Release Notes**: Detailed change documentation for each Spring Boot version (4.0, 3.5, 3.4, 3.3, 3.2, etc.)
+- **Migration Guides**: Step-by-step upgrade instructions between versions (2.7→3.0, 3.3→3.4, 3.5→4.0, etc.)
+- **AsciiDoc Conversion**: Automatic conversion from GitHub Wiki AsciiDoc to clean Markdown
+- **Full-Text Search**: PostgreSQL TSVECTOR search across wiki content
+- **Automatic Sync**: Scheduled synchronization from spring-projects/spring-boot GitHub Wiki
+- **Content Caching**: Reduces GitHub API calls with intelligent caching
+
+**MCP Tools**:
+- `getWikiReleaseNotes` - Get release notes for a specific Spring Boot version
+- `getWikiMigrationGuide` - Get migration guide for upgrading between versions
+
+**Example Queries**:
+```
+> use spring to show me the release notes for Spring Boot 4.0
+
+> use spring to get the migration guide from Spring Boot 2.7 to 3.0
+
+> use spring to show what's new in Spring Boot 3.5
+```
+
+**Sync Configuration**:
+The Wiki sync runs as Phase 10 during documentation synchronization. Configure via Settings or manually trigger from the Sync page.
 
 ---
 

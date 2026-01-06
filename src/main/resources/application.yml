@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring Boot Documentation MCP Server
-    version: 1.6.3
+    version: 1.7.0
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.9
@@ -78,7 +78,7 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.6.3"
+        version: "1.7.0"
         # Disable annotation scanner - we provide tools explicitly via McpToolsConfig
         # This avoids timing issues with BeanPostProcessor and duplicate registration
         annotation-scanner:
@@ -86,8 +86,8 @@ spring:
         instructions: |
           Spring Boot Documentation MCP Server provides comprehensive access to Spring ecosystem documentation.
 
-          Use tools/list to discover all 44 available tools organized into:
-          - Documentation (up to 10 tools)
+          Use tools/list to discover all 46 available tools organized into:
+          - Documentation (up to 12 tools)
           - Migration (up to 7 tools)
           - Language Evolution (up to 7 tools)
           - Flavors (up to 8 tools)

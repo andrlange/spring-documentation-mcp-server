@@ -22,6 +22,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" th:href="@{/wiki}" th:classappend="${activePage == 'wiki'} ? 'active' : ''" data-sidebar-tooltip="Wiki">
+                    <i class="bi bi-journal-text" style="color: #10b981;"></i><span class="nav-text">Wiki</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" th:href="@{/projects}" th:classappend="${activePage == 'projects'} ? 'active' : ''" data-sidebar-tooltip="Projects">
                     <i class="bi bi-folder"></i><span class="nav-text">Projects</span>
                 </a>
@@ -66,7 +71,7 @@
                 </a>
             </li>
 
-            <hr class="my-3">
+            <hr class="my-2">
 
             <!-- Admin Only -->
             <li class="nav-item" sec:authorize="hasRole('ADMIN')">

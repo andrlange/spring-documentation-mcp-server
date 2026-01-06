@@ -17,6 +17,9 @@ import com.spring.mcp.service.sync.RecipeSyncService;
 import com.spring.mcp.service.sync.SpringBootVersionSyncService;
 import com.spring.mcp.service.sync.SpringGenerationsSyncService;
 import com.spring.mcp.service.sync.SyncProgressTracker;
+import com.spring.mcp.service.wiki.WikiService;
+import com.spring.mcp.service.wiki.WikiSyncService;
+import com.spring.mcp.service.documentation.DocumentationService;
 import lombok.RequiredArgsConstructor;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -83,6 +86,13 @@ public class SyncController {
     private final EmbeddingProperties embeddingProperties;
     private final Optional<EmbeddingSyncService> embeddingSyncService;
     private final Optional<EmbeddingJobProcessor> embeddingJobProcessor;
+
+    // Wiki sync service
+    private final WikiSyncService wikiSyncService;
+
+    // Wiki and Documentation services (for markdown fix)
+    private final WikiService wikiService;
+    private final DocumentationService documentationService;
 
     /**
      * Show sync page with options.
@@ -651,6 +661,77 @@ public class SyncController {
 
         } catch (Exception e) {
             String errorMsg = "Error during embeddings sync: " + e.getMessage();
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+            log.error(errorMsg, e);
+        }
+
+        return "redirect:/sync";
+    }
+
+    /**
+     * Trigger manual sync of Spring Boot Wiki content (Release Notes and Migration Guides).
+     *
+     * @param redirectAttributes for flash messages
+     * @return redirect to sync page
+     */
+    @PostMapping("/wiki")
+    public String syncWiki(RedirectAttributes redirectAttributes) {
+        log.info("Manual Wiki sync triggered");
+
+        try {
+            WikiSyncService.SyncResult result = wikiSyncService.syncWikiContent();
+
+            if (result.isSuccess()) {
+                String message = String.format(
+                    "Wiki sync completed successfully! Created %d release notes, %d migration guides (errors: %d)",
+                    result.getReleaseNotesCreated(),
+                    result.getMigrationGuidesCreated(),
+                    result.getErrorsEncountered()
+                );
+                redirectAttributes.addFlashAttribute("success", message);
+                log.info(message);
+            } else {
+                String errorMsg = "Wiki sync completed with errors: " + result.getErrorMessage();
+                redirectAttributes.addFlashAttribute("error", errorMsg);
+                log.error(errorMsg);
+            }
+
+        } catch (Exception e) {
+            String errorMsg = "Error during Wiki sync: " + e.getMessage();
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+            log.error(errorMsg, e);
+        }
+
+        return "redirect:/sync";
+    }
+
+    /**
+     * Fix markdown conversion artifacts in existing wiki and documentation content.
+     * Fixes table formatting issues and anchor link artifacts like {#_test_code}.
+     *
+     * @param redirectAttributes for flash messages
+     * @return redirect to sync page
+     */
+    @PostMapping("/fix-markdown-artifacts")
+    public String fixMarkdownArtifacts(RedirectAttributes redirectAttributes) {
+        log.info("Manual markdown artifacts fix triggered");
+
+        try {
+            int wikiFixed = wikiService.fixExistingMarkdownArtifacts();
+            int docsFixed = documentationService.fixExistingMarkdownArtifacts();
+            int totalFixed = wikiFixed + docsFixed;
+
+            String message = String.format(
+                "Markdown artifacts fix completed! Fixed %d wiki entries and %d documentation entries (total: %d)",
+                wikiFixed,
+                docsFixed,
+                totalFixed
+            );
+            redirectAttributes.addFlashAttribute("success", message);
+            log.info(message);
+
+        } catch (Exception e) {
+            String errorMsg = "Error during markdown artifacts fix: " + e.getMessage();
             redirectAttributes.addFlashAttribute("error", errorMsg);
             log.error(errorMsg, e);
         }

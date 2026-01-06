@@ -6,7 +6,7 @@ This document tracks the version configuration across all project files to ensur
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Application** | 1.6.3 | Spring MCP Server |
+| **Application** | 1.7.0 | Spring MCP Server |
 | **Java (JDK)** | 25 | LTS version |
 | **Spring Boot** | 3.5.9 | Latest stable |
 | **Spring AI** | 1.1.2 | MCP Server support |
@@ -20,7 +20,7 @@ Needs to track the changelog
 
 ### build.gradle
 ```groovy
-version = '1.6.3'
+version = '1.7.0'
 
 java {
     toolchain {
@@ -45,7 +45,7 @@ services:
   postgres:
     image: postgres:18-alpine
   spring-boot-documentation-mcp-server:
-    image: spring-boot-documentation-mcp-server:1.6.3
+    image: spring-boot-documentation-mcp-server:1.7.0
 ```
 
 ### application.yml
@@ -54,7 +54,7 @@ services:
 info:
   app:
     name: Spring MCP Server
-    version: 1.6.3
+    version: 1.7.0
   spring-boot:
     version: 3.5.9
 
@@ -65,12 +65,12 @@ spring:
   ai:
     mcp:
       server:
-        version: "1.6.3"
+        version: "1.7.0"
 ```
 
 ### build-container.sh
 ```bash
-APP_VERSION="1.6.3"
+APP_VERSION="1.7.0"
 JAVA_VERSION="25"
 ```
 
@@ -103,7 +103,7 @@ When updating versions, ensure all files listed above are updated consistently:
 
 ## MCP Tools Count
 
-Current: **44 tools** (10 documentation + 7 migration + 7 language evolution + 8 flavors + 3 flavor groups + 5 initializr + 4 javadoc)
+Current: **46 tools** (12 documentation + 7 migration + 7 language evolution + 8 flavors + 3 flavor groups + 5 initializr + 4 javadoc)
 
 Update these locations when adding/removing tools:
 - `application.yml` - `spring.ai.mcp.server.instructions`
@@ -112,6 +112,16 @@ Update these locations when adding/removing tools:
 - `.claude/memory/project-memory.md` - MCP Tools count
 
 ## Changelog
+
+### v1.7.0 (2026-01-06)
+- Spring Boot Wiki Integration (Release Notes & Migration Guides from GitHub wiki)
+- New UI page `/wiki` for browsing release notes and migration guides
+- 2 new MCP tools: `getWikiReleaseNotes`, `getWikiMigrationGuide`
+- Phase 10 in comprehensive sync for wiki content synchronization
+- AsciiDoc to Markdown conversion for wiki content
+- Flexmark for Markdown to HTML rendering
+- Full-text search across wiki content with PostgreSQL TSVECTOR
+- Documentation Tools: 10 → 12, Total MCP Tools: 44 → 46
 
 ### v1.6.3 (2026-01-05)
 - MCP Tool Response Size Optimization

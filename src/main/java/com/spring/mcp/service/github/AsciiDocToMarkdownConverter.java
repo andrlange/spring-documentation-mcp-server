@@ -40,6 +40,16 @@ public class AsciiDocToMarkdownConverter {
     private static final Pattern INCLUDE_PATTERN = Pattern.compile("include::([^\\[]+)\\[([^\\]]*)\\]");
     private static final Pattern ANCHOR_PATTERN = Pattern.compile("\\[\\[([^\\]]+)\\]\\]");
 
+    /**
+     * Patterns for post-processing markdown artifacts.
+     */
+    // Matches anchor artifacts like {#_test_code} or {#anchor-name}
+    private static final Pattern ANCHOR_ARTIFACT_PATTERN = Pattern.compile("\\s*\\{#[^}]+\\}\\s*");
+    // Matches broken table rows (pipe-separated with only dashes between)
+    private static final Pattern BROKEN_TABLE_SEPARATOR = Pattern.compile("\\|[-\\s|]+\\|");
+    // Matches table rows with content
+    private static final Pattern TABLE_ROW_PATTERN = Pattern.compile("^\\s*\\|(.+)\\|\\s*$", Pattern.MULTILINE);
+
     public AsciiDocToMarkdownConverter(HtmlToMarkdownConverter htmlToMarkdownConverter) {
         this.htmlToMarkdownConverter = htmlToMarkdownConverter;
     }
@@ -192,6 +202,7 @@ public class AsciiDocToMarkdownConverter {
 
     /**
      * Post-process the converted Markdown.
+     * Fixes common issues from AsciiDoc to HTML to Markdown conversion.
      */
     private String postProcess(String markdown) {
         // Clean up excessive whitespace
@@ -205,10 +216,129 @@ public class AsciiDocToMarkdownConverter {
         markdown = markdown.replaceAll("```([^\n])", "```\n$1");
         markdown = markdown.replaceAll("([^\n])```", "$1\n```");
 
+        // Fix anchor artifacts like {#_test_code} - remove them completely
+        markdown = ANCHOR_ARTIFACT_PATTERN.matcher(markdown).replaceAll(" ");
+
+        // Fix table formatting issues
+        markdown = fixTableFormatting(markdown);
+
+        // Fix headings that appear on the same line as previous content
+        // Ensure ### headings are on their own line with proper spacing
+        markdown = markdown.replaceAll("([^\n])\\s*(#{1,6}\\s+)", "$1\n\n$2");
+
+        // Clean up any double spaces created by replacements
+        markdown = markdown.replaceAll("  +", " ");
+
+        // Fix heading with anchor artifacts (e.g., "## Test Code {#_test_code}" -> "## Test Code")
+        markdown = markdown.replaceAll("(#{1,6}\\s+[^\\n]+?)\\s*\\{#[^}]+\\}", "$1");
+
         // Trim whitespace
         markdown = markdown.trim();
 
         return markdown;
+    }
+
+    /**
+     * Fix table formatting issues from AsciiDoc conversion.
+     * Converts broken table formats to proper Markdown tables.
+     */
+    private String fixTableFormatting(String markdown) {
+        // Split into lines for processing
+        String[] lines = markdown.split("\n");
+        StringBuilder result = new StringBuilder();
+        boolean inTable = false;
+        boolean headerRowProcessed = false;
+        int columnCount = 0;
+
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].trim();
+
+            // Check if this looks like a table row (starts and ends with |)
+            if (line.startsWith("|") && line.endsWith("|")) {
+                // Check if it's a separator row (only dashes and pipes)
+                if (BROKEN_TABLE_SEPARATOR.matcher(line).matches() || line.matches("^\\|[-:\\s|]+\\|$")) {
+                    // This is a separator row
+                    if (inTable && !headerRowProcessed) {
+                        // Generate proper separator based on column count
+                        StringBuilder separator = new StringBuilder("|");
+                        for (int c = 0; c < columnCount; c++) {
+                            separator.append(" --- |");
+                        }
+                        result.append(separator).append("\n");
+                        headerRowProcessed = true;
+                    }
+                    // Skip the original broken separator
+                    continue;
+                }
+
+                // Count columns from content row
+                String[] cells = line.split("\\|");
+                int currentColumns = 0;
+                for (String cell : cells) {
+                    if (!cell.trim().isEmpty()) {
+                        currentColumns++;
+                    }
+                }
+
+                if (!inTable) {
+                    // Starting a new table
+                    inTable = true;
+                    headerRowProcessed = false;
+                    columnCount = currentColumns > 0 ? currentColumns : 2;
+                }
+
+                // Clean up the row - ensure proper cell formatting
+                String cleanedRow = cleanTableRow(line, columnCount);
+                result.append(cleanedRow).append("\n");
+
+            } else {
+                // Not a table row
+                if (inTable) {
+                    // Table ended
+                    inTable = false;
+                    headerRowProcessed = false;
+                    result.append("\n");
+                }
+                result.append(line).append("\n");
+            }
+        }
+
+        return result.toString();
+    }
+
+    /**
+     * Clean up a table row to ensure proper Markdown formatting.
+     */
+    private String cleanTableRow(String row, int expectedColumns) {
+        // Remove leading/trailing pipes and split
+        String content = row.trim();
+        if (content.startsWith("|")) content = content.substring(1);
+        if (content.endsWith("|")) content = content.substring(0, content.length() - 1);
+
+        String[] cells = content.split("\\|");
+
+        // Rebuild with proper formatting
+        StringBuilder cleanRow = new StringBuilder("|");
+        for (int i = 0; i < expectedColumns; i++) {
+            String cell = i < cells.length ? cells[i].trim() : "";
+            cleanRow.append(" ").append(cell).append(" |");
+        }
+
+        return cleanRow.toString();
+    }
+
+    /**
+     * Fix common markdown conversion artifacts in existing content.
+     * This can be used to re-process already converted markdown.
+     *
+     * @param markdown the markdown content to fix
+     * @return the fixed markdown content
+     */
+    public String fixMarkdownArtifacts(String markdown) {
+        if (markdown == null || markdown.isBlank()) {
+            return markdown;
+        }
+        return postProcess(markdown);
     }
 
     /**

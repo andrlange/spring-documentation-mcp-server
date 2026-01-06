@@ -7,6 +7,7 @@ import com.spring.mcp.service.tools.JavadocTools;
 import com.spring.mcp.service.tools.LanguageEvolutionTools;
 import com.spring.mcp.service.tools.MigrationTools;
 import com.spring.mcp.service.tools.SpringDocumentationTools;
+import com.spring.mcp.service.tools.WikiTools;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ public class McpToolsConfig {
      * @param initializrTools Initializr tools
      * @param migrationTools Migration tools
      * @param languageEvolutionTools Language evolution tools
+     * @param wikiTools Wiki tools (release notes, migration guides)
      * @return List of SyncToolSpecification for all tools
      */
     @Bean("customToolSpecs")
@@ -53,7 +55,8 @@ public class McpToolsConfig {
             JavadocTools javadocTools,
             InitializrTools initializrTools,
             MigrationTools migrationTools,
-            LanguageEvolutionTools languageEvolutionTools
+            LanguageEvolutionTools languageEvolutionTools,
+            WikiTools wikiTools
     ) {
         List<Object> tools = List.of(
                 springDocumentationTools,
@@ -62,7 +65,8 @@ public class McpToolsConfig {
                 javadocTools,
                 initializrTools,
                 migrationTools,
-                languageEvolutionTools
+                languageEvolutionTools,
+                wikiTools
         );
 
         log.info("Creating custom tool specifications for {} tool beans", tools.size());

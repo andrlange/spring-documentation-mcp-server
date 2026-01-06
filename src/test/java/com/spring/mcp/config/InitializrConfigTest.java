@@ -38,7 +38,7 @@ class InitializrConfigTest {
             InitializrProperties properties = new InitializrProperties();
             var defaults = properties.getDefaults();
 
-            assertThat(defaults.getBootVersion()).isEqualTo("3.5.8");
+            assertThat(defaults.getBootVersion()).isEqualTo("3.5.9");
             assertThat(defaults.getJavaVersion()).isEqualTo("25");
             assertThat(defaults.getLanguage()).isEqualTo("java");
             assertThat(defaults.getPackaging()).isEqualTo("jar");
