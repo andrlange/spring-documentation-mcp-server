@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: caffeine-caching-demo
+
+  cache:
+    type: caffeine
+
+  thymeleaf:
+    cache: false
+
+server:
+  port: 8090
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,caches,metrics
+  endpoint:
+    health:
+      show-details: always

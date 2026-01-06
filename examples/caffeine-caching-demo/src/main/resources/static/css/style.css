@@ -1,0 +1,250 @@
+/*
+ * Caffeine Caching Demo - Dark Theme Styles
+ * Inspired by Spring.io design system
+ */
+
+:root {
+    /* Spring Brand Colors */
+    --spring-green: #6db33f;
+    --spring-green-dark: #5fa134;
+    --spring-green-light: #8cc656;
+
+    /* Dark Theme Colors */
+    --spring-bg-dark: #1b1f23;
+    --spring-card-bg: #1f2326;
+    --spring-nav-bg: #2a2e31;
+    --spring-border-dark: #373a3d;
+    --spring-hover-bg: #2d3135;
+
+    /* Text Colors */
+    --text-primary: #ffffff;
+    --text-secondary: #c0c0c0;
+    --text-muted: #9a9a9a;
+
+    /* Status Colors */
+    --danger-red: #dc3545;
+    --warning-orange: #fd7e14;
+    --info-blue: #17a2b8;
+    --success-green: #28a745;
+}
+
+/* Base Theme */
+body.dark-theme {
+    background-color: var(--spring-bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+}
+
+/* Utility Classes */
+.text-spring-green {
+    color: var(--spring-green) !important;
+}
+
+.bg-spring-green {
+    background-color: var(--spring-green) !important;
+}
+
+/* Override Bootstrap text-muted for dark theme */
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Buttons */
+.btn-spring-green {
+    background-color: var(--spring-green);
+    border-color: var(--spring-green);
+    color: #fff;
+    font-weight: 500;
+}
+
+.btn-spring-green:hover {
+    background-color: var(--spring-green-dark);
+    border-color: var(--spring-green-dark);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(109, 179, 63, 0.3);
+}
+
+.btn-outline-danger {
+    border-width: 2px;
+}
+
+.btn-outline-danger:hover {
+    transform: translateY(-1px);
+}
+
+/* Cards */
+.card {
+    background-color: var(--spring-card-bg);
+    border: 1px solid var(--spring-border-dark);
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.card-header {
+    background-color: var(--spring-nav-bg);
+    border-bottom: 1px solid var(--spring-border-dark);
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 1rem 1.25rem;
+}
+
+.stats-card .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Statistics Boxes */
+.stat-box {
+    text-align: center;
+    padding: 1.25rem 1rem;
+    background-color: var(--spring-nav-bg);
+    border-radius: 0.5rem;
+    border: 1px solid var(--spring-border-dark);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* Form Controls */
+.form-control {
+    background-color: var(--spring-card-bg);
+    border: 2px solid var(--spring-border-dark);
+    color: var(--text-primary);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus {
+    background-color: var(--spring-card-bg);
+    border-color: var(--spring-green);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 0.2rem rgba(109, 179, 63, 0.25);
+}
+
+.form-control::placeholder {
+    color: var(--text-secondary);
+}
+
+.form-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Tables */
+.table-dark {
+    --bs-table-bg: var(--spring-card-bg);
+    --bs-table-border-color: var(--spring-border-dark);
+    --bs-table-hover-bg: var(--spring-hover-bg);
+    --bs-table-striped-bg: rgba(42, 46, 49, 0.3);
+}
+
+.table-dark thead th {
+    background-color: var(--spring-nav-bg);
+    border-bottom: 2px solid var(--spring-border-dark);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    padding: 1rem;
+}
+
+.table-dark tbody td {
+    vertical-align: middle;
+    padding: 0.875rem 1rem;
+}
+
+.table-dark tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+/* Code Elements */
+code {
+    color: var(--spring-green-light);
+    background-color: var(--spring-bg-dark);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+}
+
+/* Badges */
+.badge {
+    font-weight: 500;
+    padding: 0.5em 0.75em;
+}
+
+.badge.bg-secondary {
+    background-color: var(--spring-nav-bg) !important;
+    border: 1px solid var(--spring-border-dark);
+}
+
+/* Alerts */
+.alert {
+    border-radius: 0.5rem;
+    border: none;
+}
+
+.alert-success {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: var(--success-green);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.alert-info {
+    background-color: rgba(23, 162, 184, 0.2);
+    color: var(--info-blue);
+    border: 1px solid rgba(23, 162, 184, 0.3);
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.65rem;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Animations */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.badge.bg-success i.bi-lightning-charge-fill {
+    animation: pulse 1s ease-in-out infinite;
+}

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caffeine Caching Demo - Spring Boot 4.0.1</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body class="dark-theme">
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div>
+                        <h1 class="text-spring-green mb-0">
+                            <i class="bi bi-lightning-charge-fill"></i> Caffeine Caching Demo
+                        </h1>
+                        <p class="text-muted mb-0">
+                            Spring Boot 4.0.1 | Caffeine | JDK 25 | Thymeleaf 3.4
+                        </p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-secondary fs-6">
+                            <i class="bi bi-book"></i> <span th:text="${totalBooks}">1000</span> Books
+                        </span>
+                        <form th:action="@{/cache/clear}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="bi bi-trash3"></i> Clear Cache
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Message -->
+        <div th:if="${message}" class="row mb-3">
+            <div class="col-12">
+                <div class="alert alert-dismissible fade show"
+                     th:classappend="${messageType == 'success'} ? 'alert-success' : 'alert-info'"
+                     role="alert">
+                    <i class="bi" th:classappend="${messageType == 'success'} ? 'bi-check-circle-fill' : 'bi-info-circle-fill'"></i>
+                    <span th:text="${message}">Message</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cache Statistics -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card stats-card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <div>
+                            <i class="bi bi-speedometer2"></i> Cache Statistics
+                            <span class="badge bg-spring-green ms-2">Live</span>
+                        </div>
+                        <small class="text-muted">TTL: 60 seconds</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <!-- Aggregated Stats -->
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <div class="stat-box">
+                                    <div class="stat-value text-spring-green"
+                                         th:text="${aggregatedStats.requestCount()}">0</div>
+                                    <div class="stat-label">Total Requests</div>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <div class="stat-box">
+                                    <div class="stat-value text-success"
+                                         th:text="${aggregatedStats.hitCount()}">0</div>
+                                    <div class="stat-label">Cache Hits</div>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <div class="stat-box">
+                                    <div class="stat-value text-warning"
+                                         th:text="${aggregatedStats.missCount()}">0</div>
+                                    <div class="stat-label">Cache Misses</div>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <div class="stat-box">
+                                    <div class="stat-value"
+                                         th:text="${#numbers.formatPercent(aggregatedStats.hitRate(), 1, 1)}">0%</div>
+                                    <div class="stat-label">Hit Rate</div>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <div class="stat-box">
+                                    <div class="stat-value text-info"
+                                         th:text="${aggregatedStats.estimatedSize()}">0</div>
+                                    <div class="stat-label">Cached Entries</div>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <div class="stat-box">
+                                    <div class="stat-value text-danger"
+                                         th:text="${aggregatedStats.evictionCount()}">0</div>
+                                    <div class="stat-label">Evictions</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Per-Cache Stats -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">
+                                    <i class="bi bi-diagram-3"></i> Per-Cache Breakdown
+                                </h6>
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-hover mb-0 table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Cache Name</th>
+                                                <th class="text-center">Requests</th>
+                                                <th class="text-center">Hits</th>
+                                                <th class="text-center">Misses</th>
+                                                <th class="text-center">Hit Rate</th>
+                                                <th class="text-center">Size</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="entry : ${cacheStats}">
+                                                <td><code th:text="${entry.key}">cacheName</code></td>
+                                                <td class="text-center" th:text="${entry.value.requestCount()}">0</td>
+                                                <td class="text-center text-success" th:text="${entry.value.hitCount()}">0</td>
+                                                <td class="text-center text-warning" th:text="${entry.value.missCount()}">0</td>
+                                                <td class="text-center" th:text="${#numbers.formatPercent(entry.value.hitRate(), 1, 1)}">0%</td>
+                                                <td class="text-center" th:text="${entry.value.estimatedSize()}">0</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <form th:action="@{/}" method="get" class="row g-3 align-items-end">
+                            <div class="col-lg-10 col-md-9">
+                                <label for="searchQuery" class="form-label">
+                                    <i class="bi bi-search text-spring-green"></i> Search Books
+                                </label>
+                                <input type="text"
+                                       class="form-control form-control-lg"
+                                       id="searchQuery"
+                                       name="query"
+                                       th:value="${query}"
+                                       placeholder="Search by title, author, genre, or ISBN..."
+                                       autofocus>
+                            </div>
+                            <div class="col-lg-2 col-md-3">
+                                <button type="submit" class="btn btn-spring-green btn-lg w-100">
+                                    <i class="bi bi-search"></i> Search
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Results Info -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span class="text-muted">
+                        <i class="bi bi-book"></i>
+                        <span th:if="${#strings.isEmpty(query)}">
+                            Showing first <strong>50</strong> of <strong th:text="${totalBooks}">1000</strong> books
+                        </span>
+                        <span th:unless="${#strings.isEmpty(query)}">
+                            Found <strong th:text="${resultCount}">0</strong> books
+                            for "<span class="text-spring-green" th:text="${query}">query</span>"
+                        </span>
+                    </span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge"
+                              th:classappend="${isCached} ? 'bg-success' : 'bg-warning'">
+                            <i class="bi bi-stopwatch"></i>
+                            <span th:text="${searchDuration}">0</span>ms
+                        </span>
+                        <span th:if="${isCached}" class="badge bg-success">
+                            <i class="bi bi-lightning-charge-fill"></i> CACHED
+                        </span>
+                        <span th:unless="${isCached}" class="badge bg-secondary">
+                            <i class="bi bi-database"></i> FROM SOURCE
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Book Results -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 60px">ID</th>
+                                        <th>Title</th>
+                                        <th>Author</th>
+                                        <th>Genre</th>
+                                        <th style="width: 80px">Year</th>
+                                        <th>ISBN</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="book : ${books}">
+                                        <td class="text-muted" th:text="${book.id()}">#</td>
+                                        <td>
+                                            <strong th:text="${book.title()}">Title</strong>
+                                        </td>
+                                        <td th:text="${book.author()}">Author</td>
+                                        <td>
+                                            <span class="badge bg-secondary" th:text="${book.genre()}">Genre</span>
+                                        </td>
+                                        <td th:text="${book.publicationYear()}">Year</td>
+                                        <td><code th:text="${book.isbn()}">ISBN</code></td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(books)}">
+                                        <td colspan="6" class="text-center text-muted py-5">
+                                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                            No books found matching your search
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="row mt-4">
+            <div class="col-12 text-center text-muted">
+                <small>
+                    <i class="bi bi-lightning-charge"></i>
+                    Caffeine Cache TTL: 60 seconds |
+                    <i class="bi bi-database"></i>
+                    1000 Mock Books |
+                    <i class="bi bi-clock"></i>
+                    Simulated DB Latency: 100ms
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

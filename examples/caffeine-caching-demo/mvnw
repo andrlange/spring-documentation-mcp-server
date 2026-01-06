@@ -1,0 +1,20 @@
+#!/bin/sh
+# Maven Wrapper script for Unix-like systems
+# Downloads and runs Maven if not present
+
+set -e
+
+MAVEN_PROJECTBASEDIR="${MAVEN_BASEDIR:-$(cd "$(dirname "$0")" && pwd)}"
+MAVEN_WRAPPER_PROPERTIES_PATH="${MAVEN_PROJECTBASEDIR}/.mvn/wrapper/maven-wrapper.properties"
+
+if [ -f "$MAVEN_WRAPPER_PROPERTIES_PATH" ]; then
+    MAVEN_URL=$(grep -E '^distributionUrl=' "$MAVEN_WRAPPER_PROPERTIES_PATH" | cut -d'=' -f2-)
+fi
+
+MAVEN_HOME="${MAVEN_HOME:-$HOME/.m2/wrapper/dists}"
+
+echo "Maven Wrapper - Spring Boot 4.0.1 Caffeine Demo"
+echo "Using Maven from: ${MAVEN_HOME}"
+
+# For simplicity, delegate to system Maven
+exec mvn "$@"
