@@ -96,7 +96,7 @@
         <div class="col-md-3">
             <div class="card bg-dark border-secondary text-center">
                 <div class="card-body py-3">
-                    <h3 class="mb-0 text-info" th:text="${stats.releaseNotesWithEmbedding()}">0</h3>
+                    <h3 class="mb-0 text-info" th:text="${stats.releaseNotesWithEmbedding() + stats.migrationGuidesWithEmbedding()}">0</h3>
                     <small class="text-muted">With Embeddings</small>
                 </div>
             </div>
