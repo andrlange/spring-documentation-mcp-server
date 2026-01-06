@@ -5,10 +5,13 @@ import com.spring.mcp.model.entity.WikiMigrationGuide;
 import com.spring.mcp.model.entity.WikiReleaseNotes;
 import com.spring.mcp.repository.SpringBootVersionRepository;
 import com.spring.mcp.service.wiki.WikiService;
+import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
+
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -42,8 +45,15 @@ public class WikiController {
         this.wikiService = wikiService;
         this.springBootVersionRepository = springBootVersionRepository;
 
-        // Initialize Flexmark
+        // Initialize Flexmark with extensions for proper table rendering
         MutableDataSet options = new MutableDataSet();
+        options.set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create()));
+        // Configure table options
+        options.set(TablesExtension.COLUMN_SPANS, false);
+        options.set(TablesExtension.APPEND_MISSING_COLUMNS, true);
+        options.set(TablesExtension.DISCARD_EXTRA_COLUMNS, true);
+        options.set(TablesExtension.HEADER_SEPARATOR_COLUMN_MATCH, true);
+
         this.markdownParser = Parser.builder(options).build();
         this.htmlRenderer = HtmlRenderer.builder(options).build();
     }

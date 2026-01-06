@@ -138,13 +138,6 @@ public class WikiServiceImpl implements WikiService {
         for (WikiReleaseNotes notes : releaseNotes) {
             String original = notes.getContentMarkdown();
             if (original != null && !original.isBlank()) {
-                // Check if content has inline tables
-                boolean hasInlineTable = original.contains("| --- |") && original.contains("| |");
-                if (hasInlineTable) {
-                    log.info("Release notes {} has potential inline table (length: {})",
-                            notes.getVersionString(), original.length());
-                }
-
                 String fixedContent = asciiDocConverter.fixMarkdownArtifacts(original);
                 if (!fixedContent.equals(original)) {
                     notes.setContentMarkdown(fixedContent);
@@ -163,13 +156,6 @@ public class WikiServiceImpl implements WikiService {
         for (WikiMigrationGuide guide : guides) {
             String original = guide.getContentMarkdown();
             if (original != null && !original.isBlank()) {
-                // Check if content has inline tables
-                boolean hasInlineTable = original.contains("| --- |") && original.contains("| |");
-                if (hasInlineTable) {
-                    log.info("Migration guide {} has potential inline table (length: {})",
-                            guide.getMigrationPath(), original.length());
-                }
-
                 String fixedContent = asciiDocConverter.fixMarkdownArtifacts(original);
                 if (!fixedContent.equals(original)) {
                     guide.setContentMarkdown(fixedContent);
