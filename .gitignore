@@ -60,6 +60,7 @@ CLAUDE.md
 .auto-claude/
 docs/
 .vols/
+.vols-old/
 .fastRequest/
 /mcp.md
 .mcp.json
@@ -67,6 +68,7 @@ start.sh
 start-dev.sh
 
 vols.zip
+vols20250108.zip
 latest.jar
 
 

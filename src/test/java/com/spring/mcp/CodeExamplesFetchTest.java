@@ -10,6 +10,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -18,14 +19,18 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Test different approaches for fetching code examples from spring.io
+ * Test different approaches for fetching code examples from spring.io.
  *
  * This test explores:
  * 1. HtmlUnit with different JavaScript wait strategies
  * 2. JSoup for static HTML parsing
  * 3. Different selectors and page structures
  * 4. Finding the best approach before implementing in services
+ *
+ * DISABLED: This test makes external HTTP calls to spring.io.
+ * Run manually when needed for integration testing.
  */
+@Disabled("Makes external HTTP calls to spring.io - run manually when needed")
 public class CodeExamplesFetchTest {
 
     private static final String TEST_PROJECT_URL = "https://spring.io/projects/spring-boot";

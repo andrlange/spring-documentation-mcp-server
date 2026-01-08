@@ -6,6 +6,7 @@ import org.htmlunit.html.DomElement;
 import org.htmlunit.html.DomNode;
 import org.htmlunit.html.DomNodeList;
 import org.htmlunit.html.HtmlPage;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
@@ -18,7 +19,11 @@ import java.util.List;
  * Example URL: https://spring.io/projects/spring-cloud#samples
  *
  * The #samples fragment indicates a client-side tab that needs JavaScript rendering.
+ *
+ * DISABLED: This test makes external HTTP calls to spring.io.
+ * Run manually when needed for integration testing.
  */
+@Disabled("Makes external HTTP calls to spring.io - run manually when needed")
 public class ProjectPageSamplesTest {
 
     private static final String SPRING_CLOUD_URL = "https://spring.io/projects/spring-cloud";

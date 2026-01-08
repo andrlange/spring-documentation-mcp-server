@@ -5,6 +5,23 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2026-01-08
+
+### Fixed
+- **SpringBootVersionSyncService OSS Support**: Fixed Phase 0 sync to create versions with active OSS support
+    - Previously, undocumented but still-supported Spring Boot versions (e.g., 3.4.x, 3.3.x) were only created when enterprise mode was enabled
+    - Now creates version entries for any generation with active OSS or enterprise support
+    - Enables Phase 1 (Spring Generations) to properly find and map compatibility data
+    - Resolves "Spring Boot version X.X.x not found in spring_boot_versions table" errors during comprehensive sync
+- **GitHubCodeExampleService Range Error**: Fixed substring range error for empty/minimal javadocs
+    - Error: `Range [X, Y) out of bounds for length Z` when processing Java files with minimal javadocs like `/***/`
+    - Added bounds check before substring extraction to handle edge case where `*/` appears immediately after `/**`
+- **AsciidoctorJ Logging**: Suppressed cross-document reference warnings
+    - Set `asciidoctor` log level to ERROR to hide "possible invalid reference" warnings
+    - These warnings occur when AsciiDoc files reference sections in other documents (expected behavior)
+
+---
+
 ## [1.7.0] - 2026-01-06
 
 ### Added
@@ -606,6 +623,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.7.1 | 2026-01-08 | Sync fixes (OSS version support, javadoc parsing, logging) |
 | 1.7.0 | 2026-01-06 | Spring Boot Wiki Integration (Release Notes & Migration Guides) |
 | 1.6.3 | 2026-01-05 | MCP Tool Response Size Optimization, isCurrent flag fix |
 | 1.6.2 | 2026-01-03 | MCP Tool Masquerading - Dynamic tool visibility & descriptions |

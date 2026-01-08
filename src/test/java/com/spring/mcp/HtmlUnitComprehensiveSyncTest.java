@@ -7,14 +7,19 @@ import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import org.htmlunit.WebClient;
 import org.htmlunit.BrowserVersion;
 import org.htmlunit.html.HtmlPage;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Comprehensive test of HtmlUnit-based documentation fetching for multiple Spring projects
+ * Comprehensive test of HtmlUnit-based documentation fetching for multiple Spring projects.
+ *
+ * DISABLED: This test makes external HTTP calls to spring.io.
+ * Run manually when needed for integration testing.
  */
+@Disabled("Makes external HTTP calls to spring.io - run manually when needed")
 public class HtmlUnitComprehensiveSyncTest {
 
     @Test

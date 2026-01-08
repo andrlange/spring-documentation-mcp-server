@@ -4,6 +4,7 @@ import org.htmlunit.BrowserVersion;
 import org.htmlunit.WebClient;
 import org.htmlunit.html.HtmlPage;
 import org.htmlunit.html.DomElement;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -11,8 +12,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Test HtmlUnit's ability to fetch JavaScript-rendered Spring documentation
+ * Test HtmlUnit's ability to fetch JavaScript-rendered Spring documentation.
+ *
+ * DISABLED: This test makes external HTTP calls to spring.io and docs.spring.io.
+ * Run manually when needed for integration testing.
  */
+@Disabled("Makes external HTTP calls to spring.io - run manually when needed")
 public class HtmlUnitDocumentationTest {
 
     @Test
