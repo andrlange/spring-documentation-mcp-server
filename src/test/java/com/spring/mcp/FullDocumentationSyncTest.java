@@ -2,6 +2,7 @@ package com.spring.mcp;
 
 import com.spring.mcp.repository.DocumentationContentRepository;
 import com.spring.mcp.service.sync.DocumentationSyncService;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,8 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Full integration test to sync all Spring project documentation using HtmlUnit
+ * Full integration test to sync all Spring project documentation using HtmlUnit.
+ *
+ * DISABLED: This test makes external HTTP calls to spring.io and GitHub.
+ * Run manually when needed for integration testing.
  */
+@Disabled("Makes external HTTP calls to spring.io and GitHub - run manually when needed")
 @SpringBootTest
 @Transactional
 public class FullDocumentationSyncTest {

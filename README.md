@@ -12,7 +12,7 @@
 >
 > **Purpose**: My main goal is to create demo applications using my own specifications to explore AI-assisted development workflows.
 
-### (Current Version 1.7.0 - Spring Boot Wiki Integration)
+### (Current Version 1.7.1 - Sync Fixes)
 
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
 
@@ -80,6 +80,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
+| **1.7.1** | 2026-01-08 | Sync fixes (OSS version support, javadoc parsing, logging) |
 | **1.7.0** | 2026-01-06 | Spring Boot Wiki Integration (Release Notes & Migration Guides, +2 MCP tools) |
 | **1.6.x** | 2026-01    | Semantic embeddings with pgvector, Virtual Threads, MCP Tool Masquerading, response size optimization |
 | **1.5.x** | 2025-12    | MCP Monitoring Dashboard, JEP/KEP feature examples, collapsible sidebar, Spring Boot 3.5.9 |
@@ -115,7 +116,7 @@ docker-compose up -d postgres
 ### 2. Build and Run
 ```bash
 ./gradlew clean build
-java -jar build/libs/spring-boot-documentation-mcp-server-1.7.0.jar
+java -jar build/libs/spring-boot-documentation-mcp-server-1.7.1.jar
 ```
 
 Or using Gradle:

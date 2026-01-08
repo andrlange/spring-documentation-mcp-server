@@ -186,27 +186,39 @@ public class SpringBootVersionSyncService {
                             log.trace("Matched generation {} to version {}", gen, versionData.getVersion());
                         }
                         log.debug("Applied support dates from {} to {} versions", gen, versionsForGen.size());
-                    } else if (enterpriseEnabled && enterpriseSupportEnd != null && enterpriseSupportEnd.isAfter(today)) {
-                        // No documented version, but enterprise support is still active
-                        // Create an enterprise-only version entry using the generation pattern
-                        log.info("Adding enterprise-supported version {} (enterprise support until {})",
-                            gen, enterpriseSupportEnd);
+                    } else {
+                        // No documented version for this generation - check if it still has active support
+                        boolean hasActiveOssSupport = ossSupportEnd != null && ossSupportEnd.isAfter(today);
+                        boolean hasActiveEnterpriseSupport = enterpriseEnabled &&
+                            enterpriseSupportEnd != null && enterpriseSupportEnd.isAfter(today);
 
-                        VersionData enterpriseVersion = VersionData.builder()
-                            .version(gen) // Use generation pattern like "2.7.x"
-                            .isCurrent(false)
-                            .gatsbyStatus("ENTERPRISE")
-                            .initialRelease(initialRelease)
-                            .ossSupportEnd(ossSupportEnd)
-                            .enterpriseSupportEnd(enterpriseSupportEnd)
-                            .isEnterpriseOnly(true)
-                            .build();
+                        if (hasActiveOssSupport || hasActiveEnterpriseSupport) {
+                            // Create version entry for this still-supported generation
+                            boolean isEnterpriseOnly = !hasActiveOssSupport && hasActiveEnterpriseSupport;
+                            String status = isEnterpriseOnly ? "ENTERPRISE" : "GENERAL_AVAILABILITY";
 
-                        versionDataList.add(enterpriseVersion);
-                        versionsByMajorMinor.computeIfAbsent(key, k -> new ArrayList<>()).add(enterpriseVersion);
-                    } else if (enterpriseSupportEnd != null) {
-                        log.debug("Skipping generation {} - enterprise support ended {} (enterprise mode: {})",
-                            gen, enterpriseSupportEnd, enterpriseEnabled ? "enabled" : "disabled");
+                            log.info("Adding supported version {} (OSS support: {}, enterprise support: {}, enterprise-only: {})",
+                                gen,
+                                ossSupportEnd != null ? ossSupportEnd : "N/A",
+                                enterpriseSupportEnd != null ? enterpriseSupportEnd : "N/A",
+                                isEnterpriseOnly);
+
+                            VersionData supportedVersion = VersionData.builder()
+                                .version(gen) // Use generation pattern like "3.4.x"
+                                .isCurrent(false)
+                                .gatsbyStatus(status)
+                                .initialRelease(initialRelease)
+                                .ossSupportEnd(ossSupportEnd)
+                                .enterpriseSupportEnd(enterpriseSupportEnd)
+                                .isEnterpriseOnly(isEnterpriseOnly)
+                                .build();
+
+                            versionDataList.add(supportedVersion);
+                            versionsByMajorMinor.computeIfAbsent(key, k -> new ArrayList<>()).add(supportedVersion);
+                        } else {
+                            log.debug("Skipping generation {} - no active support (OSS: {}, enterprise: {}, enterprise mode: {})",
+                                gen, ossSupportEnd, enterpriseSupportEnd, enterpriseEnabled ? "enabled" : "disabled");
+                        }
                     }
                 }
             }

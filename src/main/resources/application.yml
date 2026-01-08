@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring Boot Documentation MCP Server
-    version: 1.7.0
+    version: 1.7.1
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.9
@@ -78,7 +78,7 @@ spring:
       server:
         name: "spring-documentation-server"
         type: "sync"
-        version: "1.7.0"
+        version: "1.7.1"
         # Disable annotation scanner - we provide tools explicitly via McpToolsConfig
         # This avoids timing issues with BeanPostProcessor and duplicate registration
         annotation-scanner:
@@ -452,6 +452,8 @@ logging:
     org.htmlunit: ERROR
     org.htmlunit.javascript: OFF
     org.htmlunit.css: OFF
+    # Suppress AsciidoctorJ warnings about unresolved cross-document references
+    asciidoctor: ERROR
     org.htmlunit.corejs: OFF
     org.htmlunit.IncorrectnessListenerImpl: OFF
   pattern:

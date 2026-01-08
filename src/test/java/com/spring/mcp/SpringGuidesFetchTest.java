@@ -10,6 +10,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -19,14 +20,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Test fetching Spring Guides from spring.io/guides
+ * Test fetching Spring Guides from spring.io/guides.
  *
  * This test explores:
  * 1. Guides index page structure
  * 2. Individual guide page structure
  * 3. Code example extraction
  * 4. Metadata (tags, categories, difficulty)
+ *
+ * DISABLED: This test makes external HTTP calls to spring.io.
+ * Run manually when needed for integration testing.
  */
+@Disabled("Makes external HTTP calls to spring.io - run manually when needed")
 public class SpringGuidesFetchTest {
 
     private static final String GUIDES_INDEX_URL = "https://spring.io/guides";

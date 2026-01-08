@@ -260,7 +260,14 @@ public class GitHubCodeExampleService {
             return null;
         }
 
-        String javadoc = content.substring(javadocStart + 3, javadocEnd);
+        // Handle edge case: empty or minimal javadocs like /***/ or /** */
+        // where the closing */ comes immediately after or very close to /**
+        int substringStart = javadocStart + 3;
+        if (substringStart >= javadocEnd) {
+            return null;
+        }
+
+        String javadoc = content.substring(substringStart, javadocEnd);
 
         // Extract the description (text before the first @tag)
         int firstTag = javadoc.indexOf("\n * @");
