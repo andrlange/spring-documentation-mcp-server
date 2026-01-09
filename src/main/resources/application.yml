@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring Boot Documentation MCP Server
-    version: 1.7.1
+    version: 1.8.0
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.9
@@ -73,12 +73,21 @@ spring:
       roles: ADMIN
 
   # Spring AI MCP Server Configuration
+  # Using Streamable-HTTP protocol (MCP spec 2025-11-25) instead of SSE
   ai:
     mcp:
       server:
+        # Protocol: STREAMABLE for stateful HTTP with tool-change-notification support
+        # (NOT STATELESS - that would break MCP Tool Masquerading feature)
+        protocol: STREAMABLE
         name: "spring-documentation-server"
-        type: "sync"
-        version: "1.7.1"
+        type: SYNC
+        version: "1.8.0"
+        request-timeout: 60s
+        # Enable tool change notifications for MCP Tool Masquerading (/mcp-tools)
+        tool-change-notification: true
+        resource-change-notification: false
+        prompt-change-notification: false
         # Disable annotation scanner - we provide tools explicitly via McpToolsConfig
         # This avoids timing issues with BeanPostProcessor and duplicate registration
         annotation-scanner:
@@ -95,11 +104,12 @@ spring:
           - Initializr (up to 5 tools)
           - Javadoc (up to 4 tools)
 
-          SSE endpoint: /mcp/spring/sse
-          Message endpoint: /mcp/spring/messages
+          MCP Endpoint: /mcp/spring (Streamable-HTTP)
 
-        sse-endpoint: /mcp/spring/sse
-        sse-message-endpoint: /mcp/spring/messages
+        # Streamable-HTTP configuration (replaces SSE endpoints)
+        streamable-http:
+          mcp-endpoint: /mcp/spring
+          keep-alive-interval: 30s
 
         capabilities:
           tool: true
@@ -124,17 +134,18 @@ server:
 spring.lifecycle:
   timeout-per-shutdown-phase: 10s  # Don't wait more than 10 seconds for connections to close
 
-# MCP Server Configuration
+# MCP Server Configuration (custom application settings)
 mcp:
   server:
     name: "Spring Documentation MCP Server"
-    version: "1.4.4"
-    sse:
-      timeout: 3600000 # 1 hour in milliseconds
-      heartbeat-interval: 30000 # 30 seconds in milliseconds
+    version: "1.8.0"
+    # Streamable-HTTP transport settings
+    streamable-http:
+      request-timeout: 60000 # 60 seconds in milliseconds
+      keep-alive-interval: 30000 # 30 seconds in milliseconds
 
-  # MCP Transport 2025-06-18 Protocol Compliance
-  # See: https://spec.modelcontextprotocol.io/2025-06-18/basic/transports/
+  # MCP Transport 2025-11-25 Protocol Compliance (Streamable-HTTP)
+  # See: https://spec.modelcontextprotocol.io/2025-11-25/basic/transports/#streamable-http
   security:
     # Origin header validation for browser-based clients
     # Set to false to disable origin checking (useful for CLI tools)

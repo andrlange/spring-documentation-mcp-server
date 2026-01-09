@@ -15,10 +15,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Filter for MCP Transport 2025-06-18 protocol compliance.
+ * Filter for MCP Transport 2025-11-25 protocol compliance (Streamable-HTTP).
  *
  * <p>This filter adds protocol compliance headers and validates security headers
- * for MCP endpoints according to the MCP Transport 2025-06-18 specification.</p>
+ * for MCP endpoints according to the MCP Transport 2025-11-25 specification.</p>
  *
  * <h3>Features:</h3>
  * <ul>
@@ -30,15 +30,15 @@ import java.util.Set;
  *
  * <h3>Header Support:</h3>
  * <ul>
- *   <li>{@code MCP-Protocol-Version: 2025-06-18} - Added to all MCP responses</li>
+ *   <li>{@code MCP-Protocol-Version: 2025-11-25} - Added to all MCP responses</li>
  *   <li>{@code Mcp-Session-Id} - Read from header (preferred) or query param (backwards compat)</li>
  *   <li>{@code Origin} - Validated against allowed origins list when present</li>
  * </ul>
  *
  * @author Spring MCP Server
- * @version 1.4.4
+ * @version 1.8.0
  * @since 2025-12-16
- * @see <a href="https://spec.modelcontextprotocol.io/2025-06-18/basic/transports/">MCP Transport Spec</a>
+ * @see <a href="https://spec.modelcontextprotocol.io/2025-11-25/basic/transports/#streamable-http">MCP Streamable-HTTP Spec</a>
  */
 @Slf4j
 @Component
@@ -51,12 +51,12 @@ public class McpProtocolHeaderFilter extends OncePerRequestFilter {
     public static final String MCP_PROTOCOL_VERSION_HEADER = "MCP-Protocol-Version";
 
     /**
-     * MCP Protocol version value (2025-06-18 spec).
+     * MCP Protocol version value (2025-11-25 Streamable-HTTP spec).
      */
-    public static final String MCP_PROTOCOL_VERSION = "2025-06-18";
+    public static final String MCP_PROTOCOL_VERSION = "2025-11-25";
 
     /**
-     * Session ID header name (per MCP 2025-06-18 spec).
+     * Session ID header name (per MCP 2025-11-25 spec).
      */
     public static final String MCP_SESSION_ID_HEADER = "Mcp-Session-Id";
 
@@ -144,7 +144,7 @@ public class McpProtocolHeaderFilter extends OncePerRequestFilter {
      * @return session ID or null if not provided
      */
     private String resolveSessionId(HttpServletRequest request) {
-        // 1. Check Mcp-Session-Id header (preferred, per MCP 2025-06-18 spec)
+        // 1. Check Mcp-Session-Id header (preferred, per MCP 2025-11-25 spec)
         String sessionId = request.getHeader(MCP_SESSION_ID_HEADER);
         if (sessionId != null && !sessionId.isBlank()) {
             log.debug("Session ID from header: {}", sessionId);

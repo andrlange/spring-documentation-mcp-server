@@ -6,7 +6,7 @@ This document tracks the version configuration across all project files to ensur
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Application** | 1.7.1 | Spring MCP Server |
+| **Application** | 1.8.0 | Spring MCP Server |
 | **Java (JDK)** | 25 | LTS version |
 | **Spring Boot** | 3.5.9 | Latest stable |
 | **Spring AI** | 1.1.2 | MCP Server support |
@@ -20,7 +20,7 @@ Needs to track the changelog
 
 ### build.gradle
 ```groovy
-version = '1.7.1'
+version = '1.8.0'
 
 java {
     toolchain {
@@ -45,7 +45,7 @@ services:
   postgres:
     image: postgres:18-alpine
   spring-boot-documentation-mcp-server:
-    image: spring-boot-documentation-mcp-server:1.7.1
+    image: spring-boot-documentation-mcp-server:1.8.0
 ```
 
 ### application.yml
@@ -54,7 +54,7 @@ services:
 info:
   app:
     name: Spring MCP Server
-    version: 1.7.1
+    version: 1.8.0
   spring-boot:
     version: 3.5.9
 
@@ -65,12 +65,12 @@ spring:
   ai:
     mcp:
       server:
-        version: "1.7.1"
+        version: "1.8.0"
 ```
 
 ### build-container.sh
 ```bash
-APP_VERSION="1.7.1"
+APP_VERSION="1.8.0"
 JAVA_VERSION="25"
 ```
 
@@ -112,6 +112,15 @@ Update these locations when adding/removing tools:
 - `.claude/memory/project-memory.md` - MCP Tools count
 
 ## Changelog
+
+### v1.8.0 (2026-01-09)
+- MCP Streamable-HTTP Transport Migration (replaces SSE)
+- Single unified endpoint: `/mcp/spring` (was `/mcp/spring/sse` + `/mcp/spring/messages`)
+- MCP Protocol version updated from 2025-06-18 to 2025-11-25
+- Tool change notifications enabled for MCP Tool Masquerading
+- Uses `protocol: STREAMABLE` (stateful HTTP with runtime tool modifications)
+- All 46 MCP tools unchanged - no tool code modifications needed
+- Legacy SSE endpoints retained for transition period
 
 ### v1.7.1 (2026-01-08)
 - Fixed SpringBootVersionSyncService to create versions with active OSS support (not just enterprise)

@@ -12,15 +12,15 @@
 >
 > **Purpose**: My main goal is to create demo applications using my own specifications to explore AI-assisted development workflows.
 
-### (Current Version 1.7.1 - Sync Fixes)
+### (Current Version 1.8.0 - MCP Streamable-HTTP Transport)
 
-A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Server-Sent Events (SSE).
+A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Streamable-HTTP.
 
 ## What is this?
 
 This MCP server enables AI assistants (like Claude) to search, browse, and retrieve Spring Framework documentation, code examples, and API references. It includes:
 
-- **MCP Server**: SSE-based protocol implementation using Spring AI with 46 tools across 7 categories
+- **MCP Server**: Streamable-HTTP protocol (MCP 2025-11-25) implementation using Spring AI with 46 tools across 7 categories
 - **Documentation Sync**: Automated synchronization from spring.io and GitHub spring-projects repositories
 - **Full-Text Search**: PostgreSQL-powered search across all Spring documentation
 - **Semantic Embeddings**: Vector embeddings with pgvector for intelligent semantic search using Ollama or OpenAI
@@ -80,6 +80,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
+| **1.8.0** | 2026-01-09 | MCP Streamable-HTTP Transport (replaces SSE, protocol 2025-11-25) |
 | **1.7.1** | 2026-01-08 | Sync fixes (OSS version support, javadoc parsing, logging) |
 | **1.7.0** | 2026-01-06 | Spring Boot Wiki Integration (Release Notes & Migration Guides, +2 MCP tools) |
 | **1.6.x** | 2026-01    | Semantic embeddings with pgvector, Virtual Threads, MCP Tool Masquerading, response size optimization |
@@ -116,7 +117,7 @@ docker-compose up -d postgres
 ### 2. Build and Run
 ```bash
 ./gradlew clean build
-java -jar build/libs/spring-boot-documentation-mcp-server-1.7.1.jar
+java -jar build/libs/spring-boot-documentation-mcp-server-1.8.0.jar
 ```
 
 Or using Gradle:
@@ -128,7 +129,7 @@ Or using Gradle:
 
 - **Web UI**: http://localhost:8080
 - **Login**: Username: `admin`, Password: `admin`
-- **MCP SSE Endpoint**: http://localhost:8080/mcp/spring/sse
+- **MCP Endpoint (Streamable-HTTP)**: http://localhost:8080/mcp/spring
 
 ## API Key Authentication
 
@@ -160,17 +161,17 @@ API keys can be provided in three ways:
 
 1. **X-API-Key Header** (Recommended):
    ```bash
-   curl -H "X-API-Key: smcp_your_key_here" http://localhost:8080/mcp/spring/sse
+   curl -H "X-API-Key: smcp_your_key_here" http://localhost:8080/mcp/spring
    ```
 
 2. **Authorization Bearer Header**:
    ```bash
-   curl -H "Authorization: Bearer smcp_your_key_here" http://localhost:8080/mcp/spring/sse
+   curl -H "Authorization: Bearer smcp_your_key_here" http://localhost:8080/mcp/spring
    ```
 
 3. **Query Parameter** (Testing only):
    ```bash
-   curl "http://localhost:8080/mcp/spring/sse?api_key=smcp_your_key_here"
+   curl "http://localhost:8080/mcp/spring?api_key=smcp_your_key_here"
    ```
 
 ---
@@ -899,8 +900,8 @@ Add to your Claude Code MCP configuration (`.mcp.json`):
 {
   "mcpServers": {
     "spring": {
-      "type": "sse",
-      "url": "http://localhost:8080/mcp/spring/sse",
+      "type": "http",
+      "url": "http://localhost:8080/mcp/spring",
       "headers": {
         "X-API-Key": "YOUR_API_KEY_HERE"
       }
@@ -910,6 +911,8 @@ Add to your Claude Code MCP configuration (`.mcp.json`):
 ```
 
 Replace `YOUR_API_KEY_HERE` with your actual API key from the Settings page, then restart Claude Code.
+
+> **Note:** As of v1.8.0, this server uses Streamable-HTTP transport (MCP Protocol 2025-11-25) instead of SSE.
 
 ### Documentation Queries
 
@@ -1061,8 +1064,8 @@ Different teams can use different API keys to access their specific groups:
 {
   "mcpServers": {
     "spring": {
-      "type": "sse",
-      "url": "http://localhost:8080/mcp/spring/sse",
+      "type": "streamable-http",
+      "url": "http://localhost:8080/mcp/spring",
       "headers": {
         "X-API-Key": "smcp_engineering_team_key"
       }
@@ -1074,8 +1077,8 @@ Different teams can use different API keys to access their specific groups:
 {
   "mcpServers": {
     "spring": {
-      "type": "sse",
-      "url": "http://localhost:8080/mcp/spring/sse",
+      "type": "streamable-http",
+      "url": "http://localhost:8080/mcp/spring",
       "headers": {
         "X-API-Key": "smcp_security_team_key"
       }
@@ -1184,9 +1187,13 @@ spring:
   ai:
     mcp:
       server:
+        protocol: STREAMABLE  # MCP 2025-11-25 Streamable-HTTP transport
         name: "spring-documentation-server"
-        sse-endpoint: /mcp/spring/sse
-        sse-message-endpoint: /mcp/spring/messages
+        version: "1.8.0"
+        tool-change-notification: true  # Required for MCP Tool Masquerading
+        streamable-http:
+          mcp-endpoint: /mcp/spring
+          keep-alive-interval: 30s
 
 mcp:
   features:
@@ -1245,14 +1252,14 @@ lsof -ti :8080 | xargs kill -9
 
 2. **Check MCP endpoint with API key**:
    ```bash
-   curl -H "X-API-Key: your_api_key" http://localhost:8080/mcp/spring/sse
+   curl -H "X-API-Key: your_api_key" http://localhost:8080/mcp/spring
    ```
 
 3. **Test with MCP Inspector**:
    ```bash
    npx @modelcontextprotocol/inspector
    ```
-   Configure with URL: `http://localhost:8080/mcp/spring/sse` and your API key header.
+   Configure with URL: `http://localhost:8080/mcp/spring` and your API key header.
 
 ---
 

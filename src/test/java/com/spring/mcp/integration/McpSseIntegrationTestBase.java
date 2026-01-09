@@ -7,7 +7,7 @@ import com.spring.mcp.config.TestDataBootstrapConfig;
 import com.spring.mcp.config.TestFlavorSearchVectorConfig;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.WebFluxSseClientTransport;
+import io.modelcontextprotocol.client.transport.WebClientStreamableHttpTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,8 +27,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Base class for MCP SSE integration tests.
- * Uses Spring AI MCP Client for proper protocol handling.
+ * Base class for MCP Streamable-HTTP integration tests.
+ * Uses Spring AI MCP Client with Streamable-HTTP transport (MCP Protocol 2025-11-25).
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -57,9 +57,9 @@ public abstract class McpSseIntegrationTestBase {
                 .baseUrl(baseUrl)
                 .defaultHeader("X-API-Key", API_KEY);
 
-        // Create SSE transport using WebFlux with Builder pattern
-        WebFluxSseClientTransport transport = WebFluxSseClientTransport.builder(webClientBuilder)
-                .sseEndpoint("/mcp/spring/sse")
+        // Create Streamable-HTTP transport using WebFlux (MCP Protocol 2025-11-25)
+        WebClientStreamableHttpTransport transport = WebClientStreamableHttpTransport.builder(webClientBuilder)
+                .endpoint("/mcp/spring")
                 .build();
 
         // Create and initialize the MCP client

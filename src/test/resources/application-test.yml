@@ -33,14 +33,19 @@ spring:
       roles: ADMIN
 
   # Spring AI MCP Server Configuration for tests
+  # Using Streamable-HTTP protocol (MCP spec 2025-11-25)
   ai:
     mcp:
       server:
+        protocol: STREAMABLE
         name: "spring-documentation-server-test"
-        type: "sync"
-        version: "1.3.2-test"
-        sse-endpoint: /mcp/spring/sse
-        sse-message-endpoint: /mcp/spring/messages
+        type: SYNC
+        version: "1.8.0-test"
+        request-timeout: 30s
+        tool-change-notification: true
+        streamable-http:
+          mcp-endpoint: /mcp/spring
+          keep-alive-interval: 5s
         capabilities:
           tool: true
           completion: false
@@ -50,14 +55,14 @@ spring:
 server:
   port: 0  # Random port for tests
 
-# MCP Server Configuration
+# MCP Server Configuration (custom application settings)
 mcp:
   server:
     name: "Spring Documentation MCP Server (Test)"
-    version: "1.3.2-test"
-    sse:
-      timeout: 60000
-      heartbeat-interval: 5000
+    version: "1.8.0-test"
+    streamable-http:
+      request-timeout: 30000
+      keep-alive-interval: 5000
 
   documentation:
     bootstrap:
@@ -105,6 +110,7 @@ logging:
     org.testcontainers: INFO
     # Suppress expected shutdown noise (containers stop before Spring context closes)
     io.modelcontextprotocol.server.transport.WebMvcSseServerTransportProvider: OFF
+    io.modelcontextprotocol.server.transport.WebMvcStreamableServerTransportProvider: OFF
     com.zaxxer.hikari.pool.PoolBase: OFF
     com.zaxxer.hikari.pool.HikariPool: OFF
     org.hibernate.engine.jdbc.spi.SqlExceptionHelper: OFF

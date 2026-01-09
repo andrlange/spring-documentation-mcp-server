@@ -54,7 +54,9 @@ public class SecurityConfig {
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/vendor/**", "/favicon.ico").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
 
-                // Spring AI MCP SSE endpoints - permitAll but protected by ApiKeyAuthenticationFilter
+                // Spring AI MCP Streamable-HTTP endpoint - permitAll but protected by ApiKeyAuthenticationFilter
+                .requestMatchers("/mcp/spring").permitAll()
+                // Legacy SSE endpoints (for backwards compatibility during transition)
                 .requestMatchers("/sse", "/message").permitAll()
                 .requestMatchers("/mcp/spring/sse", "/mcp/spring/messages").permitAll()
 
@@ -89,7 +91,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf
                 // Disable CSRF for MCP endpoints as they use API key authentication
                 // Also disable for AJAX endpoints in settings that use JSON responses
-                .ignoringRequestMatchers("/mcp/**", "/sse", "/message", "/mcp/spring/sse", "/mcp/spring/messages",
+                .ignoringRequestMatchers("/mcp/**", "/mcp/spring", "/sse", "/message",
+                    "/mcp/spring/sse", "/mcp/spring/messages",
                     "/api/mcp/**", "/sync/**", "/settings/api-keys/**", "/settings/global/**",
                     "/settings/scheduler/time-format", "/settings/language-scheduler/time-format",
                     "/embeddings/**", "/mcp-tools/**")
@@ -159,14 +162,16 @@ public class SecurityConfig {
             "Origin",
             "Cache-Control",
             "X-Requested-With",
-            "Mcp-Session-Id"  // MCP 2025-06-18 session header
+            "Mcp-Session-Id",         // MCP 2025-11-25 session header
+            "MCP-Protocol-Version",   // MCP 2025-11-25 protocol version header
+            "Last-Event-ID"           // SSE resume header (for backwards compatibility)
         ));
 
         // Expose headers that clients may need to read (including MCP protocol headers)
         configuration.setExposedHeaders(Arrays.asList(
             "Content-Type",
             "X-Content-Type-Options",
-            "MCP-Protocol-Version",  // MCP 2025-06-18 protocol version
+            "MCP-Protocol-Version",  // MCP 2025-11-25 protocol version
             "Mcp-Session-Id"         // Echo session ID back to client
         ));
 
@@ -179,7 +184,10 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
         // Apply CORS configuration to MCP endpoints
+        // Streamable-HTTP endpoint (primary)
+        source.registerCorsConfiguration("/mcp/spring", configuration);
         source.registerCorsConfiguration("/mcp/**", configuration);
+        // Legacy SSE endpoints (for backwards compatibility)
         source.registerCorsConfiguration("/sse", configuration);
         source.registerCorsConfiguration("/message", configuration);
 

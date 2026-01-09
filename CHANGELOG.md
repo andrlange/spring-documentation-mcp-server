@@ -5,6 +5,31 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-01-09
+
+### Added
+- **MCP Streamable-HTTP Transport**: Migrated from SSE-based transport to Streamable-HTTP protocol
+    - **MCP Protocol 2025-11-25**: Updated to latest MCP specification for Streamable-HTTP transport
+    - **Single Unified Endpoint**: `/mcp/spring` replaces `/mcp/spring/sse` and `/mcp/spring/messages`
+    - **Tool Change Notifications**: Enabled `tool-change-notification: true` for MCP Tool Masquerading support
+    - **Session Management**: `Mcp-Session-Id` header for stateful session handling
+    - **Keep-Alive**: Configurable keep-alive interval (30s default) for connection maintenance
+
+### Changed
+- MCP endpoint changed from `/mcp/spring/sse` to `/mcp/spring`
+- Protocol version header updated from `2025-06-18` to `2025-11-25`
+- Claude Code configuration now uses `type: "streamable-http"` instead of SSE transport
+- Updated UI templates to display new Streamable-HTTP endpoint
+
+### Technical Details
+- Uses Spring AI `spring-ai-starter-mcp-server-webmvc` with `protocol: STREAMABLE`
+- Full backwards compatibility with MCP Tool Masquerading feature (`/mcp-tools`)
+- Runtime tool modifications (`addTool`/`removeTool`) continue to work with stateful sessions
+- All 46 MCP tools unchanged - no tool code modifications needed
+- Legacy SSE endpoints retained for transition period
+
+---
+
 ## [1.7.1] - 2026-01-08
 
 ### Fixed
@@ -623,6 +648,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.8.0 | 2026-01-09 | MCP Streamable-HTTP Transport (replaces SSE, protocol 2025-11-25) |
 | 1.7.1 | 2026-01-08 | Sync fixes (OSS version support, javadoc parsing, logging) |
 | 1.7.0 | 2026-01-06 | Spring Boot Wiki Integration (Release Notes & Migration Guides) |
 | 1.6.3 | 2026-01-05 | MCP Tool Response Size Optimization, isCurrent flag fix |
