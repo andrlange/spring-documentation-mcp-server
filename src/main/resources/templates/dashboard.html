@@ -66,11 +66,11 @@
                         <ul>
                             <li>Configure project versions in the <a th:href="@{/projects}">Projects</a> section</li>
                             <li>Add documentation links in the <a th:href="@{/documentation}">Documentation</a> section</li>
-                            <li>Connect Claude Code to the MCP endpoint at <code>/mcp/spring/sse</code></li>
+                            <li>Connect Claude Code to the MCP endpoint at <code>/mcp/spring</code></li>
                         </ul>
 
                         <div class="alert alert-info mt-3">
-                            <strong>MCP Endpoint:</strong> <code th:text="${#httpServletRequest.requestURL.substring(0, #httpServletRequest.requestURL.lastIndexOf('/'))}" + '/mcp/spring/sse'>http://localhost:8080//mcp/spring/sse</code>
+                            <strong>MCP Endpoint (Streamable-HTTP):</strong> <code th:text="${#httpServletRequest.requestURL.substring(0, #httpServletRequest.requestURL.lastIndexOf('/'))}" + '/mcp/spring'>http://localhost:8080/mcp/spring</code>
                         </div>
                     </div>
                 </div>

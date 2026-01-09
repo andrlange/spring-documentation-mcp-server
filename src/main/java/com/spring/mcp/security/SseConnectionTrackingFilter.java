@@ -19,8 +19,9 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Filter to track SSE connections for monitoring purposes.
+ * Filter to track MCP connections for monitoring purposes.
  * Records connection and disconnection events to the monitoring service.
+ * Supports both Streamable-HTTP (MCP 2025-11-25) and legacy SSE connections.
  */
 @Slf4j
 @Component
@@ -38,12 +39,13 @@ public class SseConnectionTrackingFilter extends OncePerRequestFilter {
         String requestUri = request.getRequestURI();
         String accept = request.getHeader("Accept");
 
-        // Check if this is an SSE connection request
+        // Check if this is an MCP connection request (Streamable-HTTP or legacy SSE)
+        boolean isStreamableHttpRequest = isStreamableHttpEndpoint(requestUri);
         boolean isSseRequest = isSseEndpoint(requestUri) &&
                                accept != null &&
                                accept.contains("text/event-stream");
 
-        if (!isSseRequest) {
+        if (!isStreamableHttpRequest && !isSseRequest) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -62,8 +64,9 @@ public class SseConnectionTrackingFilter extends OncePerRequestFilter {
                     clientInfo,
                     request.getHeader("MCP-Protocol-Version")
             );
-            log.info("SSE connection established: sessionId={}, client={}",
-                    sessionId, request.getHeader("User-Agent"));
+            String protocol = isStreamableHttpRequest ? "Streamable-HTTP" : "SSE";
+            log.info("MCP {} connection established: sessionId={}, client={}",
+                    protocol, sessionId, request.getHeader("User-Agent"));
         } catch (Exception e) {
             log.warn("Failed to record connection event: {}", e.getMessage());
         }
@@ -72,7 +75,7 @@ public class SseConnectionTrackingFilter extends OncePerRequestFilter {
             // Continue with the filter chain
             filterChain.doFilter(request, response);
         } finally {
-            // Record disconnection when the request completes (SSE connection closed)
+            // Record disconnection when the request completes (MCP connection closed)
             try {
                 monitoringService.recordConnectionEvent(
                         sessionId,
@@ -80,7 +83,7 @@ public class SseConnectionTrackingFilter extends OncePerRequestFilter {
                         clientInfo,
                         request.getHeader("MCP-Protocol-Version")
                 );
-                log.info("SSE connection closed: sessionId={}", sessionId);
+                log.info("MCP connection closed: sessionId={}", sessionId);
             } catch (Exception e) {
                 log.warn("Failed to record disconnection event: {}", e.getMessage());
             }
@@ -88,7 +91,14 @@ public class SseConnectionTrackingFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Check if the request URI is an SSE endpoint.
+     * Check if the request URI is the Streamable-HTTP endpoint (MCP 2025-11-25).
+     */
+    private boolean isStreamableHttpEndpoint(String uri) {
+        return uri.equals("/mcp/spring");
+    }
+
+    /**
+     * Check if the request URI is a legacy SSE endpoint.
      */
     private boolean isSseEndpoint(String uri) {
         return uri.contains("/sse") ||
@@ -160,8 +170,8 @@ public class SseConnectionTrackingFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // Only filter SSE endpoints
+        // Only filter MCP endpoints (Streamable-HTTP and legacy SSE)
         String path = request.getRequestURI();
-        return !isSseEndpoint(path);
+        return !isStreamableHttpEndpoint(path) && !isSseEndpoint(path);
     }
 }

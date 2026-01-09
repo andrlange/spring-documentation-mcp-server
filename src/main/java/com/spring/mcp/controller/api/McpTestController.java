@@ -27,11 +27,11 @@ public class McpTestController {
 
         return Map.of(
             "serverName", "Spring Documentation MCP Server",
-            "version", "1.0.0",
+            "version", "1.8.0",
             "status", "running",
-            "endpoint", "/mcp/spring/sse",
-            "protocol", "SSE (Server-Sent Events)",
-            "springAiVersion", "1.0.3",
+            "endpoint", "/mcp/spring",
+            "protocol", "Streamable-HTTP (MCP 2025-11-25)",
+            "springAiVersion", "1.1.2",
             "autoConfigured", true,
             "statistics", Map.of(
                 "totalConnections", loggerService.getTotalConnections(),

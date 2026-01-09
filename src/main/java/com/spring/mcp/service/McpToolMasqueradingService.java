@@ -267,7 +267,10 @@ public class McpToolMasqueradingService {
                     .meta(originalTool.meta())
                     .build();
 
-            SyncToolSpecification updatedSpec = new SyncToolSpecification(updatedTool, originalSpec.call());
+            SyncToolSpecification updatedSpec = SyncToolSpecification.builder()
+                    .tool(updatedTool)
+                    .callHandler(originalSpec.callHandler())
+                    .build();
 
             // Remove the old tool and add the updated one
             mcpSyncServer.removeTool(toolName);

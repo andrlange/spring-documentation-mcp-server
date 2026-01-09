@@ -14,6 +14,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import io.modelcontextprotocol.server.McpSyncServerExchange;
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 
 import java.time.LocalDateTime;
@@ -91,8 +92,11 @@ class McpToolMasqueradingServiceTest {
                 .name("searchSpringDocs")
                 .description("Original description")
                 .build();
-        BiFunction<McpSyncServerExchange, Map<String, Object>, CallToolResult> mockHandler = (exchange, args) -> null;
-        testToolSpec = new SyncToolSpecification(tool, mockHandler);
+        BiFunction<McpSyncServerExchange, CallToolRequest, CallToolResult> mockHandler = (exchange, request) -> null;
+        testToolSpec = SyncToolSpecification.builder()
+                .tool(tool)
+                .callHandler(mockHandler)
+                .build();
     }
 
     // ==================== Initialize Tests ====================
@@ -453,8 +457,11 @@ class McpToolMasqueradingServiceTest {
             // Given
             when(mcpToolRepository.findByEnabledFalse()).thenReturn(Collections.emptyList());
             Tool tool2 = Tool.builder().name("tool2").description("Tool 2").build();
-            BiFunction<McpSyncServerExchange, Map<String, Object>, CallToolResult> handler = (e, a) -> null;
-            SyncToolSpecification spec2 = new SyncToolSpecification(tool2, handler);
+            BiFunction<McpSyncServerExchange, CallToolRequest, CallToolResult> handler = (exchange, request) -> null;
+            SyncToolSpecification spec2 = SyncToolSpecification.builder()
+                    .tool(tool2)
+                    .callHandler(handler)
+                    .build();
 
             ReflectionTestUtils.setField(masqueradingService, "toolSpecifications", List.of(testToolSpec, spec2));
 
