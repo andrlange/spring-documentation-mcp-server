@@ -30,13 +30,20 @@ public class ToolGroupDto {
     private long totalRequests;
     private double avgLatencyMs;
     private double errorRate;
-    private long toolCount;
 
     // Tools in this group
     private List<ToolMetricDto> tools;
 
     // Expanded state for UI
     private boolean expanded;
+
+    /**
+     * Get the count of tools with activity in this group.
+     * Computed dynamically from the tools list for accuracy.
+     */
+    public long getToolCount() {
+        return tools != null ? tools.size() : 0;
+    }
 
     /**
      * Get the health status class based on error rate.
@@ -53,17 +60,16 @@ public class ToolGroupDto {
 
     /**
      * Calculate aggregated metrics from tools.
+     * Note: toolCount is computed dynamically via getToolCount() method.
      */
     public void calculateAggregates() {
         if (tools == null || tools.isEmpty()) {
             this.totalRequests = 0;
             this.avgLatencyMs = 0;
             this.errorRate = 0;
-            this.toolCount = 0;
             return;
         }
 
-        this.toolCount = tools.size();
         this.totalRequests = tools.stream().mapToLong(ToolMetricDto::getTotalRequests).sum();
 
         // Weighted average latency

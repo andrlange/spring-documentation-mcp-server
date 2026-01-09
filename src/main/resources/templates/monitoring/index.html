@@ -852,7 +852,18 @@
 
                         newGroups.forEach((newGroup, index) => {
                             if (currentGroups[index]) {
-                                // Update stats in header
+                                // Update tool count in title (the "X tools" text)
+                                const newTitle = newGroup.querySelector('.tool-group-title');
+                                const currentTitle = currentGroups[index].querySelector('.tool-group-title');
+                                if (newTitle && currentTitle) {
+                                    const newToolCount = newTitle.querySelector('.text-muted.small');
+                                    const currentToolCount = currentTitle.querySelector('.text-muted.small');
+                                    if (newToolCount && currentToolCount) {
+                                        currentToolCount.textContent = newToolCount.textContent;
+                                    }
+                                }
+
+                                // Update stats in header (requests, latency, errors)
                                 const newStats = newGroup.querySelector('.tool-group-stats');
                                 const currentStats = currentGroups[index].querySelector('.tool-group-stats');
                                 if (newStats && currentStats) {
