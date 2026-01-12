@@ -280,11 +280,14 @@ public class SpringDocumentationTools {
     }
 
     /**
-     * Search for code examples with optional filters
+     * Search for code examples with optional filters.
+     * Uses semantic search when embeddings are enabled and no filters are applied.
      */
     @McpTool(description = """
         Search for code examples with optional filters.
         Returns code snippets, descriptions, and metadata.
+        When embeddings are enabled and only a query is provided, uses semantic search
+        to find examples by meaning (e.g., 'database connection' finds 'JPA', 'JDBC', 'connection pool').
         """)
     public CodeExamplesResponse getCodeExamples(
             @McpToolParam(description = "Search query for title/description (optional)") String query,
@@ -301,7 +304,33 @@ public class SpringDocumentationTools {
 
         List<CodeExample> examples;
 
-        if (project != null && !project.isBlank() && version != null && !version.isBlank()) {
+        // Use hybrid search when embeddings are enabled and only query is provided (no filters)
+        boolean useHybridSearch = embeddingProperties.isEnabled()
+                && hybridSearchService != null
+                && query != null && !query.isBlank()
+                && project == null
+                && version == null
+                && language == null;
+
+        if (useHybridSearch) {
+            log.debug("Using hybrid search (keyword + semantic) for code examples: {}", query);
+            List<HybridSearchService.SearchResult> hybridResults =
+                    hybridSearchService.searchCodeExamples(query, effectiveLimit * 2);
+
+            // Get example IDs
+            List<Long> exampleIds = hybridResults.stream()
+                    .map(HybridSearchService.SearchResult::id)
+                    .toList();
+
+            // Fetch examples by IDs, maintaining order
+            Map<Long, CodeExample> exampleMap = codeExampleRepository.findAllById(exampleIds).stream()
+                    .collect(Collectors.toMap(CodeExample::getId, e -> e));
+
+            examples = exampleIds.stream()
+                    .map(exampleMap::get)
+                    .filter(e -> e != null)
+                    .collect(Collectors.toList());
+        } else if (project != null && !project.isBlank() && version != null && !version.isBlank()) {
             SpringProject springProject = projectRepository.findBySlug(project)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found: " + project));
 
@@ -318,7 +347,8 @@ public class SpringDocumentationTools {
             examples = codeExampleRepository.findAll();
         }
 
-        if (query != null && !query.isBlank() && (project != null || version != null)) {
+        // Apply additional query filter if both query and project/version filters are provided
+        if (!useHybridSearch && query != null && !query.isBlank() && (project != null || version != null)) {
             String lowerQuery = query.toLowerCase();
             examples = examples.stream()
                 .filter(e -> e.getTitle().toLowerCase().contains(lowerQuery) ||
@@ -419,31 +449,77 @@ public class SpringDocumentationTools {
     }
 
     /**
-     * Get the latest Spring Boot version for a given major.minor combination
+     * Get the latest Spring Boot version for a given major.minor combination.
+     * When called without parameters, returns the latest GA versions that are marked as current.
      */
     @McpTool(description = """
         Get the latest patch version for a specific Spring Boot major.minor version.
         For example, for Spring Boot 3.5, returns the latest 3.5.x version.
+
+        When called without majorVersion/minorVersion parameters, returns the latest GA versions
+        that are currently supported (isCurrent=true), ordered by version descending (newest first).
         """)
     public LatestSpringBootVersionResponse getLatestSpringBootVersion(
-            @McpToolParam(description = "Major version number (required, e.g., 3)") Integer majorVersion,
-            @McpToolParam(description = "Minor version number (required, e.g., 5)") Integer minorVersion) {
+            @McpToolParam(description = "Major version number (optional, e.g., '3'). If omitted, returns latest GA+Current versions.") String majorVersion,
+            @McpToolParam(description = "Minor version number (optional, e.g., '5'). Required if majorVersion is provided.") String minorVersion) {
 
-        log.info("Tool: getLatestSpringBootVersion - major={}, minor={}", majorVersion, minorVersion);
+        // Parse string parameters to Integer, handling "null" strings and empty values
+        Integer majorVersionInt = parseOptionalInteger(majorVersion, "majorVersion");
+        Integer minorVersionInt = parseOptionalInteger(minorVersion, "minorVersion");
+
+        log.info("Tool: getLatestSpringBootVersion - major={}, minor={}", majorVersionInt, minorVersionInt);
         Instant startTime = Instant.now();
-
-        if (majorVersion == null || minorVersion == null) {
-            throw new IllegalArgumentException("Both majorVersion and minorVersion parameters are required");
-        }
 
         boolean enterpriseEnabled = settingsService.isEnterpriseSubscriptionEnabled();
 
+        // When no parameters provided, return latest GA versions that are current
+        if (majorVersionInt == null && minorVersionInt == null) {
+            List<SpringBootVersion> allVersions = springBootVersionRepository.findAllOrderByVersionDesc();
+
+            // Filter to GA versions that are current (one per minor version line)
+            List<SpringBootVersion> currentGaVersions = allVersions.stream()
+                .filter(v -> v.getState() == VersionState.GA)
+                .filter(v -> Boolean.TRUE.equals(v.getIsCurrent()))
+                .collect(Collectors.toList());
+
+            // If no current versions marked, fall back to latest GA per minor version
+            if (currentGaVersions.isEmpty()) {
+                currentGaVersions = filterToLatestPerMinorVersion(
+                    allVersions.stream()
+                        .filter(v -> v.getState() == VersionState.GA)
+                        .collect(Collectors.toList())
+                );
+            }
+
+            long executionTimeMs = Duration.between(startTime, Instant.now()).toMillis();
+
+            List<SpringBootVersionsResponse.SpringBootVersionInfo> versionInfos = currentGaVersions.stream()
+                .map(v -> mapToSpringBootVersionInfo(v, enterpriseEnabled))
+                .collect(Collectors.toList());
+
+            SpringBootVersion latestVersion = currentGaVersions.isEmpty() ? null : currentGaVersions.get(0);
+
+            return new LatestSpringBootVersionResponse(
+                null, // No specific major requested
+                null, // No specific minor requested
+                currentGaVersions.size(),
+                executionTimeMs,
+                latestVersion != null ? mapToSpringBootVersionInfo(latestVersion, enterpriseEnabled) : null,
+                versionInfos
+            );
+        }
+
+        // If only one parameter provided, require both
+        if (majorVersionInt == null || minorVersionInt == null) {
+            throw new IllegalArgumentException("Both majorVersion and minorVersion parameters are required when filtering by version");
+        }
+
         List<SpringBootVersion> versions = springBootVersionRepository
-            .findByMajorVersionAndMinorVersionOrderByPatchVersionDesc(majorVersion, minorVersion);
+            .findByMajorVersionAndMinorVersionOrderByPatchVersionDesc(majorVersionInt, minorVersionInt);
 
         if (versions.isEmpty()) {
             throw new IllegalArgumentException(
-                "No Spring Boot version found for " + majorVersion + "." + minorVersion);
+                "No Spring Boot version found for " + majorVersionInt + "." + minorVersionInt);
         }
 
         SpringBootVersion latestVersion = versions.get(0);
@@ -454,13 +530,47 @@ public class SpringDocumentationTools {
             .collect(Collectors.toList());
 
         return new LatestSpringBootVersionResponse(
-            majorVersion,
-            minorVersion,
+            majorVersionInt,
+            minorVersionInt,
             versions.size(),
             executionTimeMs,
             mapToSpringBootVersionInfo(latestVersion, enterpriseEnabled),
             allVersionInfos
         );
+    }
+
+    /**
+     * Filter a list of versions to keep only the latest patch version per major.minor combination.
+     * Assumes input is already sorted by version descending.
+     */
+    private List<SpringBootVersion> filterToLatestPerMinorVersion(List<SpringBootVersion> versions) {
+        Map<String, SpringBootVersion> latestPerMinor = new LinkedHashMap<>();
+        for (SpringBootVersion v : versions) {
+            String key = v.getMajorVersion() + "." + v.getMinorVersion();
+            latestPerMinor.putIfAbsent(key, v);
+        }
+        return new ArrayList<>(latestPerMinor.values());
+    }
+
+    /**
+     * Parse an optional integer parameter from a String, handling "null" strings and empty values.
+     * This is needed because MCP clients may send "null" as a string instead of omitting the parameter.
+     *
+     * @param value the string value to parse
+     * @param paramName the parameter name for error messages
+     * @return the parsed Integer, or null if the value is null, empty, or "null"
+     * @throws IllegalArgumentException if the value cannot be parsed as an integer
+     */
+    private Integer parseOptionalInteger(String value, String paramName) {
+        if (value == null || value.isBlank() || "null".equalsIgnoreCase(value.trim())) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                String.format("Invalid value for %s: '%s'. Expected a number.", paramName, value));
+        }
     }
 
     /**
@@ -655,11 +765,14 @@ public class SpringDocumentationTools {
     }
 
     /**
-     * Find Spring projects by use case keyword search
+     * Find Spring projects by use case keyword search.
+     * Uses semantic search when embeddings are enabled.
      */
     @McpTool(description = """
         Search for Spring projects by use case. Searches in project names and descriptions for keywords.
+        When embeddings are enabled, uses semantic search to find related projects by meaning.
         Useful for finding projects that solve specific problems or use cases.
+        Examples: 'database', 'security', 'messaging', 'web', 'REST API', 'microservices'
         """)
     public ProjectsByUseCaseResponse findProjectsByUseCase(
             @McpToolParam(description = "Use case keyword or phrase (required, e.g., 'data access', 'security', 'messaging', 'web')") String useCase) {
@@ -671,16 +784,41 @@ public class SpringDocumentationTools {
             throw new IllegalArgumentException("useCase parameter is required");
         }
 
-        List<SpringProject> allProjects = projectRepository.findByActiveTrue();
-        String lowerCaseQuery = useCase.toLowerCase();
+        List<SpringProject> matchingProjects;
 
-        List<SpringProject> matchingProjects = allProjects.stream()
-            .filter(p -> {
-                String name = p.getName().toLowerCase();
-                String desc = p.getDescription() != null ? p.getDescription().toLowerCase() : "";
-                return name.contains(lowerCaseQuery) || desc.contains(lowerCaseQuery);
-            })
-            .collect(Collectors.toList());
+        // Use hybrid search when embeddings are enabled
+        if (embeddingProperties.isEnabled() && hybridSearchService != null) {
+            log.debug("Using hybrid search (keyword + semantic) for use case: {}", useCase);
+            List<HybridSearchService.SearchResult> hybridResults =
+                    hybridSearchService.searchProjects(useCase, 50);
+
+            // Get matching project IDs
+            List<Long> projectIds = hybridResults.stream()
+                    .map(HybridSearchService.SearchResult::id)
+                    .toList();
+
+            // Fetch projects by IDs, maintaining order
+            Map<Long, SpringProject> projectMap = projectRepository.findAllById(projectIds).stream()
+                    .filter(SpringProject::getActive)
+                    .collect(Collectors.toMap(SpringProject::getId, p -> p));
+
+            matchingProjects = projectIds.stream()
+                    .map(projectMap::get)
+                    .filter(p -> p != null)
+                    .collect(Collectors.toList());
+        } else {
+            // Fall back to keyword search
+            List<SpringProject> allProjects = projectRepository.findByActiveTrue();
+            String lowerCaseQuery = useCase.toLowerCase();
+
+            matchingProjects = allProjects.stream()
+                .filter(p -> {
+                    String name = p.getName().toLowerCase();
+                    String desc = p.getDescription() != null ? p.getDescription().toLowerCase() : "";
+                    return name.contains(lowerCaseQuery) || desc.contains(lowerCaseQuery);
+                })
+                .collect(Collectors.toList());
+        }
 
         long executionTimeMs = Duration.between(startTime, Instant.now()).toMillis();
 

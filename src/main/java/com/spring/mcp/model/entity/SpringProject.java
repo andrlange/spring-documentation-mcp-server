@@ -57,6 +57,13 @@ public class SpringProject {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Embedding fields for semantic search
+    @Column(name = "embedding_model", length = 100)
+    private String embeddingModel;
+
+    @Column(name = "embedded_at")
+    private LocalDateTime embeddedAt;
+
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ProjectVersion> versions = new ArrayList<>();

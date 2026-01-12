@@ -2,7 +2,7 @@
 info:
   app:
     name: Spring Boot Documentation MCP Server
-    version: 1.8.0
+    version: 1.8.1
     description: MCP Server providing comprehensive access to Spring ecosystem documentation
   spring-boot:
     version: 3.5.9
@@ -82,7 +82,7 @@ spring:
         protocol: STREAMABLE
         name: "spring-documentation-server"
         type: SYNC
-        version: "1.8.0"
+        version: "1.8.1"
         request-timeout: 60s
         # Enable tool change notifications for MCP Tool Masquerading (/mcp-tools)
         tool-change-notification: true
@@ -138,7 +138,7 @@ spring.lifecycle:
 mcp:
   server:
     name: "Spring Documentation MCP Server"
-    version: "1.8.0"
+    version: "1.8.1"
     # Streamable-HTTP transport settings
     streamable-http:
       request-timeout: 60000 # 60 seconds in milliseconds

@@ -12,7 +12,7 @@
 >
 > **Purpose**: My main goal is to create demo applications using my own specifications to explore AI-assisted development workflows.
 
-### (Current Version 1.8.0 - MCP Streamable-HTTP Transport)
+### (Current Version 1.8.1 - Documentation Tools Improvements)
 
 A comprehensive Spring Boot application that serves as a Model Context Protocol (MCP) Server, providing AI assistants with full-text searchable access to Spring ecosystem documentation via Streamable-HTTP.
 
@@ -80,6 +80,7 @@ This MCP server enables AI assistants (like Claude) to search, browse, and retri
 
 | Version   | Date       | Highlights                                                   |
 |-----------|------------|--------------------------------------------------------------|
+| **1.8.1** | 2026-01-12 | Documentation Tools Improvements (semantic search, optional params) |
 | **1.8.0** | 2026-01-09 | MCP Streamable-HTTP Transport (replaces SSE, protocol 2025-11-25) |
 | **1.7.1** | 2026-01-08 | Sync fixes (OSS version support, javadoc parsing, logging) |
 | **1.7.0** | 2026-01-06 | Spring Boot Wiki Integration (Release Notes & Migration Guides, +2 MCP tools) |
@@ -117,7 +118,7 @@ docker-compose up -d postgres
 ### 2. Build and Run
 ```bash
 ./gradlew clean build
-java -jar build/libs/spring-boot-documentation-mcp-server-1.8.0.jar
+java -jar build/libs/spring-boot-documentation-mcp-server-1.8.1.jar
 ```
 
 Or using Gradle:
@@ -1189,7 +1190,7 @@ spring:
       server:
         protocol: STREAMABLE  # MCP 2025-11-25 Streamable-HTTP transport
         name: "spring-documentation-server"
-        version: "1.8.0"
+        version: "1.8.1"
         tool-change-notification: true  # Required for MCP Tool Masquerading
         streamable-http:
           mcp-endpoint: /mcp/spring

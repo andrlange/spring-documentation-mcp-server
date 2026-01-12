@@ -178,8 +178,8 @@ class SpringDocumentationToolsIntegrationTest extends McpSseIntegrationTestBase 
         assertToolAvailable("getLatestSpringBootVersion");
 
         Map<String, Object> args = Map.of(
-            "majorVersion", 3,
-            "minorVersion", 5
+            "majorVersion", "3",
+            "minorVersion", "5"
         );
         String content = callToolAndGetTextContent("getLatestSpringBootVersion", args);
 
@@ -191,8 +191,8 @@ class SpringDocumentationToolsIntegrationTest extends McpSseIntegrationTestBase 
     @DisplayName("getLatestSpringBootVersion - should return latest 4.0.x version")
     void getLatestSpringBootVersion_shouldReturnLatest40x() throws Exception {
         Map<String, Object> args = Map.of(
-            "majorVersion", 4,
-            "minorVersion", 0
+            "majorVersion", "4",
+            "minorVersion", "0"
         );
         String content = callToolAndGetTextContent("getLatestSpringBootVersion", args);
 
