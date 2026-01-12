@@ -6,7 +6,7 @@ This document tracks the version configuration across all project files to ensur
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| **Application** | 1.8.0 | Spring MCP Server |
+| **Application** | 1.8.1 | Spring MCP Server |
 | **Java (JDK)** | 25 | LTS version |
 | **Spring Boot** | 3.5.9 | Latest stable |
 | **Spring AI** | 1.1.2 | MCP Server support |
@@ -20,7 +20,7 @@ Needs to track the changelog
 
 ### build.gradle
 ```groovy
-version = '1.8.0'
+version = '1.8.1'
 
 java {
     toolchain {
@@ -45,7 +45,7 @@ services:
   postgres:
     image: postgres:18-alpine
   spring-boot-documentation-mcp-server:
-    image: spring-boot-documentation-mcp-server:1.8.0
+    image: spring-boot-documentation-mcp-server:1.8.1
 ```
 
 ### application.yml
@@ -54,7 +54,7 @@ services:
 info:
   app:
     name: Spring MCP Server
-    version: 1.8.0
+    version: 1.8.1
   spring-boot:
     version: 3.5.9
 
@@ -65,12 +65,12 @@ spring:
   ai:
     mcp:
       server:
-        version: "1.8.0"
+        version: "1.8.1"
 ```
 
 ### build-container.sh
 ```bash
-APP_VERSION="1.8.0"
+APP_VERSION="1.8.1"
 JAVA_VERSION="25"
 ```
 
@@ -112,6 +112,16 @@ Update these locations when adding/removing tools:
 - `.claude/memory/project-memory.md` - MCP Tools count
 
 ## Changelog
+
+### v1.8.1 (2026-01-12)
+- Documentation Tools Improvements with semantic search capabilities
+- `findProjectsByUseCase`: Now uses semantic embeddings for more accurate project discovery
+- `getCodeExamples`: Enhanced with vector similarity search for better code example matching
+- `getLatestSpringBootVersion`: Parameters now optional (returns latest GA + Current when omitted)
+- New Spring Projects embedding support in `spring_projects` table
+- Embeddings Dashboard updated to show Projects coverage
+- New Python testing framework for Documentation MCP tools (`usecases/test_documentation_tools.py`)
+- Migration V27 adds embedding columns to spring_projects table
 
 ### v1.8.0 (2026-01-09)
 - MCP Streamable-HTTP Transport Migration (replaces SSE)

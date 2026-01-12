@@ -50,7 +50,7 @@ services:
   #       wait
 
   spring-boot-documentation-mcp-server:
-    image: spring-boot-documentation-mcp-server:1.8.0
+    image: spring-boot-documentation-mcp-server:1.8.1
     container_name: spring-boot-documentation-mcp-server
     environment:
       DB_HOST: postgres

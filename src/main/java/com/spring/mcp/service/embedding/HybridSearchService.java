@@ -109,6 +109,25 @@ public class HybridSearchService {
     }
 
     /**
+     * Perform hybrid search on Spring projects.
+     * Used by findProjectsByUseCase to find projects by semantic meaning.
+     *
+     * @param query     search query text (use case keyword or phrase)
+     * @param limit     maximum results to return
+     * @return list of project IDs with their hybrid scores
+     */
+    public List<SearchResult> searchProjects(String query, int limit) {
+        return hybridSearch(
+                "spring_projects",
+                "project_embedding",
+                "COALESCE(name, '') || ' ' || COALESCE(description, '')",
+                null,
+                query,
+                limit
+        );
+    }
+
+    /**
      * Generic hybrid search implementation.
      */
     private List<SearchResult> hybridSearch(

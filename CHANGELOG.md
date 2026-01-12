@@ -5,6 +5,33 @@ All notable changes to the Spring Documentation MCP Server are documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-01-12
+
+### Added
+- **Semantic Search for Documentation Tools**: Enhanced MCP tools with hybrid search capabilities
+    - **`findProjectsByUseCase`**: Now uses semantic embeddings when enabled for more accurate project discovery
+    - **`getCodeExamples`**: Enhanced with vector similarity search for better code example matching
+    - **Spring Projects Embeddings**: New embedding support for Spring project descriptions
+    - **Database Migration**: `V27__spring_projects_embedding.sql` adds embedding columns to `spring_projects` table
+- **Python Testing Framework**: New `usecases/test_documentation_tools.py` for testing Documentation MCP tools
+    - Tests all 12 Documentation tools via MCP Streamable-HTTP
+    - Two use cases: App Modernization and App Seeding
+    - Comprehensive logging and result output
+
+### Changed
+- **`getLatestSpringBootVersion`**: Parameters now optional
+    - When `majorVersion` and `minorVersion` are omitted, returns latest GA + Current versions
+    - Results ordered by version descending (newest first)
+    - Maintains backward compatibility when parameters are provided
+- **Embeddings Dashboard**: Updated `/embeddings` page to show Projects embedding coverage
+
+### Technical Details
+- Uses existing RRF (Reciprocal Rank Fusion) algorithm from `HybridSearchService`
+- Project embeddings generated from name + description concatenation
+- 768-dimensional vectors using nomic-embed-text (Ollama) or 1536 for OpenAI
+
+---
+
 ## [1.8.0] - 2026-01-09
 
 ### Added
@@ -18,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - MCP endpoint changed from `/mcp/spring/sse` to `/mcp/spring`
 - Protocol version header updated from `2025-06-18` to `2025-11-25`
-- Claude Code configuration now uses `type: "streamable-http"` instead of SSE transport
+- Claude Code configuration now uses `type: "http"` instead of SSE transport
 - Updated UI templates to display new Streamable-HTTP endpoint
 
 ### Technical Details
@@ -648,6 +675,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.8.1 | 2026-01-12 | Documentation Tools Improvements (semantic search, optional params) |
 | 1.8.0 | 2026-01-09 | MCP Streamable-HTTP Transport (replaces SSE, protocol 2025-11-25) |
 | 1.7.1 | 2026-01-08 | Sync fixes (OSS version support, javadoc parsing, logging) |
 | 1.7.0 | 2026-01-06 | Spring Boot Wiki Integration (Release Notes & Migration Guides) |

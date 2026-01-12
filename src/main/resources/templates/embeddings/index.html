@@ -105,6 +105,7 @@
         }
 
         .entity-icon.wiki { background: rgba(236, 72, 153, 0.2); color: #f687b3; }
+        .entity-icon.projects { background: rgba(99, 179, 237, 0.2); color: #63b3ed; }
 
         .entity-header {
             display: flex;
@@ -510,6 +511,33 @@
                 </div>
             </div>
         </div>
+
+        <!-- Spring Projects -->
+        <div class="col-md-6 col-lg-3">
+            <div class="entity-card">
+                <div class="entity-header">
+                    <div class="entity-title">
+                        <div class="entity-icon projects">
+                            <i class="bi bi-folder"></i>
+                        </div>
+                        <div>
+                            <div class="entity-name">Projects</div>
+                            <div class="entity-count" x-text="stats.projectsWithEmbedding + ' / ' + stats.projectsTotal">0 / 0</div>
+                        </div>
+                    </div>
+                    <span class="badge" :class="stats.projectsCoverage >= 80 ? 'bg-success' : (stats.projectsCoverage >= 50 ? 'bg-warning' : 'bg-danger')"
+                          x-text="stats.projectsCoverage.toFixed(1) + '%'">0%</span>
+                </div>
+                <div class="coverage-progress">
+                    <div class="coverage-bar" :class="stats.projectsCoverage >= 80 ? 'high' : (stats.projectsCoverage >= 50 ? 'medium' : 'low')"
+                         :style="'width: ' + stats.projectsCoverage + '%'"></div>
+                </div>
+                <div class="coverage-label">
+                    <span>Use case search</span>
+                    <span x-text="(stats.projectsTotal - stats.projectsWithEmbedding) + ' missing'">0 missing</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Configuration Section -->
@@ -643,6 +671,9 @@
                     wikiMigrationGuidesWithEmbedding: initialStats.wikiMigrationGuidesWithEmbedding || 0,
                     wikiMigrationGuidesTotal: initialStats.wikiMigrationGuidesTotal || 0,
                     wikiMigrationGuidesCoverage: initialStats.wikiMigrationGuidesCoverage || 0,
+                    projectsWithEmbedding: initialStats.projectsWithEmbedding || 0,
+                    projectsTotal: initialStats.projectsTotal || 0,
+                    projectsCoverage: initialStats.projectsCoverage || 0,
                     pendingJobs: initialStats.pendingJobs || 0,
                     failedJobs: initialStats.failedJobs || 0,
                     totalWithEmbedding: initialStats.totalWithEmbedding || 0,
@@ -774,6 +805,9 @@
                             this.stats.wikiMigrationGuidesWithEmbedding = data.wikiMigrationGuidesWithEmbedding || 0;
                             this.stats.wikiMigrationGuidesTotal = data.wikiMigrationGuidesTotal || 0;
                             this.stats.wikiMigrationGuidesCoverage = data.wikiMigrationGuidesCoverage || 0;
+                            this.stats.projectsWithEmbedding = data.projectsWithEmbedding || 0;
+                            this.stats.projectsTotal = data.projectsTotal || 0;
+                            this.stats.projectsCoverage = data.projectsCoverage || 0;
                             this.stats.pendingJobs = data.pendingJobs || 0;
                             this.stats.failedJobs = data.failedJobs || 0;
                             this.stats.totalWithEmbedding = data.totalWithEmbedding || 0;

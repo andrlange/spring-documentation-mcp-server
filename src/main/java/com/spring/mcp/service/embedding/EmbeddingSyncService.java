@@ -5,6 +5,7 @@ import com.spring.mcp.model.entity.*;
 import com.spring.mcp.repository.*;
 import com.spring.mcp.repository.WikiReleaseNotesRepository;
 import com.spring.mcp.repository.WikiMigrationGuideRepository;
+import com.spring.mcp.repository.SpringProjectRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -46,6 +47,7 @@ public class EmbeddingSyncService {
     private final CodeExampleRepository codeExampleRepository;
     private final WikiReleaseNotesRepository wikiReleaseNotesRepository;
     private final WikiMigrationGuideRepository wikiMigrationGuideRepository;
+    private final SpringProjectRepository springProjectRepository;
     private final EmbeddingJobRepository embeddingJobRepository;
     private final EmbeddingMetadataRepository embeddingMetadataRepository;
 
@@ -140,6 +142,21 @@ public class EmbeddingSyncService {
     }
 
     /**
+     * Sync embeddings for all Spring projects.
+     */
+    @Async("embeddingTaskExecutor")
+    @Transactional
+    public CompletableFuture<SyncResult> syncProjectEmbeddings() {
+        log.info("Starting Spring project embedding sync...");
+        return syncEntityEmbeddings(
+                "PROJECT",
+                this::fetchProjectBatch,
+                this::getProjectTextForEmbedding,
+                this::updateProjectEmbedding
+        );
+    }
+
+    /**
      * Sync embeddings for entities without embeddings only.
      */
     @Async("embeddingTaskExecutor")
@@ -167,6 +184,9 @@ public class EmbeddingSyncService {
 
             SyncResult wikiMigrationGuideResult = syncMissingForEntityType("WIKI_MIGRATION_GUIDE").get();
             totalResult = totalResult.add(wikiMigrationGuideResult);
+
+            SyncResult projectResult = syncMissingForEntityType("PROJECT").get();
+            totalResult = totalResult.add(projectResult);
 
         } catch (Exception e) {
             log.error("Error syncing missing embeddings: {}", e.getMessage(), e);
@@ -251,6 +271,9 @@ public class EmbeddingSyncService {
         long wikiMigrationGuidesWithEmbedding = countEntitiesWithEmbedding("wiki_migration_guides", "content_embedding");
         long wikiMigrationGuidesTotal = wikiMigrationGuideRepository.count();
 
+        long projectsWithEmbedding = countEntitiesWithEmbedding("spring_projects", "project_embedding");
+        long projectsTotal = springProjectRepository.count();
+
         long pendingJobs = embeddingJobRepository.countPendingAndRetryJobs();
         long failedJobs = embeddingJobRepository.countByStatus(EmbeddingJob.JobStatus.FAILED);
 
@@ -261,6 +284,7 @@ public class EmbeddingSyncService {
                 examplesWithEmbedding, examplesTotal,
                 wikiReleaseNotesWithEmbedding, wikiReleaseNotesTotal,
                 wikiMigrationGuidesWithEmbedding, wikiMigrationGuidesTotal,
+                projectsWithEmbedding, projectsTotal,
                 pendingJobs,
                 failedJobs,
                 embeddingService.isAvailable(),
@@ -357,6 +381,7 @@ public class EmbeddingSyncService {
             case "CODE_EXAMPLE" -> "SELECT id FROM code_examples WHERE example_embedding IS NULL";
             case "WIKI_RELEASE_NOTES" -> "SELECT id FROM wiki_release_notes WHERE content_embedding IS NULL";
             case "WIKI_MIGRATION_GUIDE" -> "SELECT id FROM wiki_migration_guides WHERE content_embedding IS NULL";
+            case "PROJECT" -> "SELECT id FROM spring_projects WHERE project_embedding IS NULL";
             default -> throw new IllegalArgumentException("Unknown entity type: " + entityType);
         };
 
@@ -458,6 +483,8 @@ public class EmbeddingSyncService {
                     .map(this::getWikiReleaseNotesTextForEmbedding).orElse(null);
             case "WIKI_MIGRATION_GUIDE" -> wikiMigrationGuideRepository.findById(id)
                     .map(this::getWikiMigrationGuideTextForEmbedding).orElse(null);
+            case "PROJECT" -> springProjectRepository.findById(id)
+                    .map(this::getProjectTextForEmbedding).orElse(null);
             default -> null;
         };
     }
@@ -479,6 +506,7 @@ public class EmbeddingSyncService {
             case "CODE_EXAMPLE" -> updateCodeExampleEmbedding(id, embedding, model);
             case "WIKI_RELEASE_NOTES" -> updateWikiReleaseNotesEmbedding(id, embedding, model);
             case "WIKI_MIGRATION_GUIDE" -> updateWikiMigrationGuideEmbedding(id, embedding, model);
+            case "PROJECT" -> updateProjectEmbedding(id, embedding, model);
         }
     }
 
@@ -625,6 +653,26 @@ public class EmbeddingSyncService {
             """, vectorString, model, id);
     }
 
+    private Page<SpringProject> fetchProjectBatch(PageRequest pageRequest) {
+        return springProjectRepository.findAll(pageRequest);
+    }
+
+    private String getProjectTextForEmbedding(SpringProject project) {
+        StringBuilder sb = new StringBuilder();
+        if (project.getName() != null) sb.append(project.getName()).append(" ");
+        if (project.getDescription() != null) sb.append(project.getDescription());
+        return sb.toString().trim();
+    }
+
+    private void updateProjectEmbedding(Long id, float[] embedding, String model) {
+        String vectorString = floatArrayToVectorString(embedding);
+        jdbcTemplate.update("""
+            UPDATE spring_projects
+            SET project_embedding = ?::vector, embedding_model = ?, embedded_at = NOW()
+            WHERE id = ?
+            """, vectorString, model, id);
+    }
+
     private void storeEntityEmbedding(String entityType, Long entityId, float[] embedding, String model) {
         String vectorString = floatArrayToVectorString(embedding);
         String table = switch (entityType) {
@@ -634,6 +682,7 @@ public class EmbeddingSyncService {
             case "CODE_EXAMPLE" -> "code_examples";
             case "WIKI_RELEASE_NOTES" -> "wiki_release_notes";
             case "WIKI_MIGRATION_GUIDE" -> "wiki_migration_guides";
+            case "PROJECT" -> "spring_projects";
             default -> throw new IllegalArgumentException("Unknown entity type: " + entityType);
         };
         String column = switch (entityType) {
@@ -642,6 +691,7 @@ public class EmbeddingSyncService {
             case "FLAVOR" -> "flavor_embedding";
             case "CODE_EXAMPLE" -> "example_embedding";
             case "WIKI_RELEASE_NOTES", "WIKI_MIGRATION_GUIDE" -> "content_embedding";
+            case "PROJECT" -> "project_embedding";
             default -> throw new IllegalArgumentException("Unknown entity type: " + entityType);
         };
 
@@ -701,6 +751,7 @@ public class EmbeddingSyncService {
             long examplesWithEmbedding, long examplesTotal,
             long wikiReleaseNotesWithEmbedding, long wikiReleaseNotesTotal,
             long wikiMigrationGuidesWithEmbedding, long wikiMigrationGuidesTotal,
+            long projectsWithEmbedding, long projectsTotal,
             long pendingJobs,
             long failedJobs,
             boolean providerAvailable,
@@ -731,14 +782,18 @@ public class EmbeddingSyncService {
             return wikiMigrationGuidesTotal > 0 ? (double) wikiMigrationGuidesWithEmbedding / wikiMigrationGuidesTotal * 100 : 0;
         }
 
+        public double getProjectsCoverage() {
+            return projectsTotal > 0 ? (double) projectsWithEmbedding / projectsTotal * 100 : 0;
+        }
+
         public long getTotalWithEmbedding() {
             return docsWithEmbedding + transformsWithEmbedding + flavorsWithEmbedding + examplesWithEmbedding
-                    + wikiReleaseNotesWithEmbedding + wikiMigrationGuidesWithEmbedding;
+                    + wikiReleaseNotesWithEmbedding + wikiMigrationGuidesWithEmbedding + projectsWithEmbedding;
         }
 
         public long getTotalEntities() {
             return docsTotal + transformsTotal + flavorsTotal + examplesTotal
-                    + wikiReleaseNotesTotal + wikiMigrationGuidesTotal;
+                    + wikiReleaseNotesTotal + wikiMigrationGuidesTotal + projectsTotal;
         }
 
         public double getOverallCoverage() {
