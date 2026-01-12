@@ -459,6 +459,8 @@ logging:
     # MCP Server logging
     io.modelcontextprotocol: INFO
     org.springframework.ai.mcp: INFO
+    # Suppress verbose MCP connection tracking messages
+    com.spring.mcp.security.SseConnectionTrackingFilter: WARN
     # Suppress HtmlUnit noise (JavaScript engine errors, obsolete content type warnings)
     org.htmlunit: ERROR
     org.htmlunit.javascript: OFF
