@@ -1,3 +1,4 @@
+```bash
 tools/db/
 ├── export-macos.sh      # macOS/zsh
 ├── export-linux.sh      # Linux/bash
@@ -5,6 +6,7 @@ tools/db/
 ├── import-macos.sh      # macOS/zsh
 ├── import-linux.sh      # Linux/bash
 └── import-windows.ps1   # Windows/PowerShell
+```
 
 ## Verwendung
 
