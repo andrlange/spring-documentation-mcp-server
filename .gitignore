@@ -66,6 +66,9 @@ docs/
 .mcp.json
 start.sh
 start-dev.sh
+start.ps1
+start-dev.ps1
+start.zip
 
 vols.zip
 vols20250108.zip

@@ -27,9 +27,9 @@ if (-not $OutputFile) {
     $OutputFile = "spring_mcp_backup_${Timestamp}.dump"
 }
 
-Write-Host "╔════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║         PostgreSQL Database Export (Windows/PowerShell)            ║" -ForegroundColor Cyan
-Write-Host "╚════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host "======================================================================" -ForegroundColor Cyan
+Write-Host "         PostgreSQL Database Export (Windows/PowerShell)              " -ForegroundColor Cyan
+Write-Host "======================================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Configuration:" -ForegroundColor Yellow
 Write-Host "  Container:  $ContainerName"
@@ -39,51 +39,51 @@ Write-Host "  Output:     $OutputFile"
 Write-Host ""
 
 # Check if Docker is running
-try {
-    $null = docker info 2>&1
-} catch {
-    Write-Host "❌ Error: Docker is not running" -ForegroundColor Red
+$dockerCheck = docker info 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[ERROR] Docker is not running" -ForegroundColor Red
     exit 1
 }
 
 # Check if container exists and is running
-$runningContainers = docker ps --format '{{.Names}}' 2>&1
+$runningContainers = docker ps --format "{{.Names}}" 2>&1
 if ($runningContainers -notcontains $ContainerName) {
-    Write-Host "❌ Error: Container '$ContainerName' is not running" -ForegroundColor Red
+    Write-Host "[ERROR] Container '$ContainerName' is not running" -ForegroundColor Red
     Write-Host "   Start it with: docker-compose up -d postgres" -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host "🔄 Starting database export..." -ForegroundColor Green
+Write-Host "[1/2] Starting database export..." -ForegroundColor Green
 
-# Export using pg_dump with custom format (includes compression)
-# -Fc = custom format (compressed, suitable for pg_restore)
-# -v  = verbose
-# -b  = include large objects
 try {
-    $env:PGPASSWORD = $DbPassword
-    docker exec -e PGPASSWORD="$DbPassword" $ContainerName `
-        pg_dump -U $DbUser -d $DbName -Fc -v -b `
-        | Set-Content -Path $OutputFile -AsByteStream
+    # Export using pg_dump with custom format (includes compression)
+    # Create dump inside container first, then copy out
+    docker exec -e PGPASSWORD=$DbPassword $ContainerName pg_dump -U $DbUser -d $DbName -Fc -v -b -f /tmp/export.dump 2>&1
+
+    Write-Host "[2/2] Copying backup file from container..." -ForegroundColor Green
+
+    # Copy from container to host
+    docker cp "${ContainerName}:/tmp/export.dump" $OutputFile
+
+    # Cleanup temp file in container
+    docker exec $ContainerName rm -f /tmp/export.dump
 
     # Verify the export file
     if ((Test-Path $OutputFile) -and ((Get-Item $OutputFile).Length -gt 0)) {
         $FileSize = (Get-Item $OutputFile).Length
         $FileSizeMB = [math]::Round($FileSize / 1MB, 2)
         Write-Host ""
-        Write-Host "✅ Export completed successfully!" -ForegroundColor Green
+        Write-Host "[SUCCESS] Export completed successfully!" -ForegroundColor Green
         Write-Host "   File: $OutputFile"
         Write-Host "   Size: ${FileSizeMB} MB"
         Write-Host ""
-        Write-Host "📝 To import on another system, use:" -ForegroundColor Cyan
+        Write-Host "To import on another system, use:" -ForegroundColor Cyan
         Write-Host "   .\import-windows.ps1 -InputFile $OutputFile"
     } else {
-        Write-Host "❌ Error: Export failed or file is empty" -ForegroundColor Red
+        Write-Host "[ERROR] Export failed or file is empty" -ForegroundColor Red
         exit 1
     }
 } catch {
-    Write-Host "❌ Error during export: $_" -ForegroundColor Red
+    Write-Host "[ERROR] Error during export: $_" -ForegroundColor Red
     exit 1
-} finally {
-    $env:PGPASSWORD = $null
 }
