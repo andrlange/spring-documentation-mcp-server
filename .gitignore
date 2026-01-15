@@ -70,6 +70,8 @@ start-dev.sh
 vols.zip
 vols20250108.zip
 latest.jar
+database.dump
+database.zip
 
 
 usecases/run.sh
